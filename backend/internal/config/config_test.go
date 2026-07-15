@@ -376,11 +376,11 @@ func TestLoadDefaultSecurityToggles(t *testing.T) {
 	if cfg.Security.URLAllowlist.Enabled {
 		t.Fatalf("URLAllowlist.Enabled = true, want false")
 	}
-	if !cfg.Security.URLAllowlist.AllowInsecureHTTP {
-		t.Fatalf("URLAllowlist.AllowInsecureHTTP = false, want true")
+	if cfg.Security.URLAllowlist.AllowInsecureHTTP {
+		t.Fatalf("URLAllowlist.AllowInsecureHTTP = true, want false")
 	}
-	if !cfg.Security.URLAllowlist.AllowPrivateHosts {
-		t.Fatalf("URLAllowlist.AllowPrivateHosts = false, want true")
+	if cfg.Security.URLAllowlist.AllowPrivateHosts {
+		t.Fatalf("URLAllowlist.AllowPrivateHosts = true, want false")
 	}
 	if !cfg.Security.ResponseHeaders.Enabled {
 		t.Fatalf("ResponseHeaders.Enabled = false, want true")
@@ -1384,6 +1384,11 @@ func TestValidateConfigErrors(t *testing.T) {
 			wantErr: "gateway.stream_data_interval_timeout",
 		},
 		{
+			name:    "gateway stream data interval over max",
+			mutate:  func(c *Config) { c.Gateway.StreamDataIntervalTimeout = 1801 },
+			wantErr: "gateway.stream_data_interval_timeout",
+		},
+		{
 			name:    "gateway stream data interval negative",
 			mutate:  func(c *Config) { c.Gateway.StreamDataIntervalTimeout = -1 },
 			wantErr: "gateway.stream_data_interval_timeout must be non-negative",
@@ -1944,8 +1949,8 @@ func TestLoad_DefaultGatewayImageStreamConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load() error: %v", err)
 	}
-	if cfg.Gateway.StreamDataIntervalTimeout != 180 {
-		t.Fatalf("stream_data_interval_timeout = %d, want 180", cfg.Gateway.StreamDataIntervalTimeout)
+	if cfg.Gateway.StreamDataIntervalTimeout != 600 {
+		t.Fatalf("stream_data_interval_timeout = %d, want 600", cfg.Gateway.StreamDataIntervalTimeout)
 	}
 	if cfg.Gateway.StreamKeepaliveInterval != 10 {
 		t.Fatalf("stream_keepalive_interval = %d, want 10", cfg.Gateway.StreamKeepaliveInterval)

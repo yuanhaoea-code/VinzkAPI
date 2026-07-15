@@ -72,6 +72,8 @@ func RegisterUserRoutes(
 			groups.GET("/rates", h.APIKey.GetUserGroupRates)
 		}
 
+		authenticated.GET("/model-market/catalog", h.ModelMarket.Catalog)
+
 		// 用户可用渠道（非管理员接口）
 		channels := authenticated.Group("/channels")
 		{
@@ -106,6 +108,19 @@ func RegisterUserRoutes(
 		{
 			redeem.POST("", h.Redeem.Redeem)
 			redeem.GET("/history", h.Redeem.GetHistory)
+		}
+
+		imageGenerations := authenticated.Group("/image-generations")
+		{
+			imageGenerations.GET("/pricing", h.ImageGeneration.Pricing)
+			imageGenerations.POST("", h.ImageGeneration.Create)
+			imageGenerations.POST("/queued", h.ImageGeneration.CreateQueued)
+			imageGenerations.GET("", h.ImageGeneration.List)
+			imageGenerations.GET("/:id", h.ImageGeneration.Get)
+			imageGenerations.GET("/:id/prompt-versions", h.ImageGeneration.PromptVersions)
+			imageGenerations.DELETE("/:id", h.ImageGeneration.Delete)
+			imageGenerations.GET("/:id/images/:index/preview", h.ImageGeneration.Preview)
+			imageGenerations.GET("/:id/images/:index/download", h.ImageGeneration.Download)
 		}
 
 		// 用户订阅

@@ -1,29 +1,83 @@
 <template>
   <AppLayout>
-    <div class="space-y-6">
-      <UsageStatsCards :stats="usageStats" :show-account-cost="false" :strike-standard-cost="true" />
+    <UserConsolePage
+      :kicker="t('usage.console.kicker')"
+      :title="t('usage.console.title')"
+      :description="t('usage.console.description')"
+      class="usage-console"
+    >
+      <template #heroAside>
+        <div class="console-summary">
+          <div>
+            <div class="console-summary__label">SELECTED RANGE</div>
+            <div class="console-summary__value">{{ usageStats?.total_requests?.toLocaleString() || '0' }}</div>
+            <div class="console-summary__desc">
+              {{ t('usage.console.summaryDescription') }}
+            </div>
+          </div>
+          <div class="console-summary__micro">
+            <div>
+              <b>{{ formatCompactTokens(usageStats?.total_tokens || 0) }}</b>
+              <span>{{ t('usage.tokens') }}</span>
+            </div>
+            <div>
+              <b>${{ (usageStats?.total_actual_cost || 0).toFixed(2) }}</b>
+              <span>{{ t('usage.console.actualCost') }}</span>
+            </div>
+          </div>
+        </div>
+      </template>
 
-      <div class="space-y-4">
-        <div class="card p-4">
-          <div class="flex flex-wrap items-center gap-4">
-            <div class="flex items-center gap-2">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.dashboard.timeRange') }}:</span>
+      <template #heroNotes>
+        <div class="console-note">
+          <strong class="console-note__title">{{ t('usage.console.noteBillingTitle') }}</strong>
+          <span class="console-note__copy">{{ t('usage.console.noteBillingCopy') }}</span>
+        </div>
+        <div class="console-note">
+          <strong class="console-note__title">{{ t('usage.console.noteExportTitle') }}</strong>
+          <span class="console-note__copy">{{ t('usage.console.noteExportCopy') }}</span>
+        </div>
+        <div class="console-note">
+          <strong class="console-note__title">{{ t('usage.console.noteErrorTitle') }}</strong>
+          <span class="console-note__copy">{{ t('usage.console.noteErrorCopy') }}</span>
+        </div>
+      </template>
+
+      <div class="usage-console__stats">
+        <UserConsoleStatCard
+          v-for="item in usageStatCards"
+          :key="item.title"
+          :title="item.title"
+          :value="item.value"
+          :hint="item.hint"
+          :detail="item.detail"
+          :meta="item.meta"
+          :tone="item.tone"
+        />
+      </div>
+
+      <UserConsolePanel
+        :title="t('usage.console.chartsTitle')"
+        :description="t('usage.console.chartsDescription')"
+      >
+        <template #headerActions>
+          <div class="usage-console__chart-controls">
+            <div class="usage-console__chart-control">
+              <span class="usage-console__control-label">{{ t('admin.dashboard.timeRange') }}</span>
               <DateRangePicker
                 v-model:start-date="startDate"
                 v-model:end-date="endDate"
                 @change="onDateRangeChange"
               />
             </div>
-            <div class="ml-auto flex items-center gap-2">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.dashboard.granularity') }}:</span>
-              <div class="w-28">
-                <Select v-model="granularity" :options="granularityOptions" @change="loadChartData" />
-              </div>
+            <div class="usage-console__chart-control usage-console__chart-control--small">
+              <span class="usage-console__control-label">{{ t('admin.dashboard.granularity') }}</span>
+              <Select v-model="granularity" :options="granularityOptions" @change="loadChartData" />
             </div>
           </div>
-        </div>
+        </template>
 
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div class="usage-console__chart-grid">
           <ModelDistributionChart
             v-model:metric="modelDistributionMetric"
             :model-stats="requestedModelStats"
@@ -46,8 +100,7 @@
             :end-date="endDate"
           />
         </div>
-
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div class="usage-console__chart-grid">
           <EndpointDistributionChart
             v-model:source="endpointDistributionSource"
             v-model:metric="endpointDistributionMetric"
@@ -64,9 +117,12 @@
           />
           <TokenUsageTrend :trend-data="trendData" :loading="chartsLoading" />
         </div>
-      </div>
+      </UserConsolePanel>
 
-      <div class="card p-6">
+      <UserConsolePanel
+        :title="t('usage.console.filtersTitle')"
+        :description="t('usage.console.filtersDescription')"
+      >
         <div class="flex flex-wrap items-end justify-between gap-4">
           <div class="flex flex-1 flex-wrap items-end gap-4">
             <div class="w-full sm:w-auto sm:min-w-[220px]">
@@ -108,6 +164,7 @@
                 @click="showColumnDropdown = !showColumnDropdown"
                 class="btn btn-secondary px-2 md:px-3"
                 :title="t('admin.users.columnSettings')"
+                :aria-label="t('admin.users.columnSettings')"
               >
                 <Icon name="grid" size="sm" />
                 <span class="hidden md:inline">{{ t('admin.users.columnSettings') }}</span>
@@ -131,56 +188,63 @@
             <button type="button" @click="exportToCSV" :disabled="exporting" class="btn btn-primary">
               {{ exporting ? t('usage.exporting') : t('usage.exportCsv') }}
             </button>
+            </div>
           </div>
-        </div>
-      </div>
+      </UserConsolePanel>
 
-      <div v-if="errorViewEnabled" class="flex gap-2 border-b border-gray-200 dark:border-dark-700">
-        <button class="tab" :class="{ 'tab-active': activeTab === 'usage' }" @click="activeTab = 'usage'">
-          {{ t('usage.tabs.usage') }}
-        </button>
-        <button class="tab" :class="{ 'tab-active': activeTab === 'errors' }" @click="switchToErrors">
-          {{ t('usage.tabs.errors') }}
-        </button>
-      </div>
+      <UserConsolePanel
+        :title="activeTab === 'usage' ? t('usage.console.recordsTitle') : t('usage.tabs.errors')"
+        :description="activeTab === 'usage' ? t('usage.console.recordsDescription') : t('usage.console.errorsDescription')"
+      >
+        <template #headerActions>
+          <div v-if="errorViewEnabled" class="usage-console__tabs">
+            <button class="usage-console__tab" :class="{ 'usage-console__tab--active': activeTab === 'usage' }" @click="activeTab = 'usage'">
+              {{ t('usage.tabs.usage') }}
+            </button>
+            <button class="usage-console__tab" :class="{ 'usage-console__tab--active': activeTab === 'errors' }" @click="switchToErrors">
+              {{ t('usage.tabs.errors') }}
+            </button>
+          </div>
+        </template>
 
-      <template v-if="activeTab === 'usage'">
-        <UsageTable
-          :data="usageLogs"
-          :loading="loading"
-          :columns="visibleColumns"
-          :server-side-sort="true"
-          :show-account-billing="false"
-          :show-upstream-endpoint="false"
-          default-sort-key="created_at"
-          default-sort-order="desc"
-          @sort="handleSort"
-          @ipGeoBatchFailed="handleIpGeoBatchFailed"
+        <template v-if="activeTab === 'usage'">
+          <UsageTable
+            :data="usageLogs"
+            :loading="loading"
+            :columns="visibleColumns"
+            :server-side-sort="true"
+            :show-account-billing="false"
+            :show-upstream-endpoint="false"
+            default-sort-key="created_at"
+            default-sort-order="desc"
+            @sort="handleSort"
+            @ipGeoBatchFailed="handleIpGeoBatchFailed"
+          />
+
+          <Pagination
+            v-if="pagination.total > 0"
+            :page="pagination.page"
+            :total="pagination.total"
+            :page-size="pagination.page_size"
+            @update:page="handlePageChange"
+            @update:pageSize="handlePageSizeChange"
+          />
+        </template>
+
+        <UserErrorRequestsTable
+          v-else-if="errorViewEnabled"
+          :rows="errorRows"
+          :total="errorTotal"
+          :loading="errorLoading"
+          :page="errorPage"
+          :page-size="errorPageSize"
+          :api-keys="apiKeys"
+          @filter="onErrorFilter"
+          @update:page="onErrorPage"
+          @update:pageSize="onErrorPageSize"
         />
-
-        <Pagination
-          v-if="pagination.total > 0"
-          :page="pagination.page"
-          :total="pagination.total"
-          :page-size="pagination.page_size"
-          @update:page="handlePageChange"
-          @update:pageSize="handlePageSizeChange"
-        />
-      </template>
-
-      <UserErrorRequestsTable
-        v-else-if="errorViewEnabled"
-        :rows="errorRows"
-        :total="errorTotal"
-        :loading="errorLoading"
-        :page="errorPage"
-        :page-size="errorPageSize"
-        :api-keys="apiKeys"
-        @filter="onErrorFilter"
-        @update:page="onErrorPage"
-        @update:pageSize="onErrorPageSize"
-      />
-    </div>
+      </UserConsolePanel>
+    </UserConsolePage>
   </AppLayout>
 
 </template>
@@ -191,10 +255,12 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { keysAPI, usageAPI, userGroupsAPI } from '@/api'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import UserConsolePage from '@/components/user/console/UserConsolePage.vue'
+import UserConsolePanel from '@/components/user/console/UserConsolePanel.vue'
+import UserConsoleStatCard from '@/components/user/console/UserConsoleStatCard.vue'
 import Pagination from '@/components/common/Pagination.vue'
 import Select, { type SelectOption } from '@/components/common/Select.vue'
 import DateRangePicker from '@/components/common/DateRangePicker.vue'
-import UsageStatsCards from '@/components/admin/usage/UsageStatsCards.vue'
 import UsageTable from '@/components/admin/usage/UsageTable.vue'
 import ModelDistributionChart from '@/components/charts/ModelDistributionChart.vue'
 import GroupDistributionChart from '@/components/charts/GroupDistributionChart.vue'
@@ -225,6 +291,7 @@ const appStore = useAppStore()
 
 type DistributionMetric = 'tokens' | 'actual_cost'
 type EndpointSource = 'inbound' | 'upstream' | 'path'
+type UsageStatTone = 'neutral' | 'sky' | 'emerald' | 'amber' | 'violet'
 
 const usageStats = ref<UsageStatsResponse | null>(null)
 const usageLogs = ref<UsageLog[]>([])
@@ -275,6 +342,55 @@ const defaultRange = getLast24HoursRangeDates()
 const startDate = ref(defaultRange.start)
 const endDate = ref(defaultRange.end)
 const granularity = ref<'day' | 'hour'>(getGranularityForRange(startDate.value, endDate.value))
+const formatCompactTokens = (value: number) => {
+  if (value >= 1e9) return `${(value / 1e9).toFixed(1)}B`
+  if (value >= 1e6) return `${Math.round(value / 1e6)}M`
+  if (value >= 1e3) return `${Math.round(value / 1e3)}K`
+  return Number(value || 0).toLocaleString()
+}
+const formatUsageDuration = (ms: number) => (ms < 1000 ? `${ms.toFixed(0)}ms` : `${(ms / 1000).toFixed(2)}s`)
+
+const usageStatCards = computed<Array<{
+  title: string
+  value: string
+  hint: string
+  detail: string
+  meta: string
+  tone: UsageStatTone
+}>>(() => [
+  {
+    title: t('usage.totalRequests'),
+    value: (usageStats.value?.total_requests || 0).toLocaleString(),
+    hint: t('usage.inSelectedRange'),
+    detail: t('usage.console.recordsDescription'),
+    meta: 'Range',
+    tone: 'sky',
+  },
+  {
+    title: t('usage.totalTokens'),
+    value: formatCompactTokens(usageStats.value?.total_tokens || 0),
+    hint: `${t('usage.in')}: ${formatCompactTokens(usageStats.value?.total_input_tokens || 0)}`,
+    detail: `${t('usage.out')}: ${formatCompactTokens(usageStats.value?.total_output_tokens || 0)}`,
+    meta: 'Token',
+    tone: 'amber',
+  },
+  {
+    title: t('usage.totalCost'),
+    value: `$${(usageStats.value?.total_actual_cost || 0).toFixed(4)}`,
+    hint: `${t('usage.standardCost')} $${(usageStats.value?.total_cost || 0).toFixed(4)}`,
+    detail: t('usage.console.actualCost'),
+    meta: 'Actual',
+    tone: 'emerald',
+  },
+  {
+    title: t('usage.avgDuration'),
+    value: formatUsageDuration(usageStats.value?.average_duration_ms || 0),
+    hint: t('dashboard.averageTime'),
+    detail: t('usage.console.filtersDescription'),
+    meta: 'Avg',
+    tone: 'violet',
+  },
+])
 
 const modelDistributionMetric = ref<DistributionMetric>('tokens')
 const groupDistributionMetric = ref<DistributionMetric>('tokens')
@@ -754,3 +870,202 @@ watch(endpointDistributionSource, () => {
   // Endpoint source switching is handled by the chart component using already loaded stats.
 })
 </script>
+
+<style scoped>
+.usage-console__stats {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.usage-console :deep(.card) {
+  border-radius: 16px;
+  border-color: rgba(23, 20, 17, 0.08);
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: 0 1px 0 rgba(36, 29, 22, 0.02);
+}
+
+.usage-console__chart-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.usage-console__chart-grid + .usage-console__chart-grid {
+  margin-top: 12px;
+}
+
+.usage-console__chart-grid :deep(.card) {
+  min-height: 252px;
+  padding: 12px 13px;
+}
+
+.usage-console__chart-grid :deep(canvas) {
+  filter: saturate(0.72) sepia(0.08) hue-rotate(8deg);
+}
+
+.usage-console__chart-grid :deep(h3) {
+  font-family: var(--console-font-sans);
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.usage-console__chart-grid :deep(.h-48) {
+  height: 164px;
+}
+
+.usage-console__chart-grid :deep(.w-48) {
+  width: 164px;
+}
+
+.usage-console__chart-grid :deep(.gap-6) {
+  gap: 14px;
+}
+
+.usage-console__chart-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.usage-console__chart-control {
+  min-width: 0;
+}
+
+.usage-console__chart-control--small {
+  width: 8rem;
+}
+
+.usage-console__control-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #7c7267;
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.usage-console__tabs {
+  display: inline-flex;
+  gap: 0.35rem;
+  padding: 0.2rem;
+  border: 1px solid rgba(23, 20, 17, 0.08);
+  border-radius: 999px;
+  background: rgba(248, 247, 244, 0.82);
+}
+
+.usage-console__tab {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.42rem 0.82rem;
+  font-size: 0.84rem;
+  color: #6b7280;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.usage-console__tab--active {
+  background: #171411;
+  color: #fbf8f3;
+}
+
+.usage-console :deep(.table-wrapper thead),
+.usage-console :deep(.table-header) {
+  background: rgba(248, 247, 244, 0.92);
+}
+
+.usage-console :deep(.table-wrapper) {
+  border: 1px solid rgba(23, 20, 17, 0.075);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.58);
+  min-height: 328px;
+}
+
+.usage-console :deep(th) {
+  color: #7c7267;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+.usage-console :deep(td) {
+  color: #171411;
+  font-size: 14px;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+.usage-console :deep(.pagination),
+.usage-console :deep(nav[aria-label='Pagination']) {
+  margin-top: 12px;
+}
+
+.usage-console :deep(.input-label) {
+  margin-bottom: 6px;
+}
+
+:global(.dark) .usage-console__tabs,
+:global(.dark) .usage-console :deep(.card) {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.78);
+}
+
+:global(.dark) .usage-console__control-label,
+:global(.dark) .usage-console__tab {
+  color: #94a3b8;
+}
+
+:global(.dark) .usage-console__tab--active {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+:global(.dark) .usage-console :deep(.table-wrapper thead),
+:global(.dark) .usage-console :deep(.table-header) {
+  background: rgba(15, 23, 42, 0.96);
+}
+
+:global(.dark) .usage-console :deep(.table-wrapper) {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.78);
+}
+
+@media (min-width: 1180px) {
+  .usage-console__stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .usage-console__chart-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 700px) and (max-width: 1179px) {
+  .usage-console__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .usage-console__chart-controls {
+    justify-content: stretch;
+  }
+
+  .usage-console__chart-control,
+  .usage-console__chart-control--small {
+    width: 100%;
+  }
+
+  .usage-console__tabs {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .usage-console__tab {
+    flex: 1;
+  }
+}
+</style>

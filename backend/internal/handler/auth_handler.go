@@ -50,11 +50,34 @@ func NewAuthHandler(cfg *config.Config, authService *service.AuthService, userSe
 type RegisterRequest struct {
 	Email          string `json:"email" binding:"required,email"`
 	Password       string `json:"password" binding:"required,min=6"`
+	RealName       string `json:"real_name" binding:"required"`
+	UserType       string `json:"user_type" binding:"required"`
+	ContactPhone   string `json:"contact_phone" binding:"required"`
 	VerifyCode     string `json:"verify_code"`
 	TurnstileToken string `json:"turnstile_token"`
 	PromoCode      string `json:"promo_code"`      // 注册优惠码
 	InvitationCode string `json:"invitation_code"` // 邀请码
 	AffCode        string `json:"aff_code"`        // 邀请返利码
+}
+
+func normalizeRegistrationProfile(req RegisterRequest) (service.RegistrationProfile, string) {
+	profile := service.RegistrationProfile{
+		RealName:     strings.TrimSpace(req.RealName),
+		UserType:     strings.TrimSpace(req.UserType),
+		ContactPhone: strings.TrimSpace(req.ContactPhone),
+	}
+	if profile.RealName == "" {
+		return profile, "姓名不能为空"
+	}
+	if profile.ContactPhone == "" {
+		return profile, "联系方式不能为空"
+	}
+	switch profile.UserType {
+	case "个人用户", "企业用户", "学校用户":
+	default:
+		return profile, "用户类型必须是个人用户、企业用户或学校用户"
+	}
+	return profile, ""
 }
 
 // SendVerifyCodeRequest 发送验证码请求
@@ -164,6 +187,11 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		response.BadRequest(c, "Invalid request: "+err.Error())
 		return
 	}
+	profile, validationMessage := normalizeRegistrationProfile(req)
+	if validationMessage != "" {
+		response.BadRequest(c, validationMessage)
+		return
+	}
 
 	// Turnstile 验证（邮箱验证码注册场景避免重复校验一次性 token）
 	if err := h.authService.VerifyTurnstileForRegister(c.Request.Context(), req.TurnstileToken, ip.GetClientIP(c), req.VerifyCode); err != nil {
@@ -171,7 +199,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	_, user, err := h.authService.RegisterWithVerification(
+	_, user, err := h.authService.RegisterWithVerificationProfile(
 		c.Request.Context(),
 		req.Email,
 		req.Password,
@@ -179,6 +207,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		req.PromoCode,
 		req.InvitationCode,
 		req.AffCode,
+		profile,
 	)
 	if err != nil {
 		response.ErrorFrom(c, err)

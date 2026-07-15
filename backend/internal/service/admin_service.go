@@ -210,6 +210,7 @@ type CreateGroupInput struct {
 	MonthlyLimitUSD  *float64 // 月限额 (USD)
 	// 图片生成计费配置（仅 antigravity 平台使用）
 	AllowImageGeneration bool
+	ImageAllowedTiers    []string
 	ImageRateIndependent bool
 	ImageRateMultiplier  *float64
 	// 高峰时段倍率配置（PeakRateMultiplier 为 nil 时按 1.0 处理）
@@ -256,6 +257,7 @@ type UpdateGroupInput struct {
 	MonthlyLimitUSD  *float64 // 月限额 (USD)
 	// 图片生成计费配置（仅 antigravity 平台使用）
 	AllowImageGeneration *bool
+	ImageAllowedTiers    *[]string
 	ImageRateIndependent *bool
 	ImageRateMultiplier  *float64
 	// 高峰时段倍率配置（nil 表示不修改）
@@ -1886,6 +1888,7 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 	}
 
 	allowImageGeneration := input.AllowImageGeneration || defaultAllowImageGenerationForPlatform(platform)
+	imageAllowedTiers := NormalizeImageAllowedTiers(input.ImageAllowedTiers, allowImageGeneration)
 
 	// 如果指定了复制账号的源分组，先获取账号 ID 列表
 	var accountIDsToCopy []int64
@@ -1931,6 +1934,7 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 		WeeklyLimitUSD:                  weeklyLimit,
 		MonthlyLimitUSD:                 monthlyLimit,
 		AllowImageGeneration:            allowImageGeneration,
+		ImageAllowedTiers:               imageAllowedTiers,
 		ImageRateIndependent:            input.ImageRateIndependent,
 		ImageRateMultiplier:             imageRateMultiplier,
 		PeakRateEnabled:                 peakRateEnabled,
@@ -1954,6 +1958,7 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 		ModelsListConfig:                normalizeGroupModelsListConfig(input.ModelsListConfig),
 		RPMLimit:                        input.RPMLimit,
 	}
+	ApplyFixedImageGenerationPricing(group)
 	sanitizeGroupMessagesDispatchFields(group)
 	if err := s.groupRepo.Create(ctx, group); err != nil {
 		return nil, err
@@ -2117,6 +2122,11 @@ func (s *adminServiceImpl) UpdateGroup(ctx context.Context, id int64, input *Upd
 	if input.AllowImageGeneration != nil {
 		group.AllowImageGeneration = *input.AllowImageGeneration
 	}
+	if input.ImageAllowedTiers != nil {
+		group.ImageAllowedTiers = NormalizeImageAllowedTiers(*input.ImageAllowedTiers, group.AllowImageGeneration)
+	} else {
+		group.ImageAllowedTiers = NormalizeImageAllowedTiers(group.ImageAllowedTiers, group.AllowImageGeneration)
+	}
 	if input.ImageRateIndependent != nil {
 		group.ImageRateIndependent = *input.ImageRateIndependent
 	}
@@ -2154,6 +2164,7 @@ func (s *adminServiceImpl) UpdateGroup(ctx context.Context, id int64, input *Upd
 	if input.ImagePrice4K != nil {
 		group.ImagePrice4K = normalizePrice(input.ImagePrice4K)
 	}
+	ApplyFixedImageGenerationPricing(group)
 
 	// Claude Code 客户端限制
 	if input.ClaudeCodeOnly != nil {

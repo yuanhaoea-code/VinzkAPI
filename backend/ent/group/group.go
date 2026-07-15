@@ -54,6 +54,8 @@ const (
 	FieldDefaultValidityDays = "default_validity_days"
 	// FieldAllowImageGeneration holds the string denoting the allow_image_generation field in the database.
 	FieldAllowImageGeneration = "allow_image_generation"
+	// FieldImageAllowedTiers holds the string denoting the image_allowed_tiers field in the database.
+	FieldImageAllowedTiers = "image_allowed_tiers"
 	// FieldImageRateIndependent holds the string denoting the image_rate_independent field in the database.
 	FieldImageRateIndependent = "image_rate_independent"
 	// FieldImageRateMultiplier holds the string denoting the image_rate_multiplier field in the database.
@@ -188,6 +190,7 @@ var Columns = []string{
 	FieldMonthlyLimitUsd,
 	FieldDefaultValidityDays,
 	FieldAllowImageGeneration,
+	FieldImageAllowedTiers,
 	FieldImageRateIndependent,
 	FieldImageRateMultiplier,
 	FieldImagePrice1k,
@@ -277,6 +280,8 @@ var (
 	DefaultDefaultValidityDays int
 	// DefaultAllowImageGeneration holds the default value on creation for the "allow_image_generation" field.
 	DefaultAllowImageGeneration bool
+	// DefaultImageAllowedTiers holds the default value on creation for the "image_allowed_tiers" field.
+	DefaultImageAllowedTiers []string
 	// DefaultImageRateIndependent holds the default value on creation for the "image_rate_independent" field.
 	DefaultImageRateIndependent bool
 	// DefaultImageRateMultiplier holds the default value on creation for the "image_rate_multiplier" field.

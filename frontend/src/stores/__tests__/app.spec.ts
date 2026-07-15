@@ -327,6 +327,9 @@ describe('useAppStore', () => {
       const store = useAppStore()
       await store.fetchPublicSettings(true)
 
+      expect(store.apiBaseUrl).toBe('https://api.vinzk.cn')
+      expect(store.contactInfo).toBe('客服微信：13387544600')
+      expect(store.docUrl).toBe('https://vinzk.cn/tutorials')
       expect((window as any).__APP_CONFIG__.table_default_page_size).toBe(1000)
       expect((window as any).__APP_CONFIG__.table_page_size_options).toEqual([20, 100, 1000])
       expect(localStorage.getItem('table-page-size')).toBeNull()

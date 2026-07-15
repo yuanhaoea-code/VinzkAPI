@@ -230,6 +230,41 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/recharge',
+    name: 'Recharge',
+    component: () => import('@/views/user/RechargeView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: false,
+      title: 'Recharge',
+      titleKey: 'recharge.title',
+      descriptionKey: 'recharge.description'
+    }
+  },
+  {
+    path: '/model-market',
+    name: 'ModelMarket',
+    component: () => import('@/views/user/ModelMarketView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: false,
+      title: 'Model Market',
+      titleKey: 'modelMarket.title',
+      descriptionKey: 'modelMarket.description'
+    }
+  },
+  {
+    path: '/image-generation',
+    name: 'ImageGeneration',
+    component: () => import('@/views/user/ImageGenerationView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: false,
+      title: 'AI Image Generation',
+      titleKey: 'nav.imageGeneration'
+    }
+  },
+  {
     path: '/affiliate',
     name: 'Affiliate',
     component: () => import('@/views/user/AffiliateView.vue'),
@@ -263,6 +298,30 @@ const routes: RouteRecordRaw[] = [
       title: 'Profile',
       titleKey: 'profile.title',
       descriptionKey: 'profile.description'
+    }
+  },
+  {
+    path: '/tutorials',
+    name: 'TutorialHome',
+    component: () => import('@/views/user/TutorialHomeView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: false,
+      title: 'Tutorials',
+      titleKey: 'tutorials.title',
+      descriptionKey: 'tutorials.description'
+    }
+  },
+  {
+    path: '/tutorials/:slug',
+    name: 'TutorialArticle',
+    component: () => import('@/views/user/TutorialArticleView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: false,
+      title: 'Tutorials',
+      titleKey: 'tutorials.title',
+      descriptionKey: 'tutorials.description'
     }
   },
   {

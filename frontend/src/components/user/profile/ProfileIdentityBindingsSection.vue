@@ -13,7 +13,7 @@
     </div>
 
     <div :class="props.embedded ? 'space-y-4' : 'divide-y divide-gray-100 dark:divide-dark-700'">
-      <div v-if="props.embedded">
+      <div v-if="props.embedded && !props.hideHeader">
         <p class="text-sm font-semibold text-gray-900 dark:text-white">
           {{ t('profile.authBindings.title') }}
         </p>
@@ -225,6 +225,7 @@ const props = withDefaults(
     wechatMpEnabled?: boolean
     embedded?: boolean
     compact?: boolean
+    hideHeader?: boolean
   }>(),
   {
     linuxdoEnabled: false,
@@ -236,6 +237,7 @@ const props = withDefaults(
     wechatMpEnabled: undefined,
     embedded: false,
     compact: false,
+    hideHeader: false,
   }
 )
 

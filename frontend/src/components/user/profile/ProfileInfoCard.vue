@@ -133,6 +133,7 @@
         </section>
 
         <section
+          v-if="!props.hideAuthBindings"
           data-testid="profile-auth-bindings-panel"
           class="card border border-gray-100 bg-white/90 p-6 dark:border-dark-700 dark:bg-dark-900/50"
         >
@@ -197,6 +198,7 @@ const props = withDefaults(defineProps<{
   wechatEnabled?: boolean
   wechatOpenEnabled?: boolean
   wechatMpEnabled?: boolean
+  hideAuthBindings?: boolean
 }>(), {
   linuxdoEnabled: false,
   dingtalkEnabled: false,
@@ -205,6 +207,7 @@ const props = withDefaults(defineProps<{
   wechatEnabled: false,
   wechatOpenEnabled: undefined,
   wechatMpEnabled: undefined,
+  hideAuthBindings: false,
 })
 
 const { t } = useI18n()

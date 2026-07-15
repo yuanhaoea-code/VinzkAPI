@@ -37,6 +37,7 @@ type Group struct {
 
 	// 图片生成计费配置（antigravity 和 gemini 平台使用）
 	AllowImageGeneration bool
+	ImageAllowedTiers    []string
 	ImageRateIndependent bool
 	ImageRateMultiplier  float64
 	ImagePrice1K         *float64
@@ -120,6 +121,36 @@ func (g *Group) GetImagePrice(imageSize string) *float64 {
 		// 未知尺寸默认按 2K 计费
 		return g.ImagePrice2K
 	}
+}
+
+func ApplyFixedImageGenerationPricing(group *Group) {
+	if group == nil || !group.AllowImageGeneration {
+		return
+	}
+	price1K := ImageGenerationPrice1K
+	price2K := ImageGenerationPrice2K
+	price4K := ImageGenerationPrice4K
+	group.ImageRateIndependent = true
+	group.ImageRateMultiplier = 1
+	group.ImagePrice1K = &price1K
+	group.ImagePrice2K = &price2K
+	group.ImagePrice4K = &price4K
+}
+
+func (g *Group) AllowsImageTier(tier string) bool {
+	if g == nil || !g.AllowImageGeneration || !g.IsActive() {
+		return false
+	}
+	tier = NormalizeImageBillingTier(tier)
+	if tier == "" {
+		return false
+	}
+	for _, allowed := range NormalizeImageAllowedTiers(g.ImageAllowedTiers, true) {
+		if allowed == tier {
+			return true
+		}
+	}
+	return false
 }
 
 // IsGroupContextValid reports whether a group from context has the fields required for routing decisions.

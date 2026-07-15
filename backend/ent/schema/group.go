@@ -93,6 +93,10 @@ func (Group) Fields() []ent.Field {
 		field.Bool("allow_image_generation").
 			Default(false).
 			Comment("是否允许该分组使用图片生成能力"),
+		field.JSON("image_allowed_tiers", []string{}).
+			Default([]string{}).
+			SchemaType(map[string]string{dialect.Postgres: "jsonb"}).
+			Comment("允许的图片产品规格：1K, 2K, 4K"),
 		field.Bool("image_rate_independent").
 			Default(false).
 			Comment("图片生成是否使用独立倍率；false 表示共享分组有效倍率"),

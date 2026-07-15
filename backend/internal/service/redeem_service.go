@@ -518,6 +518,8 @@ func (s *RedeemService) Redeem(ctx context.Context, userID int64, code string) (
 		return nil, fmt.Errorf("get updated redeem code: %w", err)
 	}
 
+	s.tryRecordLDXPRechargeOrder(ctx, user, redeemCode)
+
 	return redeemCode, nil
 }
 
@@ -579,6 +581,77 @@ func (s *RedeemService) tryAccrueAffiliateRebateForRedeem(ctx context.Context, u
 	if rebate > 0 {
 		logger.LegacyPrintf("service.redeem", "[Redeem] affiliate rebate accrued %.8f for inviter of user %d", rebate, userID)
 	}
+}
+
+func (s *RedeemService) tryRecordLDXPRechargeOrder(ctx context.Context, user *User, redeemCode *RedeemCode) {
+	if s.entClient == nil || user == nil || !isLDXPRechargeRedeemCode(redeemCode) {
+		return
+	}
+
+	redeemedAt := time.Now()
+	if redeemCode.UsedAt != nil {
+		redeemedAt = *redeemCode.UsedAt
+	}
+
+	_, err := s.entClient.ExecContext(ctx, `
+INSERT INTO ldxp_recharge_orders (
+	user_id,
+	user_email,
+	source,
+	product_name,
+	product_amount,
+	balance_amount,
+	redeem_code_id,
+	redeem_code_masked,
+	status,
+	redeemed_at,
+	notes,
+	created_at,
+	updated_at
+)
+VALUES ($1, $2, 'ldxp', $3, $4, $5, $6, $7, 'redeemed', $8, $9, NOW(), NOW())
+ON CONFLICT DO NOTHING
+`, user.ID, strings.TrimSpace(user.Email), ldxpRechargeProductName(redeemCode.Notes), redeemCode.Value, redeemCode.Value, redeemCode.ID, maskRedeemCode(redeemCode.Code), redeemedAt, redeemCode.Notes)
+	if err != nil {
+		logger.LegacyPrintf("service.redeem", "[Redeem] record ldxp recharge order failed for user %d redeem_code_id %d: %v", user.ID, redeemCode.ID, err)
+	}
+}
+
+func isLDXPRechargeRedeemCode(redeemCode *RedeemCode) bool {
+	if redeemCode == nil || redeemCode.Type != RedeemTypeBalance || redeemCode.Value <= 0 {
+		return false
+	}
+	notes := strings.ToLower(strings.TrimSpace(redeemCode.Notes))
+	if notes == "" {
+		return false
+	}
+	return strings.Contains(notes, "ldxp") ||
+		strings.Contains(notes, "liandong") ||
+		strings.Contains(notes, "链动小铺")
+}
+
+func ldxpRechargeProductName(notes string) string {
+	notes = strings.TrimSpace(notes)
+	if notes == "" {
+		return "链动小铺卡密"
+	}
+	runes := []rune(notes)
+	if len(runes) > 255 {
+		return string(runes[:255])
+	}
+	return notes
+}
+
+func maskRedeemCode(code string) string {
+	code = strings.TrimSpace(code)
+	runes := []rune(code)
+	if len(runes) <= 8 {
+		return strings.Repeat("*", len(runes))
+	}
+	if len(runes) <= 14 {
+		return string(runes[:4]) + "..." + string(runes[len(runes)-2:])
+	}
+	return string(runes[:8]) + "..." + string(runes[len(runes)-4:])
 }
 
 // GetByID 根据ID获取兑换码

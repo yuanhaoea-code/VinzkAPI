@@ -173,14 +173,14 @@
           <div v-if="callbackPaths.notifyUrl">
             <label class="input-label">{{ t('admin.settings.payment.field_notifyUrl') }} <span class="text-red-500">*</span></label>
             <div class="flex">
-              <input v-model="notifyBaseUrl" type="text" class="input min-w-0 flex-1 !rounded-r-none !border-r-0" :placeholder="defaultBaseUrl" />
+              <input v-model="notifyBaseUrl" type="text" class="input min-w-0 flex-1 !rounded-r-none !border-r-0" :placeholder="defaultNotifyBaseUrl" />
               <span class="inline-flex items-center whitespace-nowrap rounded-r-lg border border-gray-300 bg-gray-50 px-3 text-xs text-gray-500 dark:border-dark-600 dark:bg-dark-700 dark:text-gray-400">{{ callbackPaths.notifyUrl }}</span>
             </div>
           </div>
           <div v-if="callbackPaths.returnUrl">
             <label class="input-label">{{ t('admin.settings.payment.field_returnUrl') }} <span class="text-red-500">*</span></label>
             <div class="flex">
-              <input v-model="returnBaseUrl" type="text" class="input min-w-0 flex-1 !rounded-r-none !border-r-0" :placeholder="defaultBaseUrl" />
+              <input v-model="returnBaseUrl" type="text" class="input min-w-0 flex-1 !rounded-r-none !border-r-0" :placeholder="defaultReturnBaseUrl" />
               <span class="inline-flex items-center whitespace-nowrap rounded-r-lg border border-gray-300 bg-gray-50 px-3 text-xs text-gray-500 dark:border-dark-600 dark:bg-dark-700 dark:text-gray-400">{{ callbackPaths.returnUrl }}</span>
             </div>
           </div>
@@ -268,6 +268,7 @@ import BaseDialog from '@/components/common/BaseDialog.vue'
 import HelpTooltip from '@/components/common/HelpTooltip.vue'
 import Select from '@/components/common/Select.vue'
 import type { SelectOption } from '@/components/common/Select.vue'
+import { PUBLIC_API_BASE_URL, PUBLIC_SITE_URL } from '@/constants/site'
 import ToggleSwitch from './ToggleSwitch.vue'
 import type { ProviderInstance } from '@/types/payment'
 import type { TypeOption } from './providerConfig'
@@ -367,7 +368,8 @@ const limitsExpanded = ref(false)
 const visibleFields = reactive<Record<string, boolean>>({})
 
 // --- Computed ---
-const defaultBaseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+const defaultNotifyBaseUrl = PUBLIC_API_BASE_URL
+const defaultReturnBaseUrl = PUBLIC_SITE_URL
 
 const providerWebhookHintMap: Record<string, string> = {
   stripe: 'admin.settings.payment.stripeWebhookHint',
@@ -376,7 +378,7 @@ const providerWebhookHintMap: Record<string, string> = {
 
 const providerWebhookUrl = computed(() => {
   const path = WEBHOOK_PATHS[form.provider_key]
-  return providerWebhookHintMap[form.provider_key] && path ? defaultBaseUrl + path : ''
+  return providerWebhookHintMap[form.provider_key] && path ? defaultNotifyBaseUrl + path : ''
 })
 
 const providerWebhookHint = computed(() =>
@@ -615,8 +617,8 @@ function handleSave() {
   // If base URL is empty, auto-fill with current domain
   const paths = PROVIDER_CALLBACK_PATHS[form.provider_key]
   if (paths) {
-    const notifyBase = notifyBaseUrl.value.trim() || defaultBaseUrl
-    const returnBase = returnBaseUrl.value.trim() || defaultBaseUrl
+    const notifyBase = notifyBaseUrl.value.trim() || defaultNotifyBaseUrl
+    const returnBase = returnBaseUrl.value.trim() || defaultReturnBaseUrl
     notifyBaseUrl.value = notifyBase
     returnBaseUrl.value = returnBase
     if (paths.notifyUrl) filteredConfig['notifyUrl'] = notifyBase + paths.notifyUrl

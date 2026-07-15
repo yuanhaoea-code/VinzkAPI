@@ -93,6 +93,7 @@ type CreateGroupRequest struct {
 	MonthlyLimitUSD  optionalLimitField `json:"monthly_limit_usd"`
 	// 图片生成计费配置（antigravity 和 gemini 平台使用，负数表示清除配置）
 	AllowImageGeneration            bool     `json:"allow_image_generation"`
+	ImageAllowedTiers               []string `json:"image_allowed_tiers"`
 	ImageRateIndependent            bool     `json:"image_rate_independent"`
 	ImageRateMultiplier             *float64 `json:"image_rate_multiplier"`
 	PeakRateEnabled                 bool     `json:"peak_rate_enabled"`
@@ -137,19 +138,20 @@ type UpdateGroupRequest struct {
 	WeeklyLimitUSD   optionalLimitField `json:"weekly_limit_usd"`
 	MonthlyLimitUSD  optionalLimitField `json:"monthly_limit_usd"`
 	// 图片生成计费配置（antigravity 和 gemini 平台使用，负数表示清除配置）
-	AllowImageGeneration            *bool    `json:"allow_image_generation"`
-	ImageRateIndependent            *bool    `json:"image_rate_independent"`
-	ImageRateMultiplier             *float64 `json:"image_rate_multiplier"`
-	PeakRateEnabled                 *bool    `json:"peak_rate_enabled"`
-	PeakStart                       *string  `json:"peak_start"`
-	PeakEnd                         *string  `json:"peak_end"`
-	PeakRateMultiplier              *float64 `json:"peak_rate_multiplier"`
-	ImagePrice1K                    *float64 `json:"image_price_1k"`
-	ImagePrice2K                    *float64 `json:"image_price_2k"`
-	ImagePrice4K                    *float64 `json:"image_price_4k"`
-	ClaudeCodeOnly                  *bool    `json:"claude_code_only"`
-	FallbackGroupID                 *int64   `json:"fallback_group_id"`
-	FallbackGroupIDOnInvalidRequest *int64   `json:"fallback_group_id_on_invalid_request"`
+	AllowImageGeneration            *bool     `json:"allow_image_generation"`
+	ImageAllowedTiers               *[]string `json:"image_allowed_tiers"`
+	ImageRateIndependent            *bool     `json:"image_rate_independent"`
+	ImageRateMultiplier             *float64  `json:"image_rate_multiplier"`
+	PeakRateEnabled                 *bool     `json:"peak_rate_enabled"`
+	PeakStart                       *string   `json:"peak_start"`
+	PeakEnd                         *string   `json:"peak_end"`
+	PeakRateMultiplier              *float64  `json:"peak_rate_multiplier"`
+	ImagePrice1K                    *float64  `json:"image_price_1k"`
+	ImagePrice2K                    *float64  `json:"image_price_2k"`
+	ImagePrice4K                    *float64  `json:"image_price_4k"`
+	ClaudeCodeOnly                  *bool     `json:"claude_code_only"`
+	FallbackGroupID                 *int64    `json:"fallback_group_id"`
+	FallbackGroupIDOnInvalidRequest *int64    `json:"fallback_group_id_on_invalid_request"`
 	// 模型路由配置（仅 anthropic 平台使用）
 	ModelRouting        map[string][]int64 `json:"model_routing"`
 	ModelRoutingEnabled *bool              `json:"model_routing_enabled"`
@@ -301,6 +303,7 @@ func (h *GroupHandler) Create(c *gin.Context) {
 		WeeklyLimitUSD:                  req.WeeklyLimitUSD.ToServiceInput(),
 		MonthlyLimitUSD:                 req.MonthlyLimitUSD.ToServiceInput(),
 		AllowImageGeneration:            req.AllowImageGeneration,
+		ImageAllowedTiers:               req.ImageAllowedTiers,
 		ImageRateIndependent:            req.ImageRateIndependent,
 		ImageRateMultiplier:             req.ImageRateMultiplier,
 		PeakRateEnabled:                 req.PeakRateEnabled,
@@ -361,6 +364,7 @@ func (h *GroupHandler) Update(c *gin.Context) {
 		WeeklyLimitUSD:                  req.WeeklyLimitUSD.ToServiceInput(),
 		MonthlyLimitUSD:                 req.MonthlyLimitUSD.ToServiceInput(),
 		AllowImageGeneration:            req.AllowImageGeneration,
+		ImageAllowedTiers:               req.ImageAllowedTiers,
 		ImageRateIndependent:            req.ImageRateIndependent,
 		ImageRateMultiplier:             req.ImageRateMultiplier,
 		PeakRateEnabled:                 req.PeakRateEnabled,

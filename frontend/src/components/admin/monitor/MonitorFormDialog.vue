@@ -51,7 +51,7 @@
         <label class="input-label">{{ t('admin.channelMonitor.form.endpoint') }} <span class="text-red-500">*</span></label>
         <div class="flex gap-2">
           <input v-model="form.endpoint" type="text" required class="input flex-1" :placeholder="t('admin.channelMonitor.form.endpointPlaceholder')" />
-          <button type="button" @click="useCurrentDomain" class="btn btn-secondary whitespace-nowrap">
+          <button type="button" @click="useProductionApi" class="btn btn-secondary whitespace-nowrap">
             {{ t('admin.channelMonitor.form.useCurrentDomain') }}
           </button>
         </div>
@@ -217,6 +217,7 @@ import {
   API_MODE_RESPONSES,
   DEFAULT_INTERVAL_SECONDS,
 } from '@/constants/channelMonitor'
+import { PUBLIC_API_BASE_URL } from '@/constants/site'
 
 const props = defineProps<{
   show: boolean
@@ -472,8 +473,8 @@ watch(
   { immediate: true },
 )
 
-function useCurrentDomain() {
-  form.endpoint = window.location.origin
+function useProductionApi() {
+  form.endpoint = PUBLIC_API_BASE_URL
 }
 
 async function openMyKeyPicker() {

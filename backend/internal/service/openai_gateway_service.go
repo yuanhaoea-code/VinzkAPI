@@ -5983,7 +5983,9 @@ func (s *OpenAIGatewayService) replaceModelInSSEBody(body, fromModel, toModel st
 
 func (s *OpenAIGatewayService) validateUpstreamBaseURL(raw string) (string, error) {
 	if s.cfg != nil && !s.cfg.Security.URLAllowlist.Enabled {
-		normalized, err := urlvalidator.ValidateURLFormat(raw, s.cfg.Security.URLAllowlist.AllowInsecureHTTP)
+		normalized, err := urlvalidator.ValidateHTTPURL(raw, s.cfg.Security.URLAllowlist.AllowInsecureHTTP, urlvalidator.ValidationOptions{
+			AllowPrivate: s.cfg.Security.URLAllowlist.AllowPrivateHosts,
+		})
 		if err != nil {
 			return "", fmt.Errorf("invalid base_url: %w", err)
 		}
@@ -6557,6 +6559,9 @@ func (s *OpenAIGatewayService) calculateOpenAIRecordUsageCost(
 ) (*CostBreakdown, error) {
 	billingModel := firstUsageBillingModel(billingModels)
 	if result != nil && result.ImageCount > 0 {
+		if apiKey != nil && apiKey.Group != nil && apiKey.Group.AllowImageGeneration {
+			return s.calculateOpenAIImageCost(ctx, billingModel, apiKey, result, imageMultiplier), nil
+		}
 		// 渠道定价为 token 计费时走 token 路径，否则走图片计费
 		if resolved := s.resolveOpenAIChannelPricing(ctx, billingModel, apiKey); resolved == nil || resolved.Mode != BillingModeToken {
 			return s.calculateOpenAIImageCost(ctx, billingModel, apiKey, result, imageMultiplier), nil
@@ -6626,6 +6631,33 @@ func (s *OpenAIGatewayService) calculateOpenAIImageCost(
 	multiplier float64,
 ) *CostBreakdown {
 	sizeTier := NormalizeImageBillingTierOrDefault(result.ImageSize)
+	if len(result.ImageSizeBreakdown) > 0 {
+		combined := &CostBreakdown{BillingMode: string(BillingModeImage)}
+		for _, tier := range SortedImageBillingBreakdownKeys(result.ImageSizeBreakdown) {
+			count := result.ImageSizeBreakdown[tier]
+			if count <= 0 {
+				continue
+			}
+			part := s.calculateOpenAIImageTierCost(ctx, billingModel, apiKey, tier, count, multiplier)
+			combined.TotalCost += part.TotalCost
+			combined.ActualCost += part.ActualCost
+		}
+		return combined
+	}
+	return s.calculateOpenAIImageTierCost(ctx, billingModel, apiKey, sizeTier, result.ImageCount, multiplier)
+}
+
+func (s *OpenAIGatewayService) calculateOpenAIImageTierCost(
+	ctx context.Context,
+	billingModel string,
+	apiKey *APIKey,
+	sizeTier string,
+	imageCount int,
+	multiplier float64,
+) *CostBreakdown {
+	if apiKey != nil && apiKey.Group != nil && apiKey.Group.AllowImageGeneration {
+		return s.billingService.CalculateImageGenerationFixedCost(sizeTier, imageCount)
+	}
 	if resolved := s.resolveOpenAIChannelPricing(ctx, billingModel, apiKey); resolved != nil &&
 		(resolved.Mode == BillingModePerRequest || resolved.Mode == BillingModeImage) {
 		gid := apiKey.Group.ID
@@ -6633,7 +6665,7 @@ func (s *OpenAIGatewayService) calculateOpenAIImageCost(
 			Ctx:            ctx,
 			Model:          billingModel,
 			GroupID:        &gid,
-			RequestCount:   result.ImageCount,
+			RequestCount:   imageCount,
 			SizeTier:       sizeTier,
 			RateMultiplier: multiplier,
 			Resolver:       s.resolver,
@@ -6653,7 +6685,7 @@ func (s *OpenAIGatewayService) calculateOpenAIImageCost(
 			Price4K: apiKey.Group.ImagePrice4K,
 		}
 	}
-	return s.billingService.CalculateImageCost(billingModel, sizeTier, result.ImageCount, groupConfig, multiplier)
+	return s.billingService.CalculateImageCost(billingModel, sizeTier, imageCount, groupConfig, multiplier)
 }
 
 func (s *OpenAIGatewayService) resolveOpenAIChannelPricing(ctx context.Context, billingModel string, apiKey *APIKey) *ResolvedPricing {

@@ -763,3 +763,674 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
+/* User console dark skin: keep these global so html.dark reliably reaches
+   layout, teleported announcement modals, and child components. */
+.dark .app-layout--paper-console {
+  color: #e5e7eb;
+  background:
+    radial-gradient(circle at 14% 0, rgba(20, 184, 166, 0.1), rgba(20, 184, 166, 0) 30%),
+    radial-gradient(circle at 86% 8%, rgba(56, 189, 248, 0.08), rgba(56, 189, 248, 0) 32%),
+    linear-gradient(180deg, #0b1220 0%, #08111f 100%) !important;
+}
+
+.dark .sidebar--paper {
+  border-right-color: rgba(148, 163, 184, 0.14) !important;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(8, 13, 24, 0.98)),
+    #0b1220 !important;
+}
+
+.sidebar--paper:not(.sidebar--collapsed) .sidebar-link > svg,
+.sidebar--paper:not(.sidebar--collapsed) .sidebar-svg-icon {
+  display: none !important;
+}
+
+.sidebar--paper:not(.sidebar--collapsed) .sidebar-link {
+  width: 100% !important;
+  height: auto !important;
+  justify-content: flex-start !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding: 8px 11px !important;
+}
+
+.sidebar--paper:not(.sidebar--collapsed) .sidebar-label {
+  width: auto !important;
+  max-width: 12rem !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.sidebar--paper.sidebar--collapsed .sidebar-link {
+  width: 42px !important;
+  height: 42px !important;
+  justify-content: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding: 0 !important;
+}
+
+.sidebar--paper.sidebar--collapsed .sidebar-link > svg,
+.sidebar--paper.sidebar--collapsed .sidebar-svg-icon {
+  display: block !important;
+}
+
+.sidebar--paper.sidebar--collapsed .sidebar-label,
+.sidebar--paper.sidebar--collapsed .sidebar-section-title-text,
+.sidebar--paper.sidebar--collapsed .sidebar-brand {
+  width: 0 !important;
+  max-width: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  transform: translateX(-4px) !important;
+  pointer-events: none !important;
+}
+
+.dark .sidebar--paper .sidebar-header:not(.sidebar-header-collapsed) {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.dark .sidebar--paper .sidebar-logo-paper {
+  border-color: rgba(255, 255, 255, 0.13) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.dark .sidebar--paper .sidebar-brand-title,
+.dark .sidebar--paper .sidebar-console-support strong {
+  color: #f8fafc !important;
+}
+
+.dark .sidebar--paper .sidebar-brand-subtitle,
+.dark .sidebar--paper .sidebar-section-title,
+.dark .sidebar--paper .sidebar-console-support span {
+  color: #94a3b8 !important;
+}
+
+.dark .sidebar--paper .sidebar-section,
+.dark .sidebar--paper .sidebar-console-support {
+  border-color: rgba(148, 163, 184, 0.12) !important;
+}
+
+.dark .sidebar--paper .sidebar-link {
+  color: #cbd5e1 !important;
+}
+
+.dark .sidebar--paper .sidebar-link:hover,
+.dark .sidebar--paper .sidebar-link-active {
+  border-color: rgba(45, 212, 191, 0.2) !important;
+  background: rgba(20, 184, 166, 0.13) !important;
+  color: #f8fafc !important;
+}
+
+.dark .sidebar--paper.sidebar--collapsed .sidebar-link {
+  color: #94a3b8 !important;
+}
+
+.dark .sidebar--paper.sidebar--collapsed .sidebar-link-active {
+  color: #2dd4bf !important;
+}
+
+.dark .app-header--paper {
+  border-bottom-color: rgba(148, 163, 184, 0.13) !important;
+  background: rgba(11, 18, 32, 0.84) !important;
+}
+
+.dark .app-header--paper .locale-switcher,
+.dark .app-header--paper .app-header__pill,
+.dark .app-header--paper .app-header__balance,
+.dark .app-header--paper .app-header__user,
+.dark .announcement-trigger {
+  border-color: rgba(148, 163, 184, 0.16) !important;
+  background: rgba(17, 24, 39, 0.78) !important;
+  color: #cbd5e1 !important;
+}
+
+.dark .app-header--paper .app-header__balance svg,
+.dark .app-header--paper .app-header__balance span {
+  color: #5eead4 !important;
+}
+
+.dark .app-layout--paper-console .card,
+.dark .app-layout--paper-console .input,
+.dark .app-layout--paper-console .select-trigger,
+.dark .app-layout--paper-console .table-container,
+.dark .app-layout--paper-console .table-wrapper,
+.dark .app-layout--paper-console .table-scroll-container,
+.dark .app-layout--paper-console .bg-white,
+.dark .user-console-page__hero,
+.dark .user-console-page__summary,
+.dark .console-note,
+.dark .dashboard-platforms__card,
+.dark .dashboard-platforms__quota,
+.dark .dashboard-chart-controls,
+.dark .dashboard-chart-box,
+.dark .dashboard-chart-trend .card,
+.dark .user-console-panel,
+.dark .user-console-stat-card {
+  border-color: rgba(148, 163, 184, 0.16) !important;
+  background: rgba(17, 24, 39, 0.82) !important;
+  color: #e5e7eb !important;
+  box-shadow: none !important;
+}
+
+.dark .user-console-stat-card {
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.78), rgba(15, 23, 42, 0.94)) !important;
+}
+
+.dark .app-layout--paper-console .table th,
+.dark .app-layout--paper-console .table-wrapper th,
+.dark .app-layout--paper-console thead {
+  border-color: rgba(148, 163, 184, 0.14) !important;
+  background: rgba(15, 23, 42, 0.9) !important;
+  color: #94a3b8 !important;
+}
+
+.dark .app-layout--paper-console .table td,
+.dark .app-layout--paper-console .table-wrapper td,
+.dark .app-layout--paper-console tbody tr,
+.dark .app-layout--paper-console .divide-y > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(148, 163, 184, 0.12) !important;
+  color: #e5e7eb !important;
+}
+
+.dark .app-layout--paper-console tbody tr:hover,
+.dark .app-layout--paper-console .hover\:bg-gray-50:hover,
+.dark .app-layout--paper-console .dark\:hover\:bg-dark-800:hover {
+  background: rgba(20, 184, 166, 0.08) !important;
+}
+
+.dark .app-layout--paper-console .page-title,
+.dark .app-layout--paper-console .text-gray-900,
+.dark .user-console-page__title,
+.dark .console-note__title,
+.dark .console-summary__value,
+.dark .console-summary__micro b,
+.dark .dashboard-platforms__name,
+.dark .dashboard-platforms__cost,
+.dark .dashboard-platforms__row strong,
+.dark .user-console-panel__title,
+.dark .user-console-stat-card__value {
+  color: #f8fafc !important;
+}
+
+.dark .app-layout--paper-console .page-description,
+.dark .app-layout--paper-console .text-gray-500,
+.dark .app-layout--paper-console .text-dark-400,
+.dark .user-console-page__description,
+.dark .console-note__copy,
+.dark .console-summary__desc,
+.dark .console-summary__micro span,
+.dark .dashboard-platforms__meta,
+.dark .dashboard-platforms__subtle,
+.dark .dashboard-platforms__quota-reset,
+.dark .dashboard-platforms__row,
+.dark .user-console-panel__description,
+.dark .user-console-stat-card__title,
+.dark .user-console-stat-card__detail {
+  color: #94a3b8 !important;
+}
+
+.dark .dashboard-platforms__quota,
+.dark .console-summary__micro,
+.dark .user-console-page__notes,
+.dark .dashboard-chart-controls__view,
+.dark .dashboard-models__table-inner th,
+.dark .dashboard-models__table-inner td {
+  border-color: rgba(148, 163, 184, 0.12) !important;
+}
+
+.dark .dashboard-chart-controls__view {
+  background: rgba(15, 23, 42, 0.74) !important;
+  color: #94a3b8 !important;
+}
+
+.dark .dashboard-chart-controls__view strong,
+.dark .dashboard-chart-box__head h3,
+.dark .dashboard-chart-trend h3,
+.dark .dashboard-models__table-inner td {
+  color: #f8fafc !important;
+}
+
+.dark .dashboard-chart-controls__label,
+.dark .dashboard-chart-meta,
+.dark .dashboard-models__empty,
+.dark .dashboard-models__table-inner th,
+.dark .dashboard-chart-box__head span {
+  color: #94a3b8 !important;
+}
+
+.dark .dashboard-models__table-inner td:last-child {
+  color: #5eead4 !important;
+}
+
+.dark .app-layout--paper-console .btn-primary {
+  border-color: rgba(45, 212, 191, 0.36) !important;
+  background: #14b8a6 !important;
+  color: #052e2b !important;
+}
+
+.dark .app-layout--paper-console .btn-secondary,
+.dark .app-layout--paper-console .btn-ghost {
+  border-color: rgba(148, 163, 184, 0.16) !important;
+  background: rgba(17, 24, 39, 0.82) !important;
+  color: #e5e7eb !important;
+}
+
+.dark .app-layout--paper-console .bg-gray-50,
+.dark .app-layout--paper-console .bg-gray-100,
+.dark .app-layout--paper-console .badge-gray {
+  background: rgba(30, 41, 59, 0.72) !important;
+  color: #cbd5e1 !important;
+}
+
+.dark .announcement-modal,
+.dark .announcement-popup {
+  border-color: rgba(148, 163, 184, 0.16) !important;
+  background: #0f172a !important;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42) !important;
+}
+
+.dark .announcement-modal__header,
+.dark .announcement-popup__header {
+  border-bottom-color: rgba(148, 163, 184, 0.14) !important;
+  background:
+    radial-gradient(circle at 92% 0, rgba(45, 212, 191, 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(17, 24, 39, 0.96), rgba(15, 23, 42, 0.98)) !important;
+}
+
+.dark .announcement-modal__body,
+.dark .announcement-popup__body {
+  background: rgba(15, 23, 42, 0.92) !important;
+}
+
+.dark .announcement-modal__footer,
+.dark .announcement-popup__footer {
+  border-top-color: rgba(148, 163, 184, 0.14) !important;
+  background: rgba(11, 18, 32, 0.74) !important;
+}
+
+.dark .announcement-modal__icon,
+.dark .announcement-item__unread,
+.dark .announcement-modal__primary,
+.dark .announcement-popup__icon,
+.dark .announcement-popup__badge,
+.dark .announcement-popup__primary {
+  border-color: rgba(45, 212, 191, 0.28) !important;
+  background: #14b8a6 !important;
+  color: #052e2b !important;
+}
+
+/* Console dialogs are teleported to body, so they need an explicit theme context. */
+body.paper-console-active .modal-overlay,
+body.paper-console-active .dialog-overlay {
+  background: rgba(30, 27, 23, 0.52);
+  backdrop-filter: blur(7px) saturate(0.82);
+}
+
+body.paper-console-active .modal-content,
+body.paper-console-active .dialog-container {
+  overflow: hidden;
+  border: 1px solid rgba(23, 20, 17, 0.12);
+  border-radius: 10px;
+  background: #fbfaf7;
+  color: #171411;
+  box-shadow: 0 24px 70px rgba(45, 39, 31, 0.2), 0 2px 8px rgba(45, 39, 31, 0.08);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei",
+    "Noto Sans CJK SC", Arial, sans-serif;
+}
+
+body.paper-console-active .modal-content {
+  box-shadow:
+    inset 0 3px 0 #0f766e,
+    0 24px 70px rgba(45, 39, 31, 0.2),
+    0 2px 8px rgba(45, 39, 31, 0.08);
+}
+
+body.paper-console-active .modal-header,
+body.paper-console-active .dialog-header {
+  min-height: 66px;
+  border-bottom: 1px solid rgba(23, 20, 17, 0.09);
+  padding: 16px 22px;
+  background: #f7f3eb;
+}
+
+body.paper-console-active .modal-title,
+body.paper-console-active .dialog-header h2,
+body.paper-console-active .dialog-header h3 {
+  color: #171411;
+  font-family: "STSong", "SimSun", "Songti SC", "Noto Serif CJK SC", serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+body.paper-console-active .modal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+body.paper-console-active .modal-title::before {
+  width: 4px;
+  height: 20px;
+  border-radius: 2px;
+  background: #0f766e;
+  content: "";
+}
+
+body.paper-console-active .modal-close-button {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  margin-right: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(23, 20, 17, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.64);
+  color: #6f675e;
+  box-shadow: none;
+}
+
+body.paper-console-active .modal-close-button:hover {
+  border-color: rgba(15, 118, 110, 0.3);
+  background: #ffffff;
+  color: #0f766e;
+}
+
+body.paper-console-active .modal-body,
+body.paper-console-active .dialog-body {
+  padding: 20px 22px;
+  background: #fbfaf7;
+  scrollbar-color: rgba(111, 103, 94, 0.34) transparent;
+}
+
+body.paper-console-active .modal-footer,
+body.paper-console-active .dialog-footer {
+  min-height: 62px;
+  border-top: 1px solid rgba(23, 20, 17, 0.09);
+  padding: 12px 22px;
+  background: #f7f3eb;
+}
+
+body.paper-console-active .modal-content .input,
+body.paper-console-active .modal-content .select-trigger,
+body.paper-console-active .dialog-container .input,
+body.paper-console-active .dialog-container .select-trigger {
+  min-height: 42px;
+  border-color: rgba(23, 20, 17, 0.13);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #171411;
+  font-size: 14px;
+  box-shadow: none;
+}
+
+body.paper-console-active .modal-content textarea.input,
+body.paper-console-active .dialog-container textarea.input {
+  border-radius: 8px;
+}
+
+body.paper-console-active .modal-content .input:hover,
+body.paper-console-active .modal-content .select-trigger:hover,
+body.paper-console-active .dialog-container .input:hover,
+body.paper-console-active .dialog-container .select-trigger:hover {
+  border-color: rgba(23, 20, 17, 0.22);
+}
+
+body.paper-console-active .modal-content .input:focus,
+body.paper-console-active .modal-content .select-trigger:focus,
+body.paper-console-active .modal-content .select-trigger-open,
+body.paper-console-active .dialog-container .input:focus,
+body.paper-console-active .dialog-container .select-trigger:focus,
+body.paper-console-active .dialog-container .select-trigger-open {
+  border-color: rgba(15, 118, 110, 0.5);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+}
+
+body.paper-console-active .modal-content .input-label,
+body.paper-console-active .dialog-container .input-label {
+  margin-bottom: 6px;
+  color: #4e4740;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+body.paper-console-active .modal-content .input-hint,
+body.paper-console-active .dialog-container .input-hint {
+  color: #81786f;
+  font-size: 12px;
+}
+
+body.paper-console-active .modal-content .btn,
+body.paper-console-active .dialog-container .btn {
+  min-height: 40px;
+  border-radius: 8px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+body.paper-console-active .modal-content .btn-primary,
+body.paper-console-active .dialog-container .btn-primary {
+  border: 1px solid #0f766e;
+  background: #0f766e;
+  color: #ffffff;
+}
+
+body.paper-console-active .modal-content .btn-primary:hover,
+body.paper-console-active .dialog-container .btn-primary:hover {
+  border-color: #0b655e;
+  background: #0b655e;
+}
+
+body.paper-console-active .modal-content .btn-secondary,
+body.paper-console-active .dialog-container .btn-secondary {
+  border: 1px solid rgba(23, 20, 17, 0.13);
+  background: #ffffff;
+  color: #37312c;
+}
+
+body.paper-console-active .modal-content .btn-secondary:hover,
+body.paper-console-active .dialog-container .btn-secondary:hover {
+  border-color: rgba(23, 20, 17, 0.22);
+  background: #f4f0e8;
+}
+
+body.paper-console-active .modal-content .btn-danger,
+body.paper-console-active .dialog-container .btn-danger {
+  border: 1px solid #b42318;
+  background: #b42318;
+  color: #ffffff;
+}
+
+body.paper-console-active .modal-content .bg-primary-600,
+body.paper-console-active .dialog-container .bg-primary-600 {
+  background-color: #0f766e !important;
+}
+
+body.paper-console-active .modal-content .bg-gray-200,
+body.paper-console-active .dialog-container .bg-gray-200 {
+  background-color: #d9d5ce !important;
+}
+
+body.paper-console-active .select-dropdown-portal {
+  border-color: rgba(23, 20, 17, 0.13);
+  border-radius: 8px;
+  background: #fffefa;
+  box-shadow: 0 16px 40px rgba(45, 39, 31, 0.18), 0 2px 6px rgba(45, 39, 31, 0.08);
+}
+
+body.paper-console-active .select-dropdown-portal .select-search {
+  border-bottom-color: rgba(23, 20, 17, 0.09);
+  background: #f7f3eb;
+}
+
+body.paper-console-active .select-dropdown-portal .select-option {
+  color: #37312c;
+}
+
+body.paper-console-active .select-dropdown-portal .select-option:hover,
+body.paper-console-active .select-dropdown-portal .select-option-focused {
+  background: #f1ede5;
+}
+
+body.paper-console-active .select-dropdown-portal .select-option-selected,
+body.paper-console-active .select-dropdown-portal .select-option-selected:hover,
+body.paper-console-active .select-dropdown-portal .select-option-selected.select-option-focused {
+  background: #dff1ed;
+  color: #0b655e;
+}
+
+.dark body.paper-console-active .modal-overlay,
+.dark body.paper-console-active .dialog-overlay {
+  background: rgba(2, 6, 12, 0.72);
+}
+
+.dark body.paper-console-active .modal-content,
+.dark body.paper-console-active .dialog-container {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: #101923;
+  color: #e5e7eb;
+  box-shadow: 0 28px 82px rgba(0, 0, 0, 0.5);
+}
+
+.dark body.paper-console-active .modal-content {
+  box-shadow:
+    inset 0 3px 0 #14b8a6,
+    0 28px 82px rgba(0, 0, 0, 0.5);
+}
+
+.dark body.paper-console-active .modal-header,
+.dark body.paper-console-active .dialog-header,
+.dark body.paper-console-active .modal-footer,
+.dark body.paper-console-active .dialog-footer {
+  border-color: rgba(148, 163, 184, 0.14);
+  background: #0c1622;
+}
+
+.dark body.paper-console-active .modal-title,
+.dark body.paper-console-active .dialog-header h2,
+.dark body.paper-console-active .dialog-header h3 {
+  color: #f8fafc;
+}
+
+.dark body.paper-console-active .modal-title::before {
+  background: #2dd4bf;
+}
+
+.dark body.paper-console-active .modal-body,
+.dark body.paper-console-active .dialog-body {
+  background: #101923;
+}
+
+.dark body.paper-console-active .modal-close-button {
+  border-color: rgba(148, 163, 184, 0.2);
+  background: #162231;
+  color: #94a3b8;
+}
+
+.dark body.paper-console-active .modal-close-button:hover {
+  border-color: rgba(45, 212, 191, 0.36);
+  background: #1a2a3a;
+  color: #5eead4;
+}
+
+.dark body.paper-console-active .modal-content .input,
+.dark body.paper-console-active .modal-content .select-trigger,
+.dark body.paper-console-active .dialog-container .input,
+.dark body.paper-console-active .dialog-container .select-trigger {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: #172331;
+  color: #f8fafc;
+}
+
+.dark body.paper-console-active .modal-content .input-label,
+.dark body.paper-console-active .dialog-container .input-label {
+  color: #cbd5e1;
+}
+
+.dark body.paper-console-active .modal-content .input-hint,
+.dark body.paper-console-active .dialog-container .input-hint {
+  color: #94a3b8;
+}
+
+.dark body.paper-console-active .modal-content .btn-primary,
+.dark body.paper-console-active .dialog-container .btn-primary {
+  border-color: #14b8a6;
+  background: #14b8a6;
+  color: #052e2b;
+}
+
+.dark body.paper-console-active .modal-content .btn-secondary,
+.dark body.paper-console-active .dialog-container .btn-secondary {
+  border-color: rgba(148, 163, 184, 0.2);
+  background: #172331;
+  color: #e5e7eb;
+}
+
+.dark body.paper-console-active .modal-content .bg-gray-200,
+.dark body.paper-console-active .dialog-container .bg-gray-200 {
+  background-color: #334155 !important;
+}
+
+.dark body.paper-console-active .select-dropdown-portal {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: #101923;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.46);
+}
+
+.dark body.paper-console-active .select-dropdown-portal .select-search {
+  border-bottom-color: rgba(148, 163, 184, 0.14);
+  background: #0c1622;
+}
+
+.dark body.paper-console-active .select-dropdown-portal .select-option {
+  color: #cbd5e1;
+}
+
+.dark body.paper-console-active .select-dropdown-portal .select-option:hover,
+.dark body.paper-console-active .select-dropdown-portal .select-option-focused {
+  background: #1b2a39;
+}
+
+.dark body.paper-console-active .select-dropdown-portal .select-option-selected,
+.dark body.paper-console-active .select-dropdown-portal .select-option-selected:hover,
+.dark body.paper-console-active .select-dropdown-portal .select-option-selected.select-option-focused {
+  background: rgba(20, 184, 166, 0.16);
+  color: #5eead4;
+}
+
+@media (max-width: 640px) {
+  body.paper-console-active .modal-content,
+  body.paper-console-active .dialog-container {
+    max-height: calc(100dvh - 16px);
+    border-radius: 8px;
+  }
+
+  body.paper-console-active .modal-header,
+  body.paper-console-active .dialog-header {
+    min-height: 58px;
+    padding: 12px 16px;
+  }
+
+  body.paper-console-active .modal-title,
+  body.paper-console-active .dialog-header h2,
+  body.paper-console-active .dialog-header h3 {
+    font-size: 18px;
+  }
+
+  body.paper-console-active .modal-body,
+  body.paper-console-active .dialog-body {
+    padding: 16px;
+  }
+
+  body.paper-console-active .modal-footer,
+  body.paper-console-active .dialog-footer {
+    min-height: 58px;
+    padding: 10px 16px;
+  }
+}

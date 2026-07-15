@@ -11,11 +11,119 @@ const (
 	ImageBillingSize2K = "2K"
 	ImageBillingSize4K = "4K"
 
-	ImageSizeSourceOutput  = "output"
-	ImageSizeSourceInput   = "input"
-	ImageSizeSourceDefault = "default"
-	ImageSizeSourceLegacy  = "legacy"
+	ImageGenerationPrice1K = 0.06
+	ImageGenerationPrice2K = 0.16
+	ImageGenerationPrice4K = 0.20
+
+	ImageSizeSourceOutput          = "output"
+	ImageSizeSourceInput           = "input"
+	ImageSizeSourceDefault         = "default"
+	ImageSizeSourceLegacy          = "legacy"
+	ImageSizeSourceRequested       = "requested"
+	ImageSizeSourceOutputDowngrade = "output_downgrade"
 )
+
+var imageBillingTierOrder = []string{ImageBillingSize1K, ImageBillingSize2K, ImageBillingSize4K}
+
+func NormalizeImageBillingTier(tier string) string {
+	switch strings.ToUpper(strings.TrimSpace(tier)) {
+	case ImageBillingSize1K:
+		return ImageBillingSize1K
+	case ImageBillingSize2K:
+		return ImageBillingSize2K
+	case ImageBillingSize4K:
+		return ImageBillingSize4K
+	default:
+		return ""
+	}
+}
+
+func NormalizeImageAllowedTiers(tiers []string, allowImageGeneration bool) []string {
+	seen := make(map[string]struct{}, len(tiers))
+	for _, raw := range tiers {
+		if tier := NormalizeImageBillingTier(raw); tier != "" {
+			seen[tier] = struct{}{}
+		}
+	}
+	if allowImageGeneration && len(seen) == 0 {
+		seen[ImageBillingSize1K] = struct{}{}
+	}
+	// Standard and HD keys are separate products. An HD group never also
+	// grants 1K access, which keeps each key in exactly one frontend pool.
+	if _, has2K := seen[ImageBillingSize2K]; has2K {
+		delete(seen, ImageBillingSize1K)
+	}
+	if _, has4K := seen[ImageBillingSize4K]; has4K {
+		delete(seen, ImageBillingSize1K)
+	}
+	out := make([]string, 0, len(seen))
+	for _, tier := range imageBillingTierOrder {
+		if _, ok := seen[tier]; ok {
+			out = append(out, tier)
+		}
+	}
+	return out
+}
+
+func ImageGenerationUnitPrice(tier string) (float64, bool) {
+	switch NormalizeImageBillingTier(tier) {
+	case ImageBillingSize1K:
+		return ImageGenerationPrice1K, true
+	case ImageBillingSize2K:
+		return ImageGenerationPrice2K, true
+	case ImageBillingSize4K:
+		return ImageGenerationPrice4K, true
+	default:
+		return 0, false
+	}
+}
+
+func ImageGenerationFixedPrices() map[string]float64 {
+	return map[string]float64{
+		ImageBillingSize1K: ImageGenerationPrice1K,
+		ImageBillingSize2K: ImageGenerationPrice2K,
+		ImageBillingSize4K: ImageGenerationPrice4K,
+	}
+}
+
+func NormalizeImageAspectRatio(ratio string) string {
+	switch strings.TrimSpace(ratio) {
+	case "1:1":
+		return "1:1"
+	case "2:3":
+		return "2:3"
+	case "3:2":
+		return "3:2"
+	default:
+		return ""
+	}
+}
+
+func InferImageAspectRatio(size string) string {
+	width, height, ok := parseImageBillingDimensions(size)
+	if !ok || width == height {
+		return "1:1"
+	}
+	if width < height {
+		return "2:3"
+	}
+	return "3:2"
+}
+
+func ResolveImageGenerationSize(tier, aspectRatio string) (string, bool) {
+	tier = NormalizeImageBillingTier(tier)
+	aspectRatio = NormalizeImageAspectRatio(aspectRatio)
+	if tier == "" || aspectRatio == "" {
+		return "", false
+	}
+	sizes := map[string]map[string]string{
+		ImageBillingSize1K: {"1:1": "1024x1024", "2:3": "1024x1536", "3:2": "1536x1024"},
+		ImageBillingSize2K: {"1:1": "2048x2048", "2:3": "1365x2048", "3:2": "2048x1365"},
+		ImageBillingSize4K: {"1:1": "2880x2880", "2:3": "1920x2880", "3:2": "2880x1920"},
+	}
+	size, ok := sizes[tier][aspectRatio]
+	return size, ok
+}
 
 type ImageBillingSizeResolution struct {
 	BillingSize string
@@ -125,6 +233,7 @@ func ApplyOpenAIImageBillingResolution(result *OpenAIForwardResult) {
 		outputSizes = []string{result.ImageOutputSize}
 	}
 	resolved := ResolveImageBillingSize(inputSize, outputSizes)
+	resolved = resolveRequestedImageBilling(result.ImageSize, result.ImageCount, resolved)
 	applyImageBillingResolution(
 		&result.ImageSize,
 		&result.ImageInputSize,
@@ -148,6 +257,7 @@ func ApplyForwardImageBillingResolution(result *ForwardResult) {
 		outputSizes = []string{result.ImageOutputSize}
 	}
 	resolved := ResolveImageBillingSize(inputSize, outputSizes)
+	resolved = resolveRequestedImageBilling(result.ImageSize, result.ImageCount, resolved)
 	applyImageBillingResolution(
 		&result.ImageSize,
 		&result.ImageInputSize,
@@ -156,6 +266,49 @@ func ApplyForwardImageBillingResolution(result *ForwardResult) {
 		&result.ImageSizeBreakdown,
 		resolved,
 	)
+}
+
+func resolveRequestedImageBilling(requestedTier string, imageCount int, resolved ImageBillingSizeResolution) ImageBillingSizeResolution {
+	requestedTier = NormalizeImageBillingTier(requestedTier)
+	if requestedTier == "" {
+		return resolved
+	}
+	resolved.Source = ImageSizeSourceRequested
+	resolved.BillingSize = requestedTier
+	if len(resolved.Breakdown) == 0 {
+		if imageCount > 0 {
+			resolved.Breakdown = map[string]int{requestedTier: imageCount}
+		}
+		return resolved
+	}
+
+	capped := make(map[string]int, len(resolved.Breakdown))
+	highest := ""
+	for outputTier, count := range resolved.Breakdown {
+		if count <= 0 {
+			continue
+		}
+		billedTier := NormalizeImageBillingTier(outputTier)
+		if billedTier == "" {
+			continue
+		}
+		if imageTierRank(billedTier) > imageTierRank(requestedTier) {
+			billedTier = requestedTier
+		}
+		capped[billedTier] += count
+		if imageTierRank(billedTier) > imageTierRank(highest) {
+			highest = billedTier
+		}
+	}
+	if len(capped) == 0 {
+		return resolved
+	}
+	resolved.Breakdown = normalizeImageSizeBreakdown(capped)
+	if imageTierRank(highest) < imageTierRank(requestedTier) {
+		resolved.BillingSize = highest
+		resolved.Source = ImageSizeSourceOutputDowngrade
+	}
+	return resolved
 }
 
 func applyImageBillingResolution(

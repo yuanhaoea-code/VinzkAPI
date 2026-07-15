@@ -6,6 +6,17 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/domain"
 )
 
+// VinzkAPI production identity defaults used when persisted settings are empty.
+const (
+	DefaultPublicSiteName     = "VinzkAPI"
+	DefaultPublicSiteSubtitle = "AI API Gateway Platform"
+	DefaultPublicSiteURL      = "https://vinzk.cn"
+	DefaultPublicAPIBaseURL   = "https://api.vinzk.cn"
+	DefaultPublicTutorialURL  = "https://vinzk.cn/tutorials"
+	DefaultPublicRechargeURL  = "https://vinzk.cn/recharge"
+	DefaultPublicContactInfo  = "客服微信：13387544600"
+)
+
 // Status constants
 const (
 	StatusActive   = domain.StatusActive

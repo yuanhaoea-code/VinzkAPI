@@ -822,6 +822,15 @@
               {{ t("admin.groups.imagePricing.independentMultiplier") }}
             </label>
           </div>
+          <div v-if="createForm.allow_image_generation" class="mb-4">
+            <label class="input-label">{{ t("admin.groups.imagePricing.allowedTiers") }}</label>
+            <div class="flex flex-wrap gap-3">
+              <label v-for="tier in imageResolutionTiers" :key="tier" class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <input v-model="createForm.image_allowed_tiers" type="checkbox" :value="tier" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                {{ tier }}
+              </label>
+            </div>
+          </div>
           <div
             v-if="createForm.image_rate_independent"
             class="mb-4"
@@ -902,6 +911,15 @@
               />
               <span>{{ t("admin.groups.peakRate.enable") }}</span>
             </label>
+          </div>
+          <div v-if="editForm.allow_image_generation" class="mb-4">
+            <label class="input-label">{{ t("admin.groups.imagePricing.allowedTiers") }}</label>
+            <div class="flex flex-wrap gap-3">
+              <label v-for="tier in imageResolutionTiers" :key="tier" class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <input v-model="editForm.image_allowed_tiers" type="checkbox" :value="tier" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                {{ tier }}
+              </label>
+            </div>
           </div>
           <div
             v-if="createForm.peak_rate_enabled"
@@ -3549,6 +3567,7 @@ const createForm = reactive({
   monthly_limit_usd: null as number | null,
   // 图片生成计费配置
   allow_image_generation: false,
+  image_allowed_tiers: ["1K"] as Array<"1K" | "2K" | "4K">,
   image_rate_independent: false,
   image_rate_multiplier: 1,
   image_price_1k: null as number | null,
@@ -3885,6 +3904,7 @@ const editForm = reactive({
   monthly_limit_usd: null as number | null,
   // 图片生成计费配置
   allow_image_generation: false,
+  image_allowed_tiers: ["1K"] as Array<"1K" | "2K" | "4K">,
   image_rate_independent: false,
   image_rate_multiplier: 1,
   image_price_1k: null as number | null,
@@ -3939,6 +3959,7 @@ const imagePricingTiers = [
   { key: "image_price_2k", label: "2K" },
   { key: "image_price_4k", label: "4K" },
 ] as const;
+const imageResolutionTiers = ["1K", "2K", "4K"] as const;
 
 const normalizePreviewNumber = (value: number | string | null | undefined, fallback = 0) => {
   if (value === null || value === undefined || value === "") {
@@ -4158,6 +4179,7 @@ const closeCreateModal = () => {
   createForm.weekly_limit_usd = null;
   createForm.monthly_limit_usd = null;
   createForm.allow_image_generation = false;
+  createForm.image_allowed_tiers = ["1K"];
   createForm.image_rate_independent = false;
   createForm.image_rate_multiplier = 1;
   createForm.image_price_1k = null;
@@ -4294,6 +4316,9 @@ const handleEdit = async (group: AdminGroup) => {
   editForm.weekly_limit_usd = group.weekly_limit_usd;
   editForm.monthly_limit_usd = group.monthly_limit_usd;
   editForm.allow_image_generation = group.allow_image_generation ?? false;
+  editForm.image_allowed_tiers = group.image_allowed_tiers?.length
+    ? [...group.image_allowed_tiers]
+    : ["1K"];
   editForm.image_rate_independent = group.image_rate_independent ?? false;
   editForm.image_rate_multiplier = group.image_rate_multiplier ?? 1;
   editForm.image_price_1k = group.image_price_1k;

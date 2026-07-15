@@ -119,6 +119,9 @@ export interface LoginRequest {
 export interface RegisterRequest {
   email: string
   password: string
+  real_name: string
+  user_type: '个人用户' | '企业用户' | '学校用户'
+  contact_phone: string
   verify_code?: string
   turnstile_token?: string
   promo_code?: string
@@ -517,6 +520,7 @@ export interface Group {
   monthly_limit_usd: number | null
   // 图片生成计费配置
   allow_image_generation: boolean
+  image_allowed_tiers: Array<'1K' | '2K' | '4K'>
   image_rate_independent: boolean
   image_rate_multiplier: number
   image_price_1k: number | null
@@ -640,6 +644,7 @@ export interface CreateGroupRequest {
   weekly_limit_usd?: number | null
   monthly_limit_usd?: number | null
   allow_image_generation?: boolean
+  image_allowed_tiers?: Array<'1K' | '2K' | '4K'>
   image_rate_independent?: boolean
   image_rate_multiplier?: number
   image_price_1k?: number | null
@@ -679,6 +684,7 @@ export interface UpdateGroupRequest {
   weekly_limit_usd?: number | null
   monthly_limit_usd?: number | null
   allow_image_generation?: boolean
+  image_allowed_tiers?: Array<'1K' | '2K' | '4K'>
   image_rate_independent?: boolean
   image_rate_multiplier?: number
   image_price_1k?: number | null

@@ -1883,7 +1883,7 @@
                         v-model="form.github_oauth_redirect_url"
                         type="url"
                         class="input font-mono text-sm"
-                        placeholder="https://your-domain.com/api/v1/auth/oauth/github/callback"
+                        placeholder="https://api.vinzk.cn/api/v1/auth/oauth/github/callback"
                       />
                       <div class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                         <button
@@ -1977,7 +1977,7 @@
                         v-model="form.google_oauth_redirect_url"
                         type="url"
                         class="input font-mono text-sm"
-                        placeholder="https://your-domain.com/api/v1/auth/oauth/google/callback"
+                        placeholder="https://api.vinzk.cn/api/v1/auth/oauth/google/callback"
                       />
                       <div class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                         <button
@@ -6280,7 +6280,7 @@
                       v-model="form.payment_product_name_prefix"
                       type="text"
                       class="input"
-                      placeholder="Sub2API"
+                      :placeholder="PUBLIC_SITE_NAME"
                     />
                   </div>
                   <div>
@@ -6302,7 +6302,7 @@
                       class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-dark-600 dark:bg-dark-800 dark:text-gray-300"
                     >
                       {{
-                        (form.payment_product_name_prefix || "Sub2API") +
+                        (form.payment_product_name_prefix || PUBLIC_SITE_NAME) +
                         " 100 " +
                         (form.payment_product_name_suffix || "CNY")
                       }}
@@ -7047,7 +7047,7 @@
                   v-model="form.balance_low_notify_recharge_url"
                   type="url"
                   class="input"
-                  :placeholder="currentOrigin"
+                  :placeholder="PUBLIC_RECHARGE_URL"
                 />
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   {{ t("admin.settings.balanceNotify.rechargeUrlHint") }}
@@ -7246,6 +7246,16 @@ import type {
 import type { ProviderInstance } from "@/types/payment";
 import AppLayout from "@/components/layout/AppLayout.vue";
 import Icon from "@/components/icons/Icon.vue";
+import {
+  PUBLIC_API_BASE_URL,
+  PUBLIC_CONTACT_INFO,
+  PUBLIC_RECHARGE_URL,
+  PUBLIC_SITE_NAME,
+  PUBLIC_SITE_SUBTITLE,
+  PUBLIC_SITE_URL,
+  PUBLIC_TUTORIAL_URL,
+  resolvePublicUrl,
+} from "@/constants/site";
 import Select from "@/components/common/Select.vue";
 import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 import PaymentProviderList from "@/components/payment/PaymentProviderList.vue";
@@ -7930,12 +7940,12 @@ const form = reactive<SettingsForm>({
   default_subscriptions: [],
   force_email_on_third_party_signup: false,
   default_user_rpm_limit: 0,
-  site_name: "Sub2API",
+  site_name: PUBLIC_SITE_NAME,
   site_logo: "",
-  site_subtitle: "Subscription to API Conversion Platform",
-  api_base_url: "",
-  contact_info: "",
-  doc_url: "",
+  site_subtitle: PUBLIC_SITE_SUBTITLE,
+  api_base_url: PUBLIC_API_BASE_URL,
+  contact_info: PUBLIC_CONTACT_INFO,
+  doc_url: PUBLIC_TUTORIAL_URL,
   home_content: "",
   backend_mode_enabled: false,
   hide_ccs_import_button: false,
@@ -7978,7 +7988,7 @@ const form = reactive<SettingsForm>({
     endpoint: string;
     description: string;
   }>,
-  frontend_url: "",
+  frontend_url: PUBLIC_SITE_URL,
   smtp_host: "",
   smtp_port: 587,
   smtp_username: "",
@@ -8464,11 +8474,8 @@ const addQuotaNotifyEmail = () => {
   });
 };
 
-const currentOrigin =
-  typeof window !== "undefined" ? window.location.origin : "";
-
 function buildApiCallbackUrl(path: string): string {
-  const base = (form.api_base_url || currentOrigin).replace(/\/+$/, "");
+  const base = (form.api_base_url || PUBLIC_API_BASE_URL).replace(/\/+$/, "");
   const apiRoot = base.endsWith("/api/v1") ? base : `${base}/api/v1`;
   return `${apiRoot}${path.startsWith("/") ? path : `/${path}`}`;
 }
@@ -8793,6 +8800,19 @@ async function loadSettings() {
         (form as Record<string, unknown>)[key] = value;
       }
     }
+    form.site_name = form.site_name.trim() || PUBLIC_SITE_NAME;
+    form.site_subtitle = form.site_subtitle.trim() || PUBLIC_SITE_SUBTITLE;
+    form.api_base_url = resolvePublicUrl(
+      form.api_base_url,
+      PUBLIC_API_BASE_URL,
+    );
+    form.frontend_url = resolvePublicUrl(form.frontend_url, PUBLIC_SITE_URL);
+    form.contact_info = form.contact_info.trim() || PUBLIC_CONTACT_INFO;
+    form.doc_url = resolvePublicUrl(form.doc_url, PUBLIC_TUTORIAL_URL);
+    form.balance_low_notify_recharge_url = resolvePublicUrl(
+      form.balance_low_notify_recharge_url,
+      PUBLIC_RECHARGE_URL,
+    );
     if (!form.claude_oauth_system_prompt_blocks?.trim()) {
       form.claude_oauth_system_prompt_blocks =
         defaultClaudeOAuthSystemPromptBlocks;
@@ -9364,7 +9384,10 @@ async function saveSettings() {
       balance_low_notify_threshold:
         Number(form.balance_low_notify_threshold) || 0,
       balance_low_notify_recharge_url: (form.balance_low_notify_recharge_url =
-        form.balance_low_notify_recharge_url || currentOrigin),
+        resolvePublicUrl(
+          form.balance_low_notify_recharge_url,
+          PUBLIC_RECHARGE_URL,
+        )),
       subscription_expiry_notify_enabled:
         form.subscription_expiry_notify_enabled,
       account_quota_notify_enabled: form.account_quota_notify_enabled,

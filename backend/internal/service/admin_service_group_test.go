@@ -300,7 +300,7 @@ func TestAdminService_UpdateGroup_PartialImagePricing(t *testing.T) {
 	require.Nil(t, repo.updated.ImagePrice4K)
 }
 
-func TestAdminService_UpdateGroup_PreservesImageGenerationControlsWhenOmitted(t *testing.T) {
+func TestAdminService_UpdateGroup_EnforcesFixedImageGenerationPricing(t *testing.T) {
 	imageMultiplier := 0.5
 	existingGroup := &Group{
 		ID:                   1,
@@ -323,7 +323,10 @@ func TestAdminService_UpdateGroup_PreservesImageGenerationControlsWhenOmitted(t 
 	require.NotNil(t, repo.updated)
 	require.True(t, repo.updated.AllowImageGeneration)
 	require.True(t, repo.updated.ImageRateIndependent)
-	require.InDelta(t, 0.5, repo.updated.ImageRateMultiplier, 1e-12)
+	require.InDelta(t, 1.0, repo.updated.ImageRateMultiplier, 1e-12)
+	require.InDelta(t, ImageGenerationPrice1K, *repo.updated.ImagePrice1K, 1e-12)
+	require.InDelta(t, ImageGenerationPrice2K, *repo.updated.ImagePrice2K, 1e-12)
+	require.InDelta(t, ImageGenerationPrice4K, *repo.updated.ImagePrice4K, 1e-12)
 }
 
 func TestAdminService_UpdateGroup_ClearsDescriptionWhenEmptyString(t *testing.T) {

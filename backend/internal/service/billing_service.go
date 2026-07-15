@@ -1208,6 +1208,26 @@ type ImagePriceConfig struct {
 	Price4K *float64 // 4K 尺寸价格（nil 表示使用默认值）
 }
 
+// CalculateImageGenerationFixedCost applies the public image-studio price list.
+// It deliberately ignores group and channel multipliers so the displayed price
+// and the deducted amount cannot diverge.
+func (s *BillingService) CalculateImageGenerationFixedCost(imageSize string, imageCount int) *CostBreakdown {
+	if imageCount <= 0 {
+		return &CostBreakdown{BillingMode: string(BillingModeImage)}
+	}
+	imageSize = NormalizeImageBillingTierOrDefault(imageSize)
+	unitPrice, ok := ImageGenerationUnitPrice(imageSize)
+	if !ok {
+		unitPrice = ImageGenerationPrice2K
+	}
+	totalCost := unitPrice * float64(imageCount)
+	return &CostBreakdown{
+		TotalCost:   totalCost,
+		ActualCost:  totalCost,
+		BillingMode: string(BillingModeImage),
+	}
+}
+
 // CalculateImageCost 计算图片生成费用
 // model: 请求的模型名称（用于获取 LiteLLM 默认价格）
 // imageSize: 图片尺寸 "1K", "2K", "4K"

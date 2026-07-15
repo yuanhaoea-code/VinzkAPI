@@ -50,20 +50,22 @@ type CreateGroupRequest struct {
 	RateMultiplier       float64  `json:"rate_multiplier"`
 	IsExclusive          bool     `json:"is_exclusive"`
 	AllowImageGeneration bool     `json:"allow_image_generation"`
+	ImageAllowedTiers    []string `json:"image_allowed_tiers"`
 	ImageRateIndependent bool     `json:"image_rate_independent"`
 	ImageRateMultiplier  *float64 `json:"image_rate_multiplier"`
 }
 
 // UpdateGroupRequest 更新分组请求
 type UpdateGroupRequest struct {
-	Name                 *string  `json:"name"`
-	Description          *string  `json:"description"`
-	RateMultiplier       *float64 `json:"rate_multiplier"`
-	IsExclusive          *bool    `json:"is_exclusive"`
-	Status               *string  `json:"status"`
-	AllowImageGeneration *bool    `json:"allow_image_generation"`
-	ImageRateIndependent *bool    `json:"image_rate_independent"`
-	ImageRateMultiplier  *float64 `json:"image_rate_multiplier"`
+	Name                 *string   `json:"name"`
+	Description          *string   `json:"description"`
+	RateMultiplier       *float64  `json:"rate_multiplier"`
+	IsExclusive          *bool     `json:"is_exclusive"`
+	Status               *string   `json:"status"`
+	AllowImageGeneration *bool     `json:"allow_image_generation"`
+	ImageAllowedTiers    *[]string `json:"image_allowed_tiers"`
+	ImageRateIndependent *bool     `json:"image_rate_independent"`
+	ImageRateMultiplier  *float64  `json:"image_rate_multiplier"`
 }
 
 // GroupService 分组管理服务
@@ -108,9 +110,11 @@ func (s *GroupService) Create(ctx context.Context, req CreateGroupRequest) (*Gro
 		Status:               StatusActive,
 		SubscriptionType:     SubscriptionTypeStandard,
 		AllowImageGeneration: req.AllowImageGeneration,
+		ImageAllowedTiers:    NormalizeImageAllowedTiers(req.ImageAllowedTiers, req.AllowImageGeneration),
 		ImageRateIndependent: req.ImageRateIndependent,
 		ImageRateMultiplier:  imageRateMultiplier,
 	}
+	ApplyFixedImageGenerationPricing(group)
 
 	if err := s.groupRepo.Create(ctx, group); err != nil {
 		return nil, fmt.Errorf("create group: %w", err)
@@ -184,6 +188,9 @@ func (s *GroupService) Update(ctx context.Context, id int64, req UpdateGroupRequ
 	if req.AllowImageGeneration != nil {
 		group.AllowImageGeneration = *req.AllowImageGeneration
 	}
+	if req.ImageAllowedTiers != nil {
+		group.ImageAllowedTiers = NormalizeImageAllowedTiers(*req.ImageAllowedTiers, group.AllowImageGeneration)
+	}
 	if req.ImageRateIndependent != nil {
 		group.ImageRateIndependent = *req.ImageRateIndependent
 	}
@@ -193,6 +200,8 @@ func (s *GroupService) Update(ctx context.Context, id int64, req UpdateGroupRequ
 		}
 		group.ImageRateMultiplier = *req.ImageRateMultiplier
 	}
+	group.ImageAllowedTiers = NormalizeImageAllowedTiers(group.ImageAllowedTiers, group.AllowImageGeneration)
+	ApplyFixedImageGenerationPricing(group)
 
 	if err := s.groupRepo.Update(ctx, group); err != nil {
 		return nil, fmt.Errorf("update group: %w", err)

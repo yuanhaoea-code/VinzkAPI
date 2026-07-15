@@ -50,7 +50,7 @@
           v-if="isOpen"
           ref="dropdownRef"
           class="select-dropdown-portal"
-          :class="[instanceId]"
+          :class="[instanceId, dropdownClass]"
           :style="dropdownStyle"
           role="listbox"
           @click.stop
@@ -148,6 +148,7 @@ interface Props {
   creatable?: boolean
   creatablePrefix?: string
   clearable?: boolean
+  dropdownClass?: string
 }
 
 interface Emits {

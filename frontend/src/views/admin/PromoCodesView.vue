@@ -403,6 +403,7 @@ import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import Select from '@/components/common/Select.vue'
 import Icon from '@/components/icons/Icon.vue'
+import { PUBLIC_SITE_URL } from '@/constants/site'
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -663,8 +664,7 @@ const handleUpdate = async () => {
 
 // Copy Register Link
 const copyRegisterLink = async (code: PromoCode) => {
-  const baseUrl = window.location.origin
-  const registerLink = `${baseUrl}/register?promo=${encodeURIComponent(code.code)}`
+  const registerLink = `${PUBLIC_SITE_URL}/register?promo=${encodeURIComponent(code.code)}`
 
   try {
     await navigator.clipboard.writeText(registerLink)

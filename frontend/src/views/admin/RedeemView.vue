@@ -1,38 +1,131 @@
 <template>
   <AppLayout>
-    <TablePageLayout>
-      <template #filters>
-        <div class="flex flex-wrap items-center gap-3">
-          <!-- Left: Search + Filters -->
-          <div class="flex-1 sm:max-w-64">
-            <input
-              v-model="searchQuery"
-              type="text"
-              :placeholder="t('admin.redeem.searchCodes')"
-              class="input"
-              @input="handleSearch"
+    <UserConsolePage
+      kicker="ADMIN CODES"
+      :title="t('admin.redeem.title')"
+      :description="t('admin.redeem.description')"
+      class="admin-redeem-console"
+    >
+      <template #heroAside>
+        <div class="console-summary">
+          <div>
+            <div class="console-summary__label">FILTERED TOTAL</div>
+            <div class="console-summary__value">{{ pagination.total }}</div>
+            <div class="console-summary__desc">
+              当前筛选条件下的兑换码总量，列表与导出都沿用同一套查询条件。
+            </div>
+          </div>
+          <div class="console-summary__micro">
+            <div>
+              <b>{{ selectedCount }}</b>
+              <span>已选择</span>
+            </div>
+            <div>
+              <b>{{ codes.length }}</b>
+              <span>当前页</span>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template #heroNotes>
+        <div class="console-note">
+          <strong class="console-note__title">{{ t('admin.redeem.generateCodes') }}</strong>
+          <span class="console-note__copy">生成余额、并发、订阅和邀请码，规则仍按现有后端接口执行。</span>
+        </div>
+        <div class="console-note">
+          <strong class="console-note__title">{{ t('admin.redeem.batchUpdate') }}</strong>
+          <span class="console-note__copy">勾选兑换码后可统一调整状态、过期时间、备注或订阅分组。</span>
+        </div>
+        <div class="console-note">
+          <strong class="console-note__title">{{ t('admin.redeem.exportCsv') }}</strong>
+          <span class="console-note__copy">按当前搜索、类型和状态筛选结果导出，不额外增加字段。</span>
+        </div>
+      </template>
+
+      <div class="admin-redeem-console__stats">
+        <UserConsoleStatCard
+          title="筛选结果"
+          :value="pagination.total"
+          hint="跟随搜索、类型、状态实时刷新"
+          meta="Total"
+          tone="sky"
+        >
+          <template #icon>
+            <Icon name="gift" size="md" />
+          </template>
+        </UserConsoleStatCard>
+        <UserConsoleStatCard
+          title="当前页"
+          :value="codes.length"
+          hint="表格正在展示的兑换码数量"
+          meta="Page"
+          tone="neutral"
+        >
+          <template #icon>
+            <Icon name="grid" size="md" />
+          </template>
+        </UserConsoleStatCard>
+        <UserConsoleStatCard
+          title="已选择"
+          :value="selectedCount"
+          hint="用于批量修改的选中数量"
+          meta="Batch"
+          tone="amber"
+        >
+          <template #icon>
+            <Icon name="edit" size="md" />
+          </template>
+        </UserConsoleStatCard>
+        <UserConsoleStatCard
+          title="当前页未使用"
+          :value="visibleUnusedCount"
+          hint="仅统计当前可见页数据"
+          meta="Unused"
+          tone="emerald"
+        >
+          <template #icon>
+            <Icon name="checkCircle" size="md" />
+          </template>
+        </UserConsoleStatCard>
+      </div>
+
+      <UserConsolePanel
+        title="筛选与操作"
+        description="用兑换码、用户邮箱、类型和状态缩小范围；右侧操作按钮保持原有导出、批量修改和生成逻辑。"
+      >
+        <div class="admin-redeem-console__toolbar">
+          <div class="admin-redeem-console__filters">
+            <div class="admin-redeem-console__search">
+              <input
+                v-model="searchQuery"
+                type="text"
+                :placeholder="t('admin.redeem.searchCodes')"
+                class="input"
+                @input="handleSearch"
+              />
+            </div>
+            <Select
+              v-model="filters.type"
+              :options="filterTypeOptions"
+              class="admin-redeem-console__select"
+              @change="loadCodes"
+            />
+            <Select
+              v-model="filters.status"
+              :options="filterStatusOptions"
+              class="admin-redeem-console__select"
+              @change="loadCodes"
             />
           </div>
-          <Select
-            v-model="filters.type"
-            :options="filterTypeOptions"
-            class="w-36"
-            @change="loadCodes"
-          />
-          <Select
-            v-model="filters.status"
-            :options="filterStatusOptions"
-            class="w-36"
-            @change="loadCodes"
-          />
 
-          <!-- Right: Action buttons -->
-          <div class="flex flex-1 flex-wrap items-center justify-end gap-2">
+          <div class="admin-redeem-console__actions">
             <button
               @click="loadCodes"
               :disabled="loading"
               class="btn btn-secondary"
               :title="t('common.refresh')"
+              :aria-label="t('common.refresh')"
             >
               <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
             </button>
@@ -53,9 +146,39 @@
             </button>
           </div>
         </div>
-      </template>
+      </UserConsolePanel>
 
-      <template #table>
+      <UserConsolePanel
+        :title="t('admin.redeem.title')"
+        description="表格列、排序、复制、删除和分页都沿用原有逻辑；这里只调整视觉层级。"
+        class="admin-redeem-console__table-panel"
+      >
+        <div
+          v-if="selectedCount > 0"
+          class="admin-redeem-console__selection"
+        >
+          <span>
+            {{ t('admin.redeem.selectedCount', { count: selectedCount }) }}
+          </span>
+          <div class="admin-redeem-console__selection-actions">
+            <button
+              type="button"
+              class="admin-redeem-console__text-button"
+              @click="clearSelectedCodes"
+            >
+              {{ t('admin.redeem.clearSelection') }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              @click="openBatchUpdateDialog"
+            >
+              {{ t('admin.redeem.batchUpdate') }}
+            </button>
+          </div>
+        </div>
+
+        <div class="admin-redeem-console__table-shell">
         <DataTable
           :columns="columns"
           :data="codes"
@@ -202,51 +325,27 @@
             </div>
           </template>
         </DataTable>
-      </template>
+        </div>
 
-      <template #pagination>
-        <div
-          v-if="selectedCount > 0"
-          class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-primary-50 p-3 dark:bg-primary-900/20"
-        >
-          <span class="text-sm font-medium text-primary-900 dark:text-primary-100">
-            {{ t('admin.redeem.selectedCount', { count: selectedCount }) }}
-          </span>
-          <div class="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              class="text-xs font-medium text-primary-700 hover:text-primary-800 dark:text-primary-300 dark:hover:text-primary-200"
-              @click="clearSelectedCodes"
-            >
-              {{ t('admin.redeem.clearSelection') }}
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary btn-sm"
-              @click="openBatchUpdateDialog"
-            >
-              {{ t('admin.redeem.batchUpdate') }}
+        <div class="admin-redeem-console__pagination">
+          <Pagination
+            v-if="pagination.total > 0"
+            :page="pagination.page"
+            :total="pagination.total"
+            :page-size="pagination.page_size"
+            @update:page="handlePageChange"
+            @update:pageSize="handlePageSizeChange"
+          />
+
+          <!-- Batch Actions -->
+          <div v-if="filters.status === 'unused'" class="admin-redeem-console__danger-zone">
+            <button @click="showDeleteUnusedDialog = true" class="btn btn-danger">
+              {{ t('admin.redeem.deleteAllUnused') }}
             </button>
           </div>
         </div>
-
-        <Pagination
-          v-if="pagination.total > 0"
-          :page="pagination.page"
-          :total="pagination.total"
-          :page-size="pagination.page_size"
-          @update:page="handlePageChange"
-          @update:pageSize="handlePageSizeChange"
-        />
-
-        <!-- Batch Actions -->
-        <div v-if="filters.status === 'unused'" class="flex justify-end">
-          <button @click="showDeleteUnusedDialog = true" class="btn btn-danger">
-            {{ t('admin.redeem.deleteAllUnused') }}
-          </button>
-        </div>
-      </template>
-    </TablePageLayout>
+      </UserConsolePanel>
+    </UserConsolePage>
 
     <!-- Delete Confirmation Dialog -->
     <ConfirmDialog
@@ -626,7 +725,9 @@ import type {
 } from '@/types'
 import type { Column } from '@/components/common/types'
 import AppLayout from '@/components/layout/AppLayout.vue'
-import TablePageLayout from '@/components/layout/TablePageLayout.vue'
+import UserConsolePage from '@/components/user/console/UserConsolePage.vue'
+import UserConsolePanel from '@/components/user/console/UserConsolePanel.vue'
+import UserConsoleStatCard from '@/components/user/console/UserConsoleStatCard.vue'
 import DataTable from '@/components/common/DataTable.vue'
 import Pagination from '@/components/common/Pagination.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
@@ -804,6 +905,8 @@ const {
   rows: codes,
   getId: (code) => code.id
 })
+
+const visibleUnusedCount = computed(() => codes.value.filter((code) => code.status === 'unused').length)
 
 const batchUpdateForm = reactive({
   update_status: false,
@@ -1187,3 +1290,211 @@ onUnmounted(() => {
   abortController?.abort()
 })
 </script>
+
+<style scoped>
+.admin-redeem-console__stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-redeem-console__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.admin-redeem-console__filters,
+.admin-redeem-console__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-redeem-console__filters {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.admin-redeem-console__actions {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+}
+
+.admin-redeem-console__search {
+  flex: 1 1 260px;
+  min-width: min(100%, 240px);
+  max-width: 420px;
+}
+
+.admin-redeem-console__select {
+  width: 148px;
+}
+
+.admin-redeem-console__selection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(127, 159, 152, 0.18);
+  border-radius: 16px;
+  padding: 10px 12px;
+  background: rgba(127, 159, 152, 0.1);
+  color: #263f3a;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-redeem-console__selection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.admin-redeem-console__text-button {
+  color: #547c73;
+  font-size: 12px;
+  font-weight: 700;
+  transition: color 0.2s ease;
+}
+
+.admin-redeem-console__text-button:hover {
+  color: #263f3a;
+}
+
+.admin-redeem-console__table-shell {
+  display: flex;
+  min-height: 420px;
+  overflow: hidden;
+  border: 1px solid rgba(23, 20, 17, 0.07);
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.admin-redeem-console__table-shell :deep(.table-wrapper) {
+  min-height: 420px;
+  max-height: min(58vh, 640px);
+}
+
+.admin-redeem-console__table-shell :deep(.table-header),
+.admin-redeem-console__table-shell :deep(.sticky-header-cell) {
+  background: rgba(248, 244, 236, 0.96);
+}
+
+.admin-redeem-console__table-shell :deep(th) {
+  border-bottom-color: rgba(23, 20, 17, 0.08);
+  color: #7c7267;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.admin-redeem-console__table-shell :deep(td) {
+  border-bottom-color: rgba(23, 20, 17, 0.06);
+}
+
+.admin-redeem-console__table-shell :deep(tbody tr:hover) {
+  background: rgba(127, 159, 152, 0.08);
+}
+
+.admin-redeem-console__table-shell :deep(tbody .sticky-col),
+.admin-redeem-console__table-shell :deep(tbody tr:hover .sticky-col) {
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.admin-redeem-console__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 13px;
+}
+
+.admin-redeem-console__danger-zone {
+  display: flex;
+  justify-content: flex-end;
+}
+
+:global(.dark) .admin-redeem-console__selection {
+  border-color: rgba(45, 212, 191, 0.18);
+  background: rgba(20, 184, 166, 0.11);
+  color: #ccfbf1;
+}
+
+:global(.dark) .admin-redeem-console__text-button {
+  color: #5eead4;
+}
+
+:global(.dark) .admin-redeem-console__text-button:hover {
+  color: #99f6e4;
+}
+
+:global(.dark) .admin-redeem-console__table-shell {
+  border-color: rgba(148, 163, 184, 0.14);
+  background: rgba(15, 23, 42, 0.76);
+}
+
+:global(.dark) .admin-redeem-console__table-shell :deep(.table-header),
+:global(.dark) .admin-redeem-console__table-shell :deep(.sticky-header-cell) {
+  background: rgba(15, 23, 42, 0.95);
+}
+
+:global(.dark) .admin-redeem-console__table-shell :deep(tbody .sticky-col),
+:global(.dark) .admin-redeem-console__table-shell :deep(tbody tr:hover .sticky-col) {
+  background: rgba(17, 24, 39, 0.96);
+}
+
+@media (max-width: 1180px) {
+  .admin-redeem-console__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-redeem-console__toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-redeem-console__actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-redeem-console__stats {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-redeem-console__search,
+  .admin-redeem-console__select {
+    width: 100%;
+    max-width: none;
+  }
+
+  .admin-redeem-console__actions {
+    width: 100%;
+  }
+
+  .admin-redeem-console__selection,
+  .admin-redeem-console__pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-redeem-console__table-shell {
+    min-height: auto;
+    border: 0;
+    background: transparent;
+  }
+
+  .admin-redeem-console__table-shell :deep(.space-y-3 > div) {
+    border-color: rgba(23, 20, 17, 0.08);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.68);
+  }
+}
+</style>

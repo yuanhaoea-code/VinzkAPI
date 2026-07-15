@@ -3,7 +3,7 @@
     <!-- 铃铛按钮 -->
     <button
       @click="openModal"
-      class="relative flex h-9 w-9 items-center justify-center rounded-lg text-gray-600 transition-all hover:bg-gray-100 hover:scale-105 dark:text-gray-400 dark:hover:bg-dark-800"
+      class="announcement-trigger relative flex h-9 w-9 items-center justify-center rounded-lg text-gray-600 transition-all hover:bg-gray-100 hover:scale-105 dark:text-gray-400 dark:hover:bg-dark-800"
       :class="{ 'text-blue-600 dark:text-blue-400': unreadCount > 0 }"
       :aria-label="t('announcements.title')"
     >
@@ -23,19 +23,19 @@
       <Transition name="modal-fade">
         <div
           v-if="isModalOpen"
-          class="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-gradient-to-br from-black/70 via-black/60 to-black/70 p-4 pt-[8vh] backdrop-blur-md"
+          class="announcement-overlay fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-gradient-to-br from-black/70 via-black/60 to-black/70 p-4 pt-[8vh] backdrop-blur-md"
           @click="closeModal"
         >
           <div
-            class="w-full max-w-[620px] overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-dark-800 dark:ring-white/10"
+            class="announcement-modal w-full max-w-[620px] overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-dark-800 dark:ring-white/10"
             @click.stop
           >
             <!-- Header with Gradient -->
-            <div class="relative overflow-hidden border-b border-gray-100/80 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 px-6 py-5 dark:border-dark-700/50 dark:from-blue-900/10 dark:to-indigo-900/5">
+            <div class="announcement-modal__header relative overflow-hidden border-b border-gray-100/80 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 px-6 py-5 dark:border-dark-700/50 dark:from-blue-900/10 dark:to-indigo-900/5">
               <div class="relative z-10 flex items-start justify-between">
                 <div>
                   <div class="flex items-center gap-2">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
+                    <div class="announcement-modal__icon flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
                       <Icon name="bell" size="sm" />
                     </div>
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
@@ -52,13 +52,13 @@
                     v-if="unreadCount > 0"
                     @click="markAllAsRead"
                     :disabled="loading"
-                    class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-medium text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-700 hover:shadow-xl disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
+                    class="announcement-modal__primary rounded-lg bg-blue-600 px-4 py-2 text-xs font-medium text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-700 hover:shadow-xl disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
                   >
                     {{ t('announcements.markAllRead') }}
                   </button>
                   <button
                     @click="closeModal"
-                    class="flex h-9 w-9 items-center justify-center rounded-lg bg-white/50 text-gray-500 backdrop-blur-sm transition-all hover:bg-white hover:text-gray-700 dark:bg-dark-700/50 dark:text-gray-400 dark:hover:bg-dark-700 dark:hover:text-gray-300"
+                    class="announcement-modal__close flex h-9 w-9 items-center justify-center rounded-lg bg-white/50 text-gray-500 backdrop-blur-sm transition-all hover:bg-white hover:text-gray-700 dark:bg-dark-700/50 dark:text-gray-400 dark:hover:bg-dark-700 dark:hover:text-gray-300"
                     :aria-label="t('common.close')"
                   >
                     <Icon name="x" size="sm" />
@@ -84,7 +84,7 @@
                 <div
                   v-for="item in announcements"
                   :key="item.id"
-                  class="group relative flex items-center gap-4 border-b border-gray-100 px-6 py-4 transition-all hover:bg-gray-50 dark:border-dark-700 dark:hover:bg-dark-700/30"
+                  class="announcement-item group relative flex items-center gap-4 border-b border-gray-100 px-6 py-4 transition-all hover:bg-gray-50 dark:border-dark-700 dark:hover:bg-dark-700/30"
                   :class="{ 'bg-blue-50/30 dark:bg-blue-900/5': !item.read_at }"
                   style="min-height: 72px"
                   @click="openDetail(item)"
@@ -93,7 +93,7 @@
                   <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center">
                     <div
                       v-if="!item.read_at"
-                      class="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30"
+                      class="announcement-item__unread relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30"
                     >
                       <!-- Pulse ring -->
                       <span class="absolute inline-flex h-full w-full animate-ping rounded-xl bg-blue-400 opacity-75"></span>
@@ -158,7 +158,7 @@
               </div>
 
               <!-- Empty State -->
-              <div v-else class="flex flex-col items-center justify-center py-16">
+              <div v-else class="announcement-empty flex flex-col items-center justify-center py-16">
                 <div class="relative mb-4">
                   <div class="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-dark-700 dark:to-dark-600">
                     <Icon name="inbox" size="xl" class="text-gray-400 dark:text-gray-500" />
@@ -183,15 +183,15 @@
       <Transition name="modal-fade">
         <div
           v-if="detailModalOpen && selectedAnnouncement"
-          class="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-gradient-to-br from-black/70 via-black/60 to-black/70 p-4 pt-[6vh] backdrop-blur-md"
+          class="announcement-overlay fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-gradient-to-br from-black/70 via-black/60 to-black/70 p-4 pt-[6vh] backdrop-blur-md"
           @click="closeDetail"
         >
           <div
-            class="w-full max-w-[780px] overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-dark-800 dark:ring-white/10"
+            class="announcement-modal announcement-modal--detail w-full max-w-[780px] overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-dark-800 dark:ring-white/10"
             @click.stop
           >
             <!-- Header with Decorative Elements -->
-            <div class="relative overflow-hidden border-b border-gray-100 bg-gradient-to-br from-blue-50/80 via-indigo-50/50 to-purple-50/30 px-8 py-6 dark:border-dark-700 dark:from-blue-900/20 dark:via-indigo-900/10 dark:to-purple-900/5">
+            <div class="announcement-modal__header relative overflow-hidden border-b border-gray-100 bg-gradient-to-br from-blue-50/80 via-indigo-50/50 to-purple-50/30 px-8 py-6 dark:border-dark-700 dark:from-blue-900/20 dark:via-indigo-900/10 dark:to-purple-900/5">
               <!-- Decorative background elements -->
               <div class="absolute right-0 top-0 h-full w-64 bg-gradient-to-l from-indigo-100/30 to-transparent dark:from-indigo-900/20"></div>
               <div class="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gradient-to-br from-blue-400/20 to-indigo-500/20 blur-3xl"></div>
@@ -201,7 +201,7 @@
                 <div class="flex-1 min-w-0">
                   <!-- Icon and Category -->
                   <div class="mb-3 flex items-center gap-2">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
+                    <div class="announcement-modal__icon flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
                       <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -249,7 +249,7 @@
                 <!-- Close button -->
                 <button
                   @click="closeDetail"
-                  class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white/50 text-gray-500 backdrop-blur-sm transition-all hover:bg-white hover:text-gray-700 hover:shadow-lg dark:bg-dark-700/50 dark:text-gray-400 dark:hover:bg-dark-700 dark:hover:text-gray-300"
+                  class="announcement-modal__close flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white/50 text-gray-500 backdrop-blur-sm transition-all hover:bg-white hover:text-gray-700 hover:shadow-lg dark:bg-dark-700/50 dark:text-gray-400 dark:hover:bg-dark-700 dark:hover:text-gray-300"
                   :aria-label="t('common.close')"
                 >
                   <Icon name="x" size="md" />
@@ -258,11 +258,11 @@
             </div>
 
             <!-- Body with Enhanced Markdown -->
-            <div class="max-h-[60vh] overflow-y-auto bg-white px-8 py-8 dark:bg-dark-800">
+            <div class="announcement-modal__body max-h-[60vh] overflow-y-auto bg-white px-8 py-8 dark:bg-dark-800">
               <!-- Content with decorative border -->
               <div class="relative">
                 <!-- Decorative left border -->
-                <div class="absolute left-0 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b from-blue-500 via-indigo-500 to-purple-500"></div>
+                <div class="announcement-modal__rail absolute left-0 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b from-blue-500 via-indigo-500 to-purple-500"></div>
 
                 <div class="pl-6">
                   <div
@@ -274,7 +274,7 @@
             </div>
 
             <!-- Footer with Actions -->
-            <div class="border-t border-gray-100 bg-gray-50/50 px-8 py-5 dark:border-dark-700 dark:bg-dark-900/30">
+            <div class="announcement-modal__footer border-t border-gray-100 bg-gray-50/50 px-8 py-5 dark:border-dark-700 dark:bg-dark-900/30">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                   <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -292,7 +292,7 @@
                   <button
                     v-if="!selectedAnnouncement.read_at"
                     @click="markAsReadAndClose(selectedAnnouncement.id)"
-                    class="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/30 transition-all hover:shadow-xl hover:scale-105"
+                    class="announcement-modal__primary rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/30 transition-all hover:shadow-xl hover:scale-105"
                   >
                     <span class="flex items-center gap-2">
                       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -421,6 +421,183 @@ watch(
 </script>
 
 <style scoped>
+.announcement-trigger {
+  border: 1px solid rgba(23, 20, 17, 0.075);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #5f584f;
+  box-shadow: none;
+}
+
+.announcement-trigger:hover {
+  border-color: rgba(127, 159, 152, 0.22);
+  background: rgba(255, 255, 255, 0.86);
+  color: #171411;
+  transform: none;
+}
+
+.announcement-overlay {
+  background: rgba(11, 18, 32, 0.62);
+}
+
+.announcement-modal {
+  border: 1px solid rgba(23, 20, 17, 0.08);
+  border-radius: 22px;
+  background: #fbf8f1;
+  box-shadow: 0 28px 90px rgba(23, 20, 17, 0.2);
+  ring-width: 0;
+}
+
+.announcement-modal__header {
+  border-bottom-color: rgba(23, 20, 17, 0.08);
+  background:
+    radial-gradient(circle at 92% 0, rgba(127, 159, 152, 0.18), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(248, 243, 233, 0.96));
+}
+
+.announcement-modal__header > .absolute {
+  display: none;
+}
+
+.announcement-modal__icon,
+.announcement-item__unread {
+  background: #171411;
+  color: #fbf8f1;
+  box-shadow: none;
+}
+
+.announcement-modal__primary {
+  border: 1px solid rgba(23, 20, 17, 0.14);
+  border-radius: 999px;
+  background: #171411;
+  color: #fbf8f1;
+  box-shadow: none;
+}
+
+.announcement-modal__primary:hover {
+  background: #2b2721;
+  transform: none;
+}
+
+.announcement-modal__close {
+  border: 1px solid rgba(23, 20, 17, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.announcement-item {
+  border-bottom-color: rgba(23, 20, 17, 0.07);
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.announcement-item:hover {
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.announcement-item.bg-blue-50\/30 {
+  background: rgba(127, 159, 152, 0.1);
+}
+
+.announcement-item .bg-blue-100,
+.announcement-item .bg-gray-100 {
+  background: rgba(127, 159, 152, 0.12);
+  color: #547c73;
+}
+
+.announcement-item .bg-gradient-to-b {
+  background: #7f9f98;
+}
+
+.announcement-empty {
+  color: #7c7267;
+}
+
+.announcement-modal__body {
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.announcement-modal__rail {
+  background: #7f9f98;
+}
+
+.announcement-modal__footer {
+  border-top-color: rgba(23, 20, 17, 0.08);
+  background: rgba(255, 255, 255, 0.42);
+}
+
+:global(.dark) .announcement-trigger {
+  border-color: rgba(148, 163, 184, 0.16);
+  background: rgba(17, 24, 39, 0.78);
+  color: #cbd5e1;
+}
+
+:global(.dark) .announcement-trigger:hover {
+  border-color: rgba(45, 212, 191, 0.26);
+  background: rgba(30, 41, 59, 0.86);
+  color: #f8fafc;
+}
+
+:global(.dark) .announcement-modal {
+  border-color: rgba(148, 163, 184, 0.16);
+  background: #0f172a;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+}
+
+:global(.dark) .announcement-modal__header {
+  border-bottom-color: rgba(148, 163, 184, 0.14);
+  background:
+    radial-gradient(circle at 92% 0, rgba(45, 212, 191, 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(17, 24, 39, 0.96), rgba(15, 23, 42, 0.98));
+}
+
+:global(.dark) .announcement-modal__icon,
+:global(.dark) .announcement-item__unread {
+  background: #14b8a6;
+  color: #052e2b;
+}
+
+:global(.dark) .announcement-modal__primary {
+  border-color: rgba(45, 212, 191, 0.28);
+  background: #14b8a6;
+  color: #052e2b;
+}
+
+:global(.dark) .announcement-modal__primary:hover {
+  background: #2dd4bf;
+}
+
+:global(.dark) .announcement-modal__close {
+  border-color: rgba(148, 163, 184, 0.14);
+  background: rgba(30, 41, 59, 0.8);
+}
+
+:global(.dark) .announcement-item {
+  border-bottom-color: rgba(148, 163, 184, 0.12);
+  background: rgba(15, 23, 42, 0.58);
+}
+
+:global(.dark) .announcement-item:hover {
+  background: rgba(20, 184, 166, 0.08);
+}
+
+:global(.dark) .announcement-item.dark\:bg-blue-900\/5,
+:global(.dark) .announcement-item.bg-blue-50\/30 {
+  background: rgba(20, 184, 166, 0.1);
+}
+
+:global(.dark) .announcement-modal__body {
+  background: rgba(15, 23, 42, 0.92);
+}
+
+:global(.dark) .announcement-modal__rail {
+  background: #14b8a6;
+}
+
+:global(.dark) .announcement-modal__footer {
+  border-top-color: rgba(148, 163, 184, 0.14);
+  background: rgba(11, 18, 32, 0.74);
+}
+
 /* Modal Animations */
 .modal-fade-enter-active {
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);

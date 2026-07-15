@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"net"
 	"net/url"
 	"sort"
 	"strconv"
@@ -707,9 +708,12 @@ func (s *SettingService) GetAllSettings(ctx context.Context) (*SystemSettings, e
 func (s *SettingService) GetFrontendURL(ctx context.Context) string {
 	val, err := s.settingRepo.GetValue(ctx, SettingKeyFrontendURL)
 	if err == nil && strings.TrimSpace(val) != "" {
-		return strings.TrimSpace(val)
+		return productionPublicURLOrDefault(val, DefaultPublicSiteURL)
 	}
-	return s.cfg.Server.FrontendURL
+	if configured := strings.TrimSpace(s.cfg.Server.FrontendURL); configured != "" {
+		return productionPublicURLOrDefault(configured, DefaultPublicSiteURL)
+	}
+	return DefaultPublicSiteURL
 }
 
 // GetCyberSessionBlockRuntime 返回 (开关, TTL)，进程内缓存 ~60s，
@@ -911,12 +915,12 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		LoginAgreementDocuments:          loginAgreementDocuments,
 		TurnstileEnabled:                 settings[SettingKeyTurnstileEnabled] == "true",
 		TurnstileSiteKey:                 settings[SettingKeyTurnstileSiteKey],
-		SiteName:                         s.getStringOrDefault(settings, SettingKeySiteName, "Sub2API"),
+		SiteName:                         s.getStringOrDefault(settings, SettingKeySiteName, DefaultPublicSiteName),
 		SiteLogo:                         settings[SettingKeySiteLogo],
-		SiteSubtitle:                     s.getStringOrDefault(settings, SettingKeySiteSubtitle, "Subscription to API Conversion Platform"),
-		APIBaseURL:                       settings[SettingKeyAPIBaseURL],
-		ContactInfo:                      settings[SettingKeyContactInfo],
-		DocURL:                           settings[SettingKeyDocURL],
+		SiteSubtitle:                     s.getStringOrDefault(settings, SettingKeySiteSubtitle, DefaultPublicSiteSubtitle),
+		APIBaseURL:                       productionPublicURLOrDefault(settings[SettingKeyAPIBaseURL], DefaultPublicAPIBaseURL),
+		ContactInfo:                      s.getStringOrDefault(settings, SettingKeyContactInfo, DefaultPublicContactInfo),
+		DocURL:                           productionPublicURLOrDefault(settings[SettingKeyDocURL], DefaultPublicTutorialURL),
 		HomeContent:                      settings[SettingKeyHomeContent],
 		HideCcsImportButton:              settings[SettingKeyHideCcsImportButton] == "true",
 		PurchaseSubscriptionEnabled:      settings[SettingKeyPurchaseSubscriptionEnabled] == "true",
@@ -940,7 +944,7 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		BalanceLowNotifyEnabled:          settings[SettingKeyBalanceLowNotifyEnabled] == "true",
 		AccountQuotaNotifyEnabled:        settings[SettingKeyAccountQuotaNotifyEnabled] == "true",
 		BalanceLowNotifyThreshold:        balanceLowNotifyThreshold,
-		BalanceLowNotifyRechargeURL:      settings[SettingKeyBalanceLowNotifyRechargeURL],
+		BalanceLowNotifyRechargeURL:      productionPublicURLOrDefault(settings[SettingKeyBalanceLowNotifyRechargeURL], DefaultPublicRechargeURL),
 
 		ChannelMonitorEnabled:                !isFalseSettingValue(settings[SettingKeyChannelMonitorEnabled]),
 		ChannelMonitorDefaultIntervalSeconds: parseChannelMonitorInterval(settings[SettingKeyChannelMonitorDefaultIntervalSeconds]),
@@ -2853,7 +2857,7 @@ func (s *SettingService) IsTotpEncryptionKeyConfigured() bool {
 func (s *SettingService) GetSiteName(ctx context.Context) string {
 	value, err := s.settingRepo.GetValue(ctx, SettingKeySiteName)
 	if err != nil || value == "" {
-		return "Sub2API"
+		return DefaultPublicSiteName
 	}
 	return value
 }
@@ -3048,7 +3052,13 @@ func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 		SettingKeyLoginAgreementUpdatedAt:                   defaultLoginAgreementDate,
 		SettingKeyLoginAgreementDocuments:                   loginAgreementDocumentsJSON,
 		SettingKeyAPIKeyACLTrustForwardedIP:                 "false",
-		SettingKeySiteName:                                  "Sub2API",
+		SettingKeySiteName:                                  DefaultPublicSiteName,
+		SettingKeySiteSubtitle:                              DefaultPublicSiteSubtitle,
+		SettingKeyAPIBaseURL:                                DefaultPublicAPIBaseURL,
+		SettingKeyContactInfo:                               DefaultPublicContactInfo,
+		SettingKeyDocURL:                                    DefaultPublicTutorialURL,
+		SettingKeyFrontendURL:                               DefaultPublicSiteURL,
+		SettingKeyBalanceLowNotifyRechargeURL:               DefaultPublicRechargeURL,
 		SettingKeySiteLogo:                                  "",
 		SettingKeyPurchaseSubscriptionEnabled:               "false",
 		SettingKeyPurchaseSubscriptionURL:                   "",
@@ -3234,7 +3244,7 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 		RegistrationEmailSuffixWhitelist: ParseRegistrationEmailSuffixWhitelist(settings[SettingKeyRegistrationEmailSuffixWhitelist]),
 		PromoCodeEnabled:                 settings[SettingKeyPromoCodeEnabled] != "false", // 默认启用
 		PasswordResetEnabled:             emailVerifyEnabled && settings[SettingKeyPasswordResetEnabled] == "true",
-		FrontendURL:                      settings[SettingKeyFrontendURL],
+		FrontendURL:                      productionPublicURLOrDefault(settings[SettingKeyFrontendURL], DefaultPublicSiteURL),
 		InvitationCodeEnabled:            settings[SettingKeyInvitationCodeEnabled] == "true",
 		TotpEnabled:                      settings[SettingKeyTotpEnabled] == "true",
 		LoginAgreementEnabled:            settings[SettingKeyLoginAgreementEnabled] == "true",
@@ -3251,12 +3261,12 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 		TurnstileSiteKey:                 settings[SettingKeyTurnstileSiteKey],
 		TurnstileSecretKeyConfigured:     settings[SettingKeyTurnstileSecretKey] != "",
 		APIKeyACLTrustForwardedIP:        apiKeyACLTrustForwardedIP,
-		SiteName:                         s.getStringOrDefault(settings, SettingKeySiteName, "Sub2API"),
+		SiteName:                         s.getStringOrDefault(settings, SettingKeySiteName, DefaultPublicSiteName),
 		SiteLogo:                         settings[SettingKeySiteLogo],
-		SiteSubtitle:                     s.getStringOrDefault(settings, SettingKeySiteSubtitle, "Subscription to API Conversion Platform"),
-		APIBaseURL:                       settings[SettingKeyAPIBaseURL],
-		ContactInfo:                      settings[SettingKeyContactInfo],
-		DocURL:                           settings[SettingKeyDocURL],
+		SiteSubtitle:                     s.getStringOrDefault(settings, SettingKeySiteSubtitle, DefaultPublicSiteSubtitle),
+		APIBaseURL:                       productionPublicURLOrDefault(settings[SettingKeyAPIBaseURL], DefaultPublicAPIBaseURL),
+		ContactInfo:                      s.getStringOrDefault(settings, SettingKeyContactInfo, DefaultPublicContactInfo),
+		DocURL:                           productionPublicURLOrDefault(settings[SettingKeyDocURL], DefaultPublicTutorialURL),
 		HomeContent:                      settings[SettingKeyHomeContent],
 		HideCcsImportButton:              settings[SettingKeyHideCcsImportButton] == "true",
 		PurchaseSubscriptionEnabled:      settings[SettingKeyPurchaseSubscriptionEnabled] == "true",
@@ -3775,7 +3785,7 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 	if v, err := strconv.ParseFloat(settings[SettingKeyBalanceLowNotifyThreshold], 64); err == nil && v >= 0 {
 		result.BalanceLowNotifyThreshold = v
 	}
-	result.BalanceLowNotifyRechargeURL = settings[SettingKeyBalanceLowNotifyRechargeURL]
+	result.BalanceLowNotifyRechargeURL = productionPublicURLOrDefault(settings[SettingKeyBalanceLowNotifyRechargeURL], DefaultPublicRechargeURL)
 	result.SubscriptionExpiryNotifyEnabled = !isFalseSettingValue(settings[SettingKeySubscriptionExpiryNotifyEnabled])
 
 	// 账号限额通知
@@ -4007,6 +4017,28 @@ func (s *SettingService) getStringOrDefault(settings map[string]string, key, def
 		return value
 	}
 	return defaultValue
+}
+
+func productionPublicURLOrDefault(value, fallback string) string {
+	candidate := strings.TrimSpace(value)
+	parsed, err := url.ParseRequestURI(candidate)
+	if err != nil || parsed.Scheme != "https" || parsed.Host == "" || isNonProductionPublicHost(parsed.Hostname()) {
+		return fallback
+	}
+	return strings.TrimRight(candidate, "/")
+}
+
+func isNonProductionPublicHost(host string) bool {
+	host = strings.ToLower(strings.TrimSpace(host))
+	if host == "localhost" || host == "0.0.0.0" || strings.HasSuffix(host, ".localhost") || strings.HasSuffix(host, ".local") ||
+		strings.HasSuffix(host, ".test") || strings.HasSuffix(host, ".invalid") || host == "example.com" ||
+		strings.HasSuffix(host, ".example.com") || strings.Contains(host, "your-domain") || strings.Contains(host, "your-site") {
+		return true
+	}
+	if ip := net.ParseIP(host); ip != nil {
+		return ip.IsLoopback() || ip.IsPrivate() || ip.IsUnspecified() || ip.IsLinkLocalUnicast()
+	}
+	return false
 }
 
 // IsTurnstileEnabled 检查是否启用 Turnstile 验证

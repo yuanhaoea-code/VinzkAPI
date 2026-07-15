@@ -1,6 +1,180 @@
 export default {
+  monitor: {
+    title: 'Channel Status'
+  },
   // Home Page
   home: {
+    landing: {
+      brand: 'Vinzk AI',
+      nav: {
+        label: 'Vinzk AI home navigation',
+        gateway: 'API Gateway',
+        creative: 'AI Creation',
+        workspace: 'Agent Workspace',
+        pricing: 'Services'
+      },
+      hero: {
+        core: 'AI',
+        eyebrow: 'AI capability gateway · Agent workspace · Enterprise AI service',
+        slogan: 'One thought, many outcomes',
+        subtitle: 'Bring model APIs, image generation, video generation, and agent workflows into one entry point. From a single idea to an image, a video, an app, or a document workflow.',
+        primaryCta: 'Enter console',
+        secondaryCta: 'View creative tools'
+      },
+      promise: {
+        eyebrow: 'OUR PROMISE',
+        title: 'One entry for models, one bill for usage',
+        copyOne: 'Vinzk AI is not just request forwarding. It packages model access, tool integrations, creative capabilities, and service delivery into a practical AI service.',
+        copyTwo: 'Connect it to Codex CLI, Claude Code, Cursor, and Cline, or use the web workspace to process documents, reports, code, and creative tasks.',
+        items: {
+          oneKey: 'One key · multi-model access',
+          dispatch: 'Smart routing · long stream support',
+          billing: 'Clear billing · traceable usage',
+          service: 'Enterprise and school service delivery'
+        }
+      },
+      stats: {
+        requestsValue: '802541',
+        requestsUnit: '+',
+        requestsLabel: 'API requests processed',
+        availabilityValue: '98.80',
+        availabilityUnit: '%',
+        availabilityLabel: '30-day availability',
+        latencyValue: '378',
+        latencyUnit: 'ms',
+        latencyLabel: 'Average first-token latency'
+      },
+      gateway: {
+        eyebrow: 'GATEWAY · API',
+        title: 'One key reaches many model capabilities.',
+        lead: 'Compatible with mainstream API protocols and ready for GPT, Claude, Gemini, image2, seedance, and more. Built for agents, IDEs, command line tools, and internal systems.'
+      },
+      creative: {
+        eyebrow: 'CREATE · AI Creation',
+        title: 'One sentence can create images and videos.',
+        lead: 'Connect image2 for image generation and seedance for video generation. Users describe the idea, and the platform handles calls, queues, responses, and usage records.',
+        prompt: 'A quiet coastal sunset, soft volumetric light, photorealistic detail',
+        generating: 'Generating',
+        sizeLabel: 'Supports 1K / 2K / 4K images',
+        video: 'From a still image to a short video, with room for more creative models.'
+      },
+      playbook: {
+        eyebrow: 'PLAYBOOK · Channels',
+        title: 'More than API, it can also be engaging.',
+        lead: 'Turn token usage into a more participatory service with daily check-ins, referral rewards, token leaderboards, and AI development tasks.',
+        switch: 'Switch',
+        modes: {
+          signin: {
+            title: 'Check-in',
+            caption: 'Daily check-ins grant trial quota.'
+          },
+          agent: {
+            title: 'Agent Team',
+            caption: 'Invite users and track commissions.'
+          },
+          token: {
+            title: 'Token Farm',
+            caption: 'Top token users receive extra rewards.'
+          },
+          code: {
+            title: 'AI Dev',
+            prompt: 'build a customer follow-up system',
+            caption: 'One requirement lets agents plan, code, and test.'
+          }
+        }
+      },
+      workspace: {
+        eyebrow: 'WORKSPACE · Agent',
+        title: 'Collaborate with agents directly on the web.',
+        lead: 'Later, Hermes or OpenClaw can connect your existing API capacity to a web chat workspace. Users can upload files, reports, and documents for analysis, rewriting, and planning.',
+        status: 'In progress · replace this mock after the real workspace is ready',
+        userMessage: 'Summarize this report and create next week action items.',
+        aiMessage: 'File received. I will extract key metrics, summarize trends, and prepare an execution checklist.'
+      },
+      why: {
+        eyebrow: 'WHY · Why Vinzk',
+        title: 'Less friction, more thinking speed.',
+        items: {
+          multi: {
+            title: 'Multi-model aggregation',
+            body: 'GPT, Claude, Gemini, and other capabilities can be reached from one compatible workflow.',
+            previewTitle: 'ONE KEY · ALL MODELS'
+          },
+          reliable: {
+            title: 'Reliable routing',
+            body: 'Account pools, routes, and long-response handling reduce interruption from slow upstream responses.',
+            previewTitle: 'ROUTING · STREAM SAFE'
+          },
+          billing: {
+            title: 'Clear billing',
+            body: 'Requests, models, tokens, balances, and costs are traceable for teams, schools, and enterprises.',
+            previewTitle: 'BILLING · TRACEABLE'
+          },
+          enterprise: {
+            title: 'Service delivery',
+            body: 'Provides API access, AI usage quota, industry templates, and technical support for teams and institutions.',
+            previewTitle: 'SERVICE · INVOICE READY'
+          },
+          market: {
+            title: 'Model market',
+            body: 'Show available models and capability boundaries by group, so users know what to call and when to use it.',
+            previewTitle: 'MODEL MARKET · CLEAR CHOICE'
+          },
+          recharge: {
+            title: 'Self-service recharge',
+            body: 'Users can buy quota or redeem recharge codes in the console, with balance updates handled automatically.',
+            previewTitle: 'RECHARGE · SELF SERVICE'
+          }
+        }
+      },
+      onboarding: {
+        eyebrow: 'ONBOARD · Quick Start',
+        title: 'Start without writing a line of code.',
+        lead: 'Copy an API key from the console and paste it into your tool. When the web workspace is ready, users can also launch tasks directly in the browser.',
+        idea: 'build an internal ticket system from one sentence',
+        steps: {
+          copy: {
+            title: 'Create an API key',
+            body: 'Choose group, quota, and model scope in the console.'
+          },
+          paste: {
+            title: 'Connect tools',
+            body: 'Set base_url and key for Codex, Cursor, Cline, and other workflows.'
+          },
+          create: {
+            title: 'Start creating',
+            body: 'Chat, code, images, videos, and documents gradually share one entry point.'
+          }
+        }
+      },
+      pricing: {
+        eyebrow: 'SERVICE · AI Services',
+        title: 'API access, AI assistance, and compute support.',
+        lead: 'For individuals, enterprises, and schools, Vinzk provides stable API access, web AI collaboration, model capability access, and technical support.',
+        cta: 'Start with Vinzk AI',
+        services: {
+          api: {
+            tag: 'API',
+            title: 'API calling service',
+            body: 'For agents, IDEs, automation scripts, and internal systems with metered usage and unified management.'
+          },
+          workspace: {
+            tag: 'AI Support',
+            title: 'AI assistance',
+            body: 'Supports web chat, file processing, report analysis, and agent tasks for non-technical users.'
+          },
+          invoice: {
+            tag: 'Compute',
+            title: 'Compute and technical support',
+            body: 'Provides model access, quota management, technical assistance, and ongoing service support for teams.'
+          }
+        }
+      },
+      footer: {
+        tagline: 'Vinzk · ideas become outcomes faster',
+        copyright: "{'@'}2026 www.Vinzk.cn"
+      }
+    },
     viewOnGithub: 'View on GitHub',
     viewDocs: 'View Documentation',
     docs: 'Docs',
@@ -187,8 +361,8 @@ export default {
 
   // Setup Wizard
   setup: {
-    title: 'Sub2API Setup',
-    description: 'Configure your Sub2API instance',
+    title: 'VinzkAPI Setup',
+    description: 'Configure your VinzkAPI instance',
     database: {
       title: 'Database Configuration',
       description: 'Connect to your PostgreSQL database',
@@ -404,6 +578,7 @@ export default {
     affiliateRebateRecords: 'Rebate Records',
     affiliateTransferRecords: 'Transfer Records',
     profile: 'Profile',
+    tutorials: 'Tutorials',
     users: 'Users',
     groups: 'Groups',
     channels: 'Channels',
@@ -424,6 +599,9 @@ export default {
     github: 'GitHub',
     mySubscriptions: 'My Subscriptions',
     buySubscription: 'Recharge / Subscription',
+    modelMarket: 'Model Market',
+    imageGeneration: 'AI Images',
+    recharge: 'Recharge',
     docs: 'Docs',
     myOrders: 'My Orders',
     orderManagement: 'Orders',
@@ -437,14 +615,53 @@ export default {
     riskControl: 'Risk Control',
   },
 
+  authLayout: {
+    brand: 'Vinzk AI',
+    brandMark: 'V',
+    backHome: 'Back home',
+    cardSubtitle: 'AI service entry',
+    kicker: 'API access service · AI assistance · compute support',
+    titleOne: 'Give ideas to models,',
+    titleTwo: 'let Vinzk deliver results',
+    lead: 'Provide stable model access, web AI collaboration, file processing, and technical service support for individuals, teams, enterprises, and schools.',
+    service: {
+      api: {
+        label: 'API',
+        value: 'Unified access'
+      },
+      ai: {
+        label: 'AI',
+        value: 'Web collaboration'
+      },
+      compute: {
+        label: 'COMPUTE',
+        value: 'Service support'
+      }
+    },
+    capabilities: {
+      api: 'Connect APIs to agents, IDEs, and automation tools',
+      workspace: 'Use web AI chat for files, reports, and documents',
+      support: 'AI service support for enterprises, schools, and individuals'
+    },
+    support: {
+      label: 'SUPPORT',
+      text: 'For login, registration, recharge, or usage issues, contact support anytime',
+      qq: 'Support QQ'
+    }
+  },
+
   // Auth
   auth: {
     welcomeBack: 'Welcome Back',
     signInToAccount: 'Sign in to your account to continue',
+    loginVinzkTitle: 'Welcome to Vinzk AI',
+    loginVinzkSubtitle: 'Continue using API, creative, and agent services',
     signIn: 'Sign In',
     signingIn: 'Signing in...',
     createAccount: 'Create Account',
     signUpToStart: 'Sign up to start using {siteName}',
+    registerVinzkTitle: 'Join Vinzk AI',
+    registerVinzkSubtitle: 'Create an account and start using AI service capabilities',
     signUp: 'Sign up',
     processing: 'Processing...',
     continue: 'Continue',
@@ -462,6 +679,17 @@ export default {
     invalidEmail: 'Please enter a valid email address',
     passwordRequired: 'Password is required',
     passwordMinLength: 'Password must be at least 6 characters',
+    realNameLabel: 'Name',
+    realNamePlaceholder: 'Enter your name',
+    realNameRequired: 'Name is required',
+    userTypeLabel: 'User Type',
+    userTypePersonal: 'Personal User',
+    userTypeEnterprise: 'Enterprise User',
+    userTypeSchool: 'School User',
+    userTypeRequired: 'User type is required',
+    contactPhoneLabel: 'Contact',
+    contactPhonePlaceholder: 'Enter your phone number or contact',
+    contactPhoneRequired: 'Contact is required',
     loginFailed: 'Login failed. Please check your credentials and try again.',
     errors: {
       USER_NOT_ACTIVE: 'Account has been disabled.',
@@ -662,6 +890,32 @@ export default {
   dashboard: {
     title: 'Dashboard',
     welcomeMessage: "Welcome back! Here's an overview of your account.",
+    console: {
+      kicker: 'DASHBOARD',
+      title: 'Dashboard',
+      description: 'Review balance, requests, token consumption, cost trends, and response performance in one place.',
+      summaryDescription: 'Your available balance and today’s usage at a glance for easier planning and top-ups.',
+      noteOverviewTitle: 'Account overview',
+      noteOverviewCopy: 'Balance, today’s requests, total tokens, actual cost, and average response are grouped together.',
+      noteAnalysisTitle: 'Usage analysis',
+      noteAnalysisCopy: 'Use model distribution and trends to see where usage is concentrated over time.',
+      noteNextTitle: 'Quick access',
+      noteNextCopy: 'Go directly to API keys, usage records, redemption, or the model market.',
+      platformDescription: 'Per-platform cost, requests, tokens, and quota windows stay together so you can see where usage is accumulating.',
+      balanceHint: 'Wallet balance',
+      keysDetail: 'Create, disable, or regroup keys to manage access from one place.',
+      requestsDetail: 'The current range helps you judge daily demand and saturation.',
+      performanceDetail: 'Current throughput in requests and tokens per minute.',
+      responseDetail: 'Average end-to-end duration from your recent requests.',
+      chartTitle: 'Stats and trends',
+      chartDescription: 'Switch the range and granularity to compare model distribution, request volume, and token trends.',
+      chartMeta: 'Usage trends and model distribution',
+      chartViewLabel: 'View',
+      modelDescription: 'Model mix shows where calls and token volume are concentrated.',
+      recentDescription: 'The latest successful requests help you confirm models, timing, and cost without leaving the page.',
+      quickActionsDescription: 'Jump straight to the most used workflows without hunting through the sidebar.',
+      monitorDescription: 'Open the current channel and route status view.',
+    },
     balance: 'Balance',
     apiKeys: 'API Keys',
     todayRequests: 'Today Requests',
@@ -726,6 +980,35 @@ export default {
   keys: {
     title: 'API Keys',
     description: 'Manage your API keys and access tokens',
+    console: {
+      kicker: 'API KEYS',
+      title: 'API Keys',
+      description: 'Create and manage API keys, filter by name, group, or status, and review usage and cost.',
+      summaryDescription: 'An overview of key count, active status, and security rules.',
+      filteredKeys: 'Filtered keys',
+      activeKeys: 'Active on this page',
+      todayActualCost: 'Today actual cost',
+      filteredHint: 'The current query result count',
+      filteredDetail: 'Search, group, and status filters all apply here.',
+      activeHint: 'Keys currently allowed to send traffic',
+      activeDetail: 'Disable, regroup, copy, or review connection instructions at any time.',
+      quotaKeys: 'Quota-managed',
+      quotaHint: 'Keys with explicit spend limits',
+      quotaDetail: 'Quota, reset, and expiration stay on the same row.',
+      ruleKeys: 'Rules applied',
+      ruleHint: 'IP rules, rate limits, or expiration enabled',
+      ruleDetail: 'Operational constraints are visible before traffic hits them.',
+      noteUseTitle: 'Use with multiple clients',
+      noteUseCopy: 'Review and copy setup instructions for Codex CLI, Claude Code, Gemini CLI, and related tools.',
+      noteControlTitle: 'Control keys from one list',
+      noteControlCopy: 'Manage groups, IP allowlists or blocklists, quotas, expiration, and rate limits from one page.',
+      noteInspectTitle: 'Inspect spend before rotation',
+      noteInspectCopy: 'Use today and total spend to decide when to pause a key or tighten its limits.',
+      filterTitle: 'Find the right keys',
+      filterCopy: 'Search by name, narrow by group, and isolate status before touching quotas or routing.',
+      actionsTitle: 'Common operations',
+      actionsCopy: 'Refresh the list, adjust visible columns, or create a new key from the same toolbar.',
+    },
     searchPlaceholder: 'Search name or key...',
     endpoints: {
       title: 'API Endpoints',
@@ -892,6 +1175,28 @@ export default {
   usage: {
     title: 'Usage Records',
     description: 'View and analyze your API usage history',
+    console: {
+      kicker: 'USAGE',
+      title: 'Usage Records',
+      description: 'Review requests, tokens, standard cost, and actual charges by time range, then filter or export for analysis.',
+      summaryDescription: 'Total requests in the selected range, viewed together with tokens, cost, and average duration.',
+      requestsInRange: 'Requests in range',
+      actualCost: 'Actual billed cost',
+      range: 'Current range',
+      noteBillingTitle: 'Compare standard and actual cost',
+      noteBillingCopy: 'Compare standard cost with actual charges to understand pricing and settlement differences.',
+      noteExportTitle: 'Export for reconciliation',
+      noteExportCopy: 'CSV exports use the current filters and sorting for reconciliation, analysis, or archiving.',
+      noteErrorTitle: 'Trace failures without leaving logs',
+      noteErrorCopy: 'When error viewing is enabled, the same time range can switch to failed requests for quick diagnosis.',
+      chartsTitle: 'Charts and distribution',
+      chartsDescription: 'Model, group, endpoint, and token charts stay on top so usage shape is visible before you scan individual rows.',
+      filtersTitle: 'Filters and export',
+      filtersDescription: 'Narrow by API key, model, group, request type, and billing mode, then export or reset from the same strip.',
+      recordsTitle: 'Detailed records',
+      recordsDescription: 'Sort, paginate, or adjust columns to review request and billing details.',
+      errorsDescription: 'Review the time, model, and error category of failed requests to locate issues quickly.',
+    },
     costDetails: 'Cost Breakdown',
     tokenDetails: 'Token Breakdown',
     cacheTtlOverriddenHint: 'Cache TTL Override enabled',
@@ -1234,6 +1539,12 @@ export default {
     failedToRedeem: 'Failed to redeem code. Please check the code and try again.',
     subscriptionRefreshFailed: 'Redeemed successfully, but failed to refresh subscription status.',
     pleaseEnterCode: 'Please enter a redeem code'
+  },
+
+  // Tutorials
+  tutorials: {
+    title: 'Tutorials',
+    description: 'Setup and troubleshooting guides from account preparation to client integration'
   },
 
   // Profile
@@ -2291,6 +2602,7 @@ export default {
         title: 'Image Generation Pricing',
         description: 'Configure image generation access and base image prices. Leave empty to use default prices.',
         allowImageGeneration: 'Allow image generation for this group',
+        allowedTiers: 'Allowed image resolutions',
         independentMultiplier: 'Use independent image multiplier',
         imageMultiplier: 'Image multiplier',
         modeHint: 'By default, image billing uses image price × current effective group multiplier. Independent mode uses image price × image multiplier.',
@@ -2907,8 +3219,8 @@ export default {
         apiModeResponses: 'Responses API',
         apiModeResponsesHint: 'Use /v1/responses with default instructions + input; best for self-check/Codex paths.',
         endpoint: 'Endpoint',
-        endpointPlaceholder: 'https://api.example.com',
-        useCurrentDomain: 'Use current service',
+        endpointPlaceholder: 'https://api.vinzk.cn',
+        useCurrentDomain: 'Use production API',
         apiKey: 'API Key',
         apiKeyPlaceholder: 'Enter API Key',
         apiKeyEditPlaceholder: 'Leave blank to keep current key',
@@ -5758,8 +6070,8 @@ export default {
         passwordReset: 'Password Reset',
         passwordResetHint: 'Allow users to reset their password via email',
         frontendUrl: 'Frontend URL',
-        frontendUrlPlaceholder: 'https://example.com',
-        frontendUrlHint: 'Used to generate password reset links in emails. Example: https://example.com',
+        frontendUrlPlaceholder: 'https://vinzk.cn',
+        frontendUrlHint: 'Used to generate password reset links in emails. Production URL: https://vinzk.cn',
         totp: 'Two-Factor Authentication (2FA)',
         totpHint: 'Allow users to use authenticator apps like Google Authenticator',
         totpKeyNotConfigured:
@@ -5786,7 +6098,7 @@ export default {
       },
       linuxdo: {
         title: 'LinuxDo Connect Login',
-        description: 'Configure LinuxDo Connect OAuth for Sub2API end-user login',
+        description: 'Configure LinuxDo Connect OAuth for VinzkAPI end-user login',
         enable: 'Enable LinuxDo Login',
         enableHint: 'Show LinuxDo login on the login/register pages',
         clientId: 'Client ID',
@@ -5798,7 +6110,7 @@ export default {
         clientSecretConfiguredPlaceholder: '********',
         clientSecretConfiguredHint: 'Secret configured. Leave empty to keep the current value.',
         redirectUrl: 'Redirect URL',
-        redirectUrlPlaceholder: 'https://your-domain.com/api/v1/auth/oauth/linuxdo/callback',
+        redirectUrlPlaceholder: 'https://api.vinzk.cn/api/v1/auth/oauth/linuxdo/callback',
         redirectUrlHint:
           'Must match the redirect URL configured in Connect.Linux.Do (must be an absolute http(s) URL)',
         quickSetCopy: 'Generate & Copy (current site)',
@@ -5806,7 +6118,7 @@ export default {
       },
       dingtalk: {
         title: 'DingTalk Login',
-        description: 'Configure DingTalk OAuth for Sub2API end-user login',
+        description: 'Configure DingTalk OAuth for VinzkAPI end-user login',
         enable: 'Enable DingTalk Login (Internal Corporate App)',
         enableHint: 'Show DingTalk login on the login/register pages',
         clientId: 'Client ID (AppKey)',
@@ -5818,7 +6130,7 @@ export default {
         clientSecretConfiguredPlaceholder: '********',
         clientSecretConfiguredHint: 'Secret configured. Leave empty to keep the current value.',
         redirectUrl: 'Redirect URL',
-        redirectUrlPlaceholder: 'https://your-domain.com/api/v1/auth/oauth/dingtalk/callback',
+        redirectUrlPlaceholder: 'https://api.vinzk.cn/api/v1/auth/oauth/dingtalk/callback',
         redirectUrlHint:
           'Must match the redirect URL configured in DingTalk Open Platform (must be an absolute http(s) URL)',
         corpPolicy: {
@@ -5875,7 +6187,7 @@ export default {
         scopesPlaceholder: 'openid email profile',
         scopesHint: 'Must include openid',
         redirectUrl: 'Backend Redirect URL',
-        redirectUrlPlaceholder: 'https://your-domain.com/api/v1/auth/oauth/oidc/callback',
+        redirectUrlPlaceholder: 'https://api.vinzk.cn/api/v1/auth/oauth/oidc/callback',
         redirectUrlHint: 'Must match the callback URL configured in the OIDC provider',
         quickSetCopy: 'Generate & Copy (current site)',
         redirectUrlSetAndCopied: 'Redirect URL generated and copied to clipboard',
@@ -6067,15 +6379,15 @@ export default {
         backendModeDescription:
           'Disables user registration, public site, and self-service features. Only admin can log in and manage the platform.',
         siteName: 'Site Name',
-        siteNamePlaceholder: 'Sub2API',
+        siteNamePlaceholder: 'VinzkAPI',
         siteNameHint: 'Displayed in emails and page titles',
         siteSubtitle: 'Site Subtitle',
-        siteSubtitlePlaceholder: 'Subscription to API Conversion Platform',
+        siteSubtitlePlaceholder: 'AI API Gateway Platform',
         siteSubtitleHint: 'Displayed on login and register pages',
         apiBaseUrl: 'API Base URL',
-        apiBaseUrlPlaceholder: 'https://api.example.com',
+        apiBaseUrlPlaceholder: 'https://api.vinzk.cn',
         apiBaseUrlHint:
-          'Used for "Use Key", "Import to CC Switch", and callback URL suggestions. Leave empty to use current site URL.',
+          'Used for "Use Key", "Import to CC Switch", and callback URL suggestions. Production URL: https://api.vinzk.cn.',
         tablePreferencesTitle: 'Global Table Preferences',
         tablePreferencesDescription: 'Configure default pagination behavior for shared table components',
         tableDefaultPageSize: 'Default Rows Per Page',
@@ -6092,17 +6404,17 @@ export default {
           name: 'Name',
           namePlaceholder: 'e.g., OpenAI Compatible',
           endpointUrl: 'Endpoint URL',
-          endpointUrlPlaceholder: 'https://api2.example.com',
+          endpointUrlPlaceholder: 'https://api.vinzk.cn',
           descriptionLabel: 'Description',
           descriptionPlaceholder: 'e.g., Supports OpenAI format requests',
           add: 'Add Endpoint',
         },
         contactInfo: 'Contact Info',
-        contactInfoPlaceholder: 'e.g., QQ: 123456789',
+        contactInfoPlaceholder: 'WeChat support: 13387544600',
         contactInfoHint: 'Customer support contact info, displayed on redeem page, profile, etc.',
         docUrl: 'Documentation URL',
-        docUrlPlaceholder: 'https://docs.example.com',
-        docUrlHint: 'Link to your documentation site. Leave empty to hide the documentation link.',
+        docUrlPlaceholder: 'https://vinzk.cn/tutorials',
+        docUrlHint: 'Production tutorial URL: https://vinzk.cn/tutorials',
         siteLogo: 'Site Logo',
         uploadImage: 'Upload Image',
         remove: 'Remove',
@@ -6123,7 +6435,7 @@ export default {
         enabled: 'Show Recharge / Subscription Entry',
         enabledHint: 'Only shown in standard mode (not simple mode)',
         url: 'Recharge / Subscription URL',
-        urlPlaceholder: 'https://example.com/purchase',
+        urlPlaceholder: 'https://vinzk.cn/subscriptions',
         urlHint: 'Must be an absolute http(s) URL',
         iframeWarning:
           '⚠️ iframe note: Some websites block embedding via X-Frame-Options or CSP (frame-ancestors). If the page is blank, provide an "Open in new tab" alternative.',
@@ -6143,7 +6455,7 @@ export default {
         name: 'Menu Name',
         namePlaceholder: 'e.g. Help Center',
         url: 'Page URL',
-        urlPlaceholder: 'https://example.com/page',
+        urlPlaceholder: 'https://vinzk.cn',
         iconSvg: 'SVG Icon',
         iconSvgPlaceholder: '<svg>...</svg>',
         iconPreview: 'Icon Preview',
@@ -6320,7 +6632,7 @@ export default {
         thresholdHint: 'Used when user has not set a custom value',
         thresholdPlaceholder: 'Enter amount',
         rechargeUrl: 'Recharge Page URL',
-        rechargeUrlPlaceholder: 'https://example.com/payment',
+        rechargeUrlPlaceholder: 'https://vinzk.cn/recharge',
         rechargeUrlHint: 'A top-up button will appear in the email when set',
       },
       quotaNotify: {
@@ -6357,7 +6669,7 @@ export default {
         fromEmail: 'From Email',
         fromEmailPlaceholder: "noreply{'@'}example.com",
         fromName: 'From Name',
-        fromNamePlaceholder: 'Sub2API',
+        fromNamePlaceholder: 'VinzkAPI',
         useTls: 'Use TLS',
         useTlsHint: 'Enable TLS encryption for SMTP connection'
       },
@@ -6672,7 +6984,7 @@ export default {
         mpModeLabel: 'Use MP inside WeChat',
         mpModeHint: 'Use Official Account authorization inside the WeChat browser.',
         redirectUrlLabel: 'Redirect URL',
-        redirectUrlPlaceholder: 'https://your-site.com/api/v1/auth/oauth/wechat/callback',
+        redirectUrlPlaceholder: 'https://api.vinzk.cn/api/v1/auth/oauth/wechat/callback',
         generateAndCopy: 'Generate & Copy (current site)',
         redirectUrlSetAndCopied: 'Redirect URL generated and copied to clipboard',
         frontendRedirectUrlLabel: 'Frontend redirect URL',
@@ -6928,6 +7240,129 @@ export default {
       'The administrator enabled the entry but has not configured a recharge/subscription URL. Please contact admin.'
   },
 
+  recharge: {
+    title: 'Recharge',
+    description: 'Buy a card code through Liandong Xiaopu, then return to Redeem to credit your balance',
+    openInNewTab: 'Open in new tab',
+    goRedeem: 'I have purchased, go redeem',
+    noticeTitle: 'Manual redemption is required after purchase',
+    noticeDesc: 'After payment, copy the card code provided by Liandong Xiaopu, click "I have purchased, go redeem", and paste the code on the redeem page.',
+    iframeTitle: 'Liandong Xiaopu recharge page'
+  },
+
+  modelMarket: {
+    title: 'Model Market',
+    description: 'Browse available models, sample prices, API endpoints, and group pricing.',
+    modelCount: '{count} models',
+    searchPlaceholder: 'Search model name',
+    providerFilter: 'Provider',
+    tableView: 'Table View',
+    inputPrice: 'Input price',
+    outputPrice: 'Output price',
+    cacheReadPrice: 'Cache read price',
+    empty: 'No matching models found',
+    copySuccess: 'Copied current model prices',
+    copyFailed: 'Copy failed',
+    loadFailed: 'Failed to load models and prices',
+    filters: {
+      allProviders: 'All providers',
+      allBilling: 'All types',
+      tokenBilling: 'Token billing',
+      requestBilling: 'Request billing',
+      allTags: 'All tags'
+    },
+    tags: {
+      reasoning: 'Reasoning',
+      tools: 'Tools',
+      files: 'Files',
+      vision: 'Vision'
+    },
+    detail: {
+      basicInfo: 'Basic Info',
+      basicInfoDesc: 'Model description and basic features',
+      apiEndpoint: 'API Endpoint',
+      apiEndpointDesc: 'Supported API endpoint information',
+      groupPricing: 'Group Pricing',
+      groupPricingDesc: 'Pricing information for different user groups',
+      group: 'Group',
+      billing: 'Billing',
+      priceSummary: 'Price Summary'
+    }
+  },
+
+  imageGeneration: {
+    title: 'AI Images',
+    kicker: 'IMAGE STUDIO',
+    description: 'Choose a standard or HD image key. Only successful outputs are billed, and every result is saved for preview and download.',
+    refreshHistory: 'Refresh history',
+    runQueue: 'Run queue',
+    queueRunning: 'Queue running',
+    settings: 'Generation settings',
+    settingsHint: 'CONFIGURE IMAGE',
+    keyReady: 'Keys ready',
+    mode: 'Generation mode',
+    textToImage: 'Text to image',
+    imageToImage: 'Image to image',
+    prompt: 'Prompt',
+    promptPlaceholder: 'Describe the subject, setting, lighting, composition, and style',
+    chooseSourceImage: 'Choose or drop a source image',
+    clearSourceImage: 'Remove source image',
+    resolution: 'Resolution',
+    billOnSuccess: 'Successful images only',
+    tiers: {
+      standard: 'Standard output',
+      hd: 'High-definition detail',
+      ultra: 'Ultra-high definition'
+    },
+    systemPrice: 'Fixed price',
+    imageUnit: 'image',
+    imageKey: 'Image key',
+    matchByResolution: 'Separated by resolution',
+    standardKey: 'Standard key',
+    hdKey: 'HD key',
+    autoSelect: 'Auto-select available key',
+    noStandardKey: 'No standard key supports 1K. Create or bind a key for an eligible group first.',
+    noHdKey: 'No HD key supports this resolution. Create or bind a key for an eligible group first.',
+    manualKey: 'Temporarily use an existing API key',
+    manualKeyPlaceholder: 'Enter a site key beginning with sk-; resolution access is still enforced',
+    parameters: 'Parameters',
+    aspectRatio: 'Aspect ratio',
+    quantity: 'Quantity',
+    quality: 'Quality',
+    outputFormat: 'Output format',
+    estimatedCost: 'Estimated cost',
+    generating: 'Generating',
+    generateTier: 'Generate {tier} image',
+    addToQueue: 'Add to queue',
+    result: 'Result',
+    completedCount: '{count} images returned',
+    resultWaiting: 'The result appears here when generation completes',
+    generatingHint: 'The request was submitted. Waiting for the upstream result and saving the images.',
+    failed: 'Generation failed',
+    completed: 'Completed',
+    preview: 'Preview image',
+    download: 'Download image',
+    waitingPrompt: 'Waiting for your description',
+    waitingPromptHint: 'Enter a prompt and choose a resolution. The complete result will appear here.',
+    queue: 'Queue',
+    history: 'History',
+    processing: 'Processing',
+    waitingQueue: 'Waiting queue',
+    waiting: 'Waiting',
+    emptyQueue: 'No tasks in the queue',
+    recentGenerations: 'Recent generations',
+    versions: 'Prompt versions',
+    emptyHistory: 'No image history yet',
+    removeFromQueue: 'Remove from queue',
+    previewTitle: 'Image preview',
+    versionTitle: 'Prompt versions',
+    versionLoading: 'Loading versions...',
+    versionEmpty: 'No version history',
+    versionNumber: 'Version {version}',
+    deleteTitle: 'Delete image record',
+    deleteMessage: 'Delete this history record? Its image files will also be removed.'
+  },
+
   // Custom Page (iframe embed)
   customPage: {
     title: 'Custom Page',
@@ -7010,14 +7445,14 @@ export default {
     // Admin tour steps
     admin: {
       welcome: {
-        title: '👋 Welcome to Sub2API',
-        description: '<div style="line-height: 1.8;"><p style="margin-bottom: 16px;">Sub2API is a powerful AI service gateway platform that helps you easily manage and distribute AI services.</p><p style="margin-bottom: 12px;"><b>🎯 Core Features:</b></p><ul style="margin-left: 20px; margin-bottom: 16px;"><li>📦 <b>Group Management</b> - Create service tiers (VIP, Free Trial, etc.)</li><li>🔗 <b>Account Pool</b> - Connect multiple upstream AI service accounts</li><li>🔑 <b>Key Distribution</b> - Generate independent API Keys for users</li><li>💰 <b>Billing Control</b> - Flexible rate and quota management</li></ul><p style="color: #10b981; font-weight: 600;">Let\'s complete the initial setup in 3 minutes →</p></div>',
+        title: '👋 Welcome to VinzkAPI',
+        description: '<div style="line-height: 1.8;"><p style="margin-bottom: 16px;">VinzkAPI is a powerful AI service gateway platform that helps you easily manage and distribute AI services.</p><p style="margin-bottom: 12px;"><b>🎯 Core Features:</b></p><ul style="margin-left: 20px; margin-bottom: 16px;"><li>📦 <b>Group Management</b> - Create service tiers (VIP, Free Trial, etc.)</li><li>🔗 <b>Account Pool</b> - Connect multiple upstream AI service accounts</li><li>🔑 <b>Key Distribution</b> - Generate independent API Keys for users</li><li>💰 <b>Billing Control</b> - Flexible rate and quota management</li></ul><p style="color: #10b981; font-weight: 600;">Let\'s complete the initial setup in 3 minutes →</p></div>',
         nextBtn: 'Start Setup 🚀',
         prevBtn: 'Skip'
       },
       groupManage: {
         title: '📦 Step 1: Group Management',
-        description: '<div style="line-height: 1.7;"><p style="margin-bottom: 12px;"><b>What is a Group?</b></p><p style="margin-bottom: 12px;">Groups are the core concept of Sub2API, like a "service package":</p><ul style="margin-left: 20px; margin-bottom: 12px; font-size: 13px;"><li>🎯 Each group can contain multiple upstream accounts</li><li>💰 Each group has independent billing multiplier</li><li>👥 Can be set as public or exclusive</li></ul><p style="margin-top: 12px; padding: 8px 12px; background: #f0fdf4; border-left: 3px solid #10b981; border-radius: 4px; font-size: 13px;"><b>💡 Example:</b> You can create "VIP Premium" (high rate) and "Free Trial" (low rate) groups</p><p style="margin-top: 16px; color: #10b981; font-weight: 600;">👉 Click "Group Management" on the left sidebar</p></div>'
+        description: '<div style="line-height: 1.7;"><p style="margin-bottom: 12px;"><b>What is a Group?</b></p><p style="margin-bottom: 12px;">Groups are the core concept of VinzkAPI, like a "service package":</p><ul style="margin-left: 20px; margin-bottom: 12px; font-size: 13px;"><li>🎯 Each group can contain multiple upstream accounts</li><li>💰 Each group has independent billing multiplier</li><li>👥 Can be set as public or exclusive</li></ul><p style="margin-top: 12px; padding: 8px 12px; background: #f0fdf4; border-left: 3px solid #10b981; border-radius: 4px; font-size: 13px;"><b>💡 Example:</b> You can create "VIP Premium" (high rate) and "Free Trial" (low rate) groups</p><p style="margin-top: 16px; color: #10b981; font-weight: 600;">👉 Click "Group Management" on the left sidebar</p></div>'
       },
       createGroup: {
         title: '➕ Create New Group',
@@ -7110,8 +7545,8 @@ export default {
     // User tour steps
     user: {
       welcome: {
-        title: '👋 Welcome to Sub2API',
-        description: '<div style="line-height: 1.8;"><p style="margin-bottom: 16px;">Hello! Welcome to the Sub2API AI service platform.</p><p style="margin-bottom: 12px;"><b>🎯 Quick Start:</b></p><ul style="margin-left: 20px; margin-bottom: 16px;"><li>🔑 Create API Key</li><li>📋 Copy key to your application</li><li>🚀 Start using AI services</li></ul><p style="color: #10b981; font-weight: 600;">Just 1 minute, let\'s get started →</p></div>',
+        title: '👋 Welcome to VinzkAPI',
+        description: '<div style="line-height: 1.8;"><p style="margin-bottom: 16px;">Hello! Welcome to the VinzkAPI AI service platform.</p><p style="margin-bottom: 12px;"><b>🎯 Quick Start:</b></p><ul style="margin-left: 20px; margin-bottom: 16px;"><li>🔑 Create API Key</li><li>📋 Copy key to your application</li><li>🚀 Start using AI services</li></ul><p style="color: #10b981; font-weight: 600;">Just 1 minute, let\'s get started →</p></div>',
         nextBtn: 'Start 🚀',
         prevBtn: 'Skip'
       },

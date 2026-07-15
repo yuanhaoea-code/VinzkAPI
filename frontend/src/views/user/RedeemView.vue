@@ -1,341 +1,165 @@
 <template>
   <AppLayout>
-    <div class="mx-auto max-w-2xl space-y-6">
-      <!-- Current Balance Card -->
-      <div class="card overflow-hidden">
-        <div class="bg-gradient-to-br from-primary-500 to-primary-600 px-6 py-8 text-center">
-          <div
-            class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm"
-          >
-            <Icon name="creditCard" size="xl" class="text-white" />
-          </div>
-          <p class="text-sm font-medium text-primary-100">{{ t('redeem.currentBalance') }}</p>
-          <p class="mt-2 text-4xl font-bold text-white">
-            ${{ user?.balance?.toFixed(2) || '0.00' }}
-          </p>
-          <p class="mt-2 text-sm text-primary-100">
-            {{ t('redeem.concurrency') }}: {{ user?.concurrency || 0 }} {{ t('redeem.requests') }}
+    <div class="redeem-page">
+      <section class="redeem-hero">
+        <div>
+          <p class="console-kicker">REDEEM CENTER</p>
+          <h1 class="redeem-title">{{ t('redeem.title') }}</h1>
+          <p class="redeem-lead">
+            输入兑换码，可为账户增加余额、并发额度或订阅权限，兑换结果和账户状态会自动更新。
           </p>
         </div>
-      </div>
+        <aside class="redeem-note">
+          <strong>快速兑换</strong>
+          <span>兑换前可查看当前余额和并发额度，成功后可在最近活动中确认到账记录。</span>
+        </aside>
+      </section>
 
-      <!-- Redeem Form -->
-      <div class="card">
-        <div class="p-6">
-          <form @submit.prevent="handleRedeem" class="space-y-5">
-            <div>
-              <label for="code" class="input-label">
-                {{ t('redeem.redeemCodeLabel') }}
-              </label>
-              <div class="relative mt-1">
-                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                  <Icon name="gift" size="md" class="text-gray-400 dark:text-dark-500" />
-                </div>
-                <input
-                  id="code"
-                  v-model="redeemCode"
-                  type="text"
-                  required
-                  :placeholder="t('redeem.redeemCodePlaceholder')"
-                  :disabled="submitting"
-                  class="input py-3 pl-12 text-lg"
-                />
-              </div>
-              <p class="input-hint">
-                {{ t('redeem.redeemCodeHint') }}
-              </p>
+      <div class="redeem-layout">
+        <section class="redeem-card redeem-main-card">
+          <div class="section-heading">
+            <p class="console-kicker">ENTER CODE</p>
+            <h2>输入兑换码</h2>
+            <p>兑换码可用于充值余额、增加并发额度或开通订阅，具体内容以兑换结果为准。</p>
+          </div>
+
+          <div class="balance-grid">
+            <div class="balance-box">
+              <span>{{ t('redeem.currentBalance') }}</span>
+              <strong>USD {{ user?.balance?.toFixed(2) || '0.00' }}</strong>
             </div>
+            <div class="balance-box">
+              <span>{{ t('redeem.concurrency') }}</span>
+              <strong>{{ user?.concurrency || 0 }}</strong>
+              <small>{{ t('redeem.requests') }}</small>
+            </div>
+          </div>
 
-            <button
-              type="submit"
-              :disabled="!redeemCode || submitting"
-              class="btn btn-primary w-full py-3"
-            >
-              <svg
-                v-if="submitting"
-                class="-ml-1 mr-2 h-5 w-5 animate-spin"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  class="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  stroke-width="4"
-                ></circle>
-                <path
-                  class="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              <Icon v-else name="checkCircle" size="md" class="mr-2" />
-              {{ submitting ? t('redeem.redeeming') : t('redeem.redeemButton') }}
-            </button>
+          <form class="redeem-form" @submit.prevent="handleRedeem">
+            <label class="code-label" for="code">{{ t('redeem.redeemCodeLabel') }}</label>
+            <div class="code-input-wrap">
+              <Icon name="gift" size="md" class="code-input-icon" />
+              <input
+                id="code"
+                v-model="redeemCode"
+                type="text"
+                required
+                :placeholder="t('redeem.redeemCodePlaceholder')"
+                :disabled="submitting"
+                class="code-input"
+              />
+            </div>
+            <p class="input-hint">{{ t('redeem.redeemCodeHint') }}</p>
+
+            <div class="submit-row">
+              <button type="submit" :disabled="!redeemCode || submitting" class="redeem-button">
+                <svg v-if="submitting" class="spin-icon" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <Icon v-else name="checkCircle" size="md" />
+                <span>{{ submitting ? t('redeem.redeeming') : t('redeem.redeemButton') }}</span>
+              </button>
+              <p>兑换成功后，账户余额、并发额度或订阅状态将自动更新。</p>
+            </div>
           </form>
-        </div>
-      </div>
 
-      <!-- Success Message -->
-      <transition name="fade">
-        <div
-          v-if="redeemResult"
-          class="card border-emerald-200 bg-emerald-50 dark:border-emerald-800/50 dark:bg-emerald-900/20"
-        >
-          <div class="p-6">
-            <div class="flex items-start gap-4">
-              <div
-                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/30"
-              >
-                <Icon name="checkCircle" size="md" class="text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <div class="flex-1">
-                <h3 class="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
-                  {{ t('redeem.redeemSuccess') }}
-                </h3>
-                <div class="mt-2 text-sm text-emerald-700 dark:text-emerald-400">
-                  <p>{{ redeemResult.message }}</p>
-                  <div class="mt-3 space-y-1">
-                    <p v-if="redeemResult.type === 'balance'" class="font-medium">
-                      {{ t('redeem.added') }}: ${{ redeemResult.value.toFixed(2) }}
-                    </p>
-                    <p v-else-if="redeemResult.type === 'concurrency'" class="font-medium">
-                      {{ t('redeem.added') }}: {{ redeemResult.value }}
-                      {{ t('redeem.concurrentRequests') }}
-                    </p>
-                    <p v-else-if="redeemResult.type === 'subscription'" class="font-medium">
-                      {{ t('redeem.subscriptionAssigned') }}
-                      <span v-if="redeemResult.group_name"> - {{ redeemResult.group_name }}</span>
-                      <span v-if="redeemResult.validity_days">
-                        ({{
-                          t('redeem.subscriptionDays', { days: redeemResult.validity_days })
-                        }})</span
-                      >
-                    </p>
-                    <p v-if="redeemResult.new_balance !== undefined">
-                      {{ t('redeem.newBalance') }}:
-                      <span class="font-semibold">${{ redeemResult.new_balance.toFixed(2) }}</span>
-                    </p>
-                    <p v-if="redeemResult.new_concurrency !== undefined">
-                      {{ t('redeem.newConcurrency') }}:
-                      <span class="font-semibold"
-                        >{{ redeemResult.new_concurrency }} {{ t('redeem.requests') }}</span
-                      >
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </transition>
-
-      <!-- Error Message -->
-      <transition name="fade">
-        <div
-          v-if="errorMessage"
-          class="card border-red-200 bg-red-50 dark:border-red-800/50 dark:bg-red-900/20"
-        >
-          <div class="p-6">
-            <div class="flex items-start gap-4">
-              <div
-                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-red-100 dark:bg-red-900/30"
-              >
-                <Icon
-                  name="exclamationCircle"
-                  size="md"
-                  class="text-red-600 dark:text-red-400"
-                />
-              </div>
-              <div class="flex-1">
-                <h3 class="text-sm font-semibold text-red-800 dark:text-red-300">
-                  {{ t('redeem.redeemFailed') }}
-                </h3>
-                <p class="mt-2 text-sm text-red-700 dark:text-red-400">
-                  {{ errorMessage }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </transition>
-
-      <!-- Information Card -->
-      <div
-        class="card border-primary-200 bg-primary-50 dark:border-primary-800/50 dark:bg-primary-900/20"
-      >
-        <div class="p-6">
-          <div class="flex items-start gap-4">
-            <div
-              class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30"
-            >
-              <Icon name="infoCircle" size="md" class="text-primary-600 dark:text-primary-400" />
-            </div>
-            <div class="flex-1">
-              <h3 class="text-sm font-semibold text-primary-800 dark:text-primary-300">
-                {{ t('redeem.aboutCodes') }}
-              </h3>
-              <ul
-                class="mt-2 list-inside list-disc space-y-1 text-sm text-primary-700 dark:text-primary-400"
-              >
-                <li>{{ t('redeem.codeRule1') }}</li>
-                <li>{{ t('redeem.codeRule2') }}</li>
-                <li>
-                  {{ t('redeem.codeRule3') }}
-                  <span
-                    v-if="contactInfo"
-                    class="ml-1.5 inline-flex items-center rounded-md bg-primary-200/50 px-2 py-0.5 text-xs font-medium text-primary-800 dark:bg-primary-800/40 dark:text-primary-200"
-                  >
-                    {{ contactInfo }}
-                  </span>
-                </li>
-                <li>{{ t('redeem.codeRule4') }}</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recent Activity -->
-      <div class="card">
-        <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {{ t('redeem.recentActivity') }}
-          </h2>
-        </div>
-        <div class="p-6">
-          <!-- Loading State -->
-          <div v-if="loadingHistory" class="flex items-center justify-center py-8">
-            <svg class="h-6 w-6 animate-spin text-primary-500" fill="none" viewBox="0 0 24 24">
-              <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"
-              ></circle>
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-          </div>
-
-          <!-- History List -->
-          <div v-else-if="history.length > 0" class="space-y-3">
-            <div
-              v-for="item in history"
-              :key="item.id"
-              class="flex items-center justify-between rounded-xl bg-gray-50 p-4 dark:bg-dark-800"
-            >
-              <div class="flex items-center gap-4">
-                <div
-                  :class="[
-                    'flex h-10 w-10 items-center justify-center rounded-xl',
-                    isBalanceType(item.type)
-                      ? item.value >= 0
-                        ? 'bg-emerald-100 dark:bg-emerald-900/30'
-                        : 'bg-red-100 dark:bg-red-900/30'
-                      : isSubscriptionType(item.type)
-                        ? 'bg-purple-100 dark:bg-purple-900/30'
-                        : item.value >= 0
-                          ? 'bg-blue-100 dark:bg-blue-900/30'
-                          : 'bg-orange-100 dark:bg-orange-900/30'
-                  ]"
-                >
-                  <!-- 余额类型图标 -->
-                  <Icon
-                    v-if="isBalanceType(item.type)"
-                    name="dollar"
-                    size="md"
-                    :class="
-                      item.value >= 0
-                        ? 'text-emerald-600 dark:text-emerald-400'
-                        : 'text-red-600 dark:text-red-400'
-                    "
-                  />
-                  <!-- 订阅类型图标 -->
-                  <Icon
-                    v-else-if="isSubscriptionType(item.type)"
-                    name="badge"
-                    size="md"
-                    class="text-purple-600 dark:text-purple-400"
-                  />
-                  <!-- 并发类型图标 -->
-                  <Icon
-                    v-else
-                    name="bolt"
-                    size="md"
-                    :class="
-                      item.value >= 0
-                        ? 'text-blue-600 dark:text-blue-400'
-                        : 'text-orange-600 dark:text-orange-400'
-                    "
-                  />
-                </div>
-                <div>
-                  <p class="text-sm font-medium text-gray-900 dark:text-white">
-                    {{ getHistoryItemTitle(item) }}
+          <transition name="fade">
+            <div v-if="redeemResult" class="result-card success">
+              <Icon name="checkCircle" size="lg" />
+              <div>
+                <h3>{{ t('redeem.redeemSuccess') }}</h3>
+                <p>{{ redeemResult.message }}</p>
+                <div class="result-lines">
+                  <p v-if="redeemResult.type === 'balance'">
+                    {{ t('redeem.added') }}: USD {{ redeemResult.value.toFixed(2) }}
                   </p>
-                  <p class="text-xs text-gray-500 dark:text-dark-400">
-                    {{ formatDateTime(item.used_at) }}
+                  <p v-else-if="redeemResult.type === 'concurrency'">
+                    {{ t('redeem.added') }}: {{ redeemResult.value }} {{ t('redeem.concurrentRequests') }}
+                  </p>
+                  <p v-else-if="redeemResult.type === 'subscription'">
+                    {{ t('redeem.subscriptionAssigned') }}
+                    <span v-if="redeemResult.group_name"> - {{ redeemResult.group_name }}</span>
+                    <span v-if="redeemResult.validity_days">
+                      ({{ t('redeem.subscriptionDays', { days: redeemResult.validity_days }) }})
+                    </span>
+                  </p>
+                  <p v-if="redeemResult.new_balance !== undefined">
+                    {{ t('redeem.newBalance') }}: USD {{ redeemResult.new_balance.toFixed(2) }}
+                  </p>
+                  <p v-if="redeemResult.new_concurrency !== undefined">
+                    {{ t('redeem.newConcurrency') }}: {{ redeemResult.new_concurrency }} {{ t('redeem.requests') }}
                   </p>
                 </div>
               </div>
-              <div class="text-right">
-                <p
-                  :class="[
-                    'text-sm font-semibold',
-                    isBalanceType(item.type)
-                      ? item.value >= 0
-                        ? 'text-emerald-600 dark:text-emerald-400'
-                        : 'text-red-600 dark:text-red-400'
-                      : isSubscriptionType(item.type)
-                        ? 'text-purple-600 dark:text-purple-400'
-                        : item.value >= 0
-                          ? 'text-blue-600 dark:text-blue-400'
-                          : 'text-orange-600 dark:text-orange-400'
-                  ]"
-                >
-                  {{ formatHistoryValue(item) }}
-                </p>
-                <p
-                  v-if="!isAdminAdjustment(item.type)"
-                  class="font-mono text-xs text-gray-400 dark:text-dark-500"
-                >
-                  {{ item.code.slice(0, 8) }}...
-                </p>
-                <p v-else class="text-xs text-gray-400 dark:text-dark-500">
-                  {{ t('redeem.adminAdjustment') }}
-                </p>
-                <!-- Display notes for admin adjustments -->
-                <p
-                  v-if="item.notes"
-                  class="mt-1 text-xs text-gray-500 dark:text-dark-400 italic max-w-[200px] truncate"
-                  :title="item.notes"
-                >
-                  {{ item.notes }}
-                </p>
+            </div>
+          </transition>
+
+          <transition name="fade">
+            <div v-if="errorMessage" class="result-card error">
+              <Icon name="exclamationCircle" size="lg" />
+              <div>
+                <h3>{{ t('redeem.redeemFailed') }}</h3>
+                <p>{{ errorMessage }}</p>
               </div>
             </div>
-          </div>
+          </transition>
+        </section>
 
-          <!-- Empty State -->
-          <div v-else class="empty-state py-8">
-            <div
-              class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 dark:bg-dark-800"
-            >
-              <Icon name="clock" size="xl" class="text-gray-400 dark:text-dark-500" />
+        <aside class="redeem-side">
+          <section class="redeem-card info-card">
+            <div class="section-heading compact">
+              <p class="console-kicker">RULES</p>
+              <h2>{{ t('redeem.aboutCodes') }}</h2>
+              <p>使用兑换码前，请确认兑换码的有效期与适用范围。</p>
             </div>
-            <p class="text-sm text-gray-500 dark:text-dark-400">
-              {{ t('redeem.historyWillAppear') }}
-            </p>
-          </div>
-        </div>
+            <ul class="rule-list">
+              <li>{{ t('redeem.codeRule1') }}</li>
+              <li>{{ t('redeem.codeRule2') }}</li>
+              <li>
+                {{ t('redeem.codeRule3') }}
+                <span v-if="contactInfo" class="contact-pill">{{ contactInfo }}</span>
+              </li>
+              <li>{{ t('redeem.codeRule4') }}</li>
+            </ul>
+          </section>
+
+          <section class="redeem-card history-card">
+            <div class="section-heading compact">
+              <p class="console-kicker">RECENT</p>
+              <h2>{{ t('redeem.recentActivity') }}</h2>
+              <p>查看近期兑换结果以及余额、并发或订阅的到账记录。</p>
+            </div>
+
+            <div v-if="loadingHistory" class="history-loading">
+              <svg class="spin-icon" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+
+            <div v-else-if="history.length > 0" class="history-list">
+              <div v-for="item in history" :key="item.id" class="history-item">
+                <div class="history-icon" :class="historyToneClass(item)">
+                  <Icon :name="historyIconName(item)" size="md" />
+                </div>
+                <div class="history-content">
+                  <p>{{ getHistoryItemTitle(item) }}</p>
+                  <span>{{ formatDateTime(item.used_at) }}</span>
+                  <small v-if="!isAdminAdjustment(item.type)">{{ item.code.slice(0, 8) }}...</small>
+                  <small v-else>{{ t('redeem.adminAdjustment') }}</small>
+                  <small v-if="item.notes" :title="item.notes">{{ item.notes }}</small>
+                </div>
+                <strong :class="historyValueClass(item)">{{ formatHistoryValue(item) }}</strong>
+              </div>
+            </div>
+
+            <div v-else class="empty-history">
+              <Icon name="clock" size="xl" />
+              <p>{{ t('redeem.historyWillAppear') }}</p>
+            </div>
+          </section>
+        </aside>
       </div>
     </div>
   </AppLayout>
@@ -351,6 +175,7 @@ import { redeemAPI, authAPI, type RedeemHistoryItem } from '@/api'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { formatDateTime } from '@/utils/format'
+import { PUBLIC_CONTACT_INFO } from '@/constants/site'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
@@ -375,7 +200,7 @@ const errorMessage = ref('')
 // History data
 const history = ref<RedeemHistoryItem[]>([])
 const loadingHistory = ref(false)
-const contactInfo = ref('')
+const contactInfo = ref(PUBLIC_CONTACT_INFO)
 
 // Helper functions for history display
 const isBalanceType = (type: string) => {
@@ -418,6 +243,25 @@ const formatHistoryValue = (item: RedeemHistoryItem) => {
     const sign = item.value >= 0 ? '+' : ''
     return `${sign}${item.value} ${t('redeem.requests')}`
   }
+}
+
+const historyIconName = (item: RedeemHistoryItem): 'dollar' | 'badge' | 'bolt' => {
+  if (isBalanceType(item.type)) return 'dollar'
+  if (isSubscriptionType(item.type)) return 'badge'
+  return 'bolt'
+}
+
+const historyToneClass = (item: RedeemHistoryItem) => {
+  if (isAdminAdjustment(item.type)) return 'admin'
+  if (isBalanceType(item.type)) return 'balance'
+  if (isSubscriptionType(item.type)) return 'subscription'
+  return 'concurrency'
+}
+
+const historyValueClass = (item: RedeemHistoryItem) => {
+  if (isBalanceType(item.type)) return item.value >= 0 ? 'value-green' : 'value-red'
+  if (isSubscriptionType(item.type)) return 'value-violet'
+  return item.value >= 0 ? 'value-blue' : 'value-red'
 }
 
 const fetchHistory = async () => {
@@ -480,7 +324,7 @@ onMounted(async () => {
   fetchHistory()
   try {
     const settings = await authAPI.getPublicSettings()
-    contactInfo.value = settings.contact_info || ''
+    contactInfo.value = settings.contact_info || PUBLIC_CONTACT_INFO
   } catch (error) {
     console.error('Failed to load contact info:', error)
   }
@@ -488,14 +332,81 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.3s ease;
+.redeem-page {
+  --panel: rgba(255, 255, 255, 0.82);
+  --ink: #171513;
+  --muted: #73695f;
+  --line: rgba(23, 21, 19, 0.1);
+  --line-strong: rgba(23, 21, 19, 0.16);
+  --teal-soft: rgba(106, 147, 139, 0.14);
+  --red-soft: rgba(187, 107, 105, 0.1);
+  --green-soft: rgba(95, 142, 114, 0.11);
+  max-width: 1560px;
+  margin: 0 auto;
+  color: var(--ink);
 }
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
+.redeem-hero { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 24px; align-items: end; margin-bottom: 18px; }
+.console-kicker { margin: 0 0 8px; color: #8c7351; font-size: 12px; font-weight: 700; letter-spacing: 0.2em; }
+.redeem-title { margin: 0; font-family: var(--console-font-sans); font-size: 30px; font-weight: 700; line-height: 1.1; }
+.redeem-lead, .redeem-note span, .section-heading p, .submit-row p { color: var(--muted); font-size: 13px; line-height: 1.82; }
+.redeem-lead { max-width: 840px; margin: 10px 0 0; }
+.redeem-note, .redeem-card { border: 1px solid var(--line); background: var(--panel); box-shadow: 0 1px 0 rgba(44, 34, 24, 0.03); }
+.redeem-note { border-radius: 18px; padding: 14px 16px; }
+.redeem-note strong { display: block; margin-bottom: 8px; font-size: 13px; }
+.redeem-layout { display: grid; grid-template-columns: 1.08fr 0.92fr; gap: 14px; }
+.redeem-card { border-radius: 24px; padding: 18px; }
+.redeem-side { display: grid; gap: 14px; align-content: start; }
+.section-heading h2 { margin: 0; font-family: var(--console-font-sans); font-size: 24px; line-height: 1.2; }
+.section-heading p { margin: 8px 0 0; }
+.compact h2 { font-size: 22px; }
+.balance-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+.balance-box { min-height: 86px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255, 255, 255, 0.62); padding: 14px 16px; }
+.balance-box span, .balance-box small { display: block; color: var(--muted); font-size: 13px; }
+.balance-box strong { display: inline-block; margin-top: 8px; font-family: var(--console-font-sans); font-size: 30px; line-height: 1; }
+.redeem-form { margin-top: 18px; }
+.code-label { display: block; margin-bottom: 8px; color: #50483f; font-size: 13px; font-weight: 700; }
+.code-input-wrap { display: flex; align-items: center; gap: 10px; height: 58px; border: 1px solid var(--line-strong); border-radius: 18px; background: rgba(255, 255, 255, 0.84); padding: 0 16px; }
+.code-input-icon { color: #8a7d70; flex: 0 0 auto; }
+.code-input { min-width: 0; width: 100%; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 15px; }
+.code-input::placeholder { color: #9d9183; }
+.input-hint { margin: 10px 0 0; color: #8d8276; font-size: 13px; }
+.submit-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+.submit-row p { margin: 0; }
+.redeem-button { display: inline-flex; min-width: 170px; height: 42px; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 999px; background: var(--ink); color: #f7f3eb; font-size: 13px; font-weight: 800; }
+.redeem-button:disabled { cursor: not-allowed; opacity: 0.45; }
+.spin-icon { width: 20px; height: 20px; animation: spin 800ms linear infinite; }
+.result-card { display: flex; align-items: flex-start; gap: 12px; margin-top: 16px; border: 1px solid var(--line); border-radius: 18px; padding: 14px 15px; font-size: 13px; line-height: 1.75; }
+.result-card h3, .result-card p { margin: 0; }
+.result-card h3 { font-size: 14px; }
+.result-card.success { border-color: rgba(95, 142, 114, 0.2); background: var(--green-soft); color: #325241; }
+.result-card.error { border-color: rgba(187, 107, 105, 0.22); background: var(--red-soft); color: #7c4746; }
+.result-lines { margin-top: 8px; font-weight: 700; }
+.rule-list { margin: 14px 0 0; padding-left: 18px; color: #5f584f; font-size: 13px; line-height: 1.9; }
+.contact-pill { display: inline-flex; margin-left: 8px; border-radius: 999px; background: var(--teal-soft); padding: 3px 8px; color: #31584f; font-size: 13px; font-weight: 700; }
+.history-card { min-height: 360px; }
+.history-loading, .empty-history { display: grid; place-items: center; gap: 10px; min-height: 180px; color: var(--muted); text-align: center; }
+.history-list { display: grid; gap: 10px; margin-top: 16px; }
+.history-item { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; gap: 12px; align-items: center; border: 1px solid rgba(23, 21, 19, 0.06); border-radius: 16px; background: rgba(247, 243, 235, 0.88); padding: 12px; }
+.history-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 14px; color: white; }
+.history-icon.balance { background: linear-gradient(135deg, #6f9c80, #4c745c); }
+.history-icon.concurrency { background: linear-gradient(135deg, #7ba7ca, #4f7191); }
+.history-icon.subscription { background: linear-gradient(135deg, #9c86b6, #66557b); }
+.history-icon.admin { background: linear-gradient(135deg, #c58b6d, #8a5f47); }
+.history-content { min-width: 0; }
+.history-content p { margin: 0; font-size: 13px; font-weight: 800; }
+.history-content span, .history-content small { display: block; overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; font-size: 12px; line-height: 1.55; }
+.history-item strong { text-align: right; font-size: 13px; line-height: 1.5; }
+.value-green { color: #39654a; }
+.value-blue { color: #456784; }
+.value-violet { color: #5f4d76; }
+.value-red { color: #7a4747; }
+.fade-enter-active, .fade-leave-active { transition: all 0.22s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-8px); }
+@keyframes spin { to { transform: rotate(360deg); } }
+:global(.dark) .redeem-page { --panel: rgba(28, 26, 24, 0.88); --ink: #f5efe6; --muted: #b7aa9c; --line: rgba(255, 255, 255, 0.1); --line-strong: rgba(255, 255, 255, 0.16); --teal-soft: rgba(106, 147, 139, 0.22); }
+:global(.dark) .redeem-note, :global(.dark) .redeem-card { background: var(--panel); }
+:global(.dark) .balance-box, :global(.dark) .code-input-wrap, :global(.dark) .history-item { background: rgba(255, 255, 255, 0.06); }
+:global(.dark) .rule-list, :global(.dark) .code-label { color: var(--ink); }
+@media (max-width: 1180px) { .redeem-hero, .redeem-layout { grid-template-columns: 1fr; } }
+@media (max-width: 720px) { .balance-grid, .history-item { grid-template-columns: 1fr; } .submit-row { align-items: stretch; flex-direction: column; } .redeem-button { width: 100%; } }
 </style>

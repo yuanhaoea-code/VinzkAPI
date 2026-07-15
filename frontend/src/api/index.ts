@@ -16,10 +16,12 @@ export { userAPI } from './user'
 export { redeemAPI, type RedeemHistoryItem } from './redeem'
 export { paymentAPI } from './payment'
 export { userGroupsAPI } from './groups'
+export { modelMarketAPI } from './modelMarket'
 export { userChannelsAPI } from './channels'
 export { totpAPI } from './totp'
 export { default as announcementsAPI } from './announcements'
 export { channelMonitorUserAPI } from './channelMonitor'
+export { imageGenerationsAPI, type ImageGenerationRecord } from './imageGenerations'
 
 // Admin APIs
 export { adminAPI } from './admin'

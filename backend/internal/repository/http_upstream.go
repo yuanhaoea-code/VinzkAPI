@@ -318,7 +318,7 @@ func (s *httpUpstreamService) getClientEntryWithTLS(proxyURL string, accountID i
 
 	// 创建带 TLS 指纹的 Transport
 	slog.Debug("tls_fingerprint_creating_new_client", "account_id", accountID, "cache_key", cacheKey, "proxy", proxyKey)
-	transport, err := buildUpstreamTransportWithTLSFingerprint(settings, parsedProxy, profile)
+	transport, err := buildUpstreamTransportWithTLSFingerprint(settings, parsedProxy, profile, s.shouldValidateResolvedIP())
 	if err != nil {
 		s.mu.Unlock()
 		return nil, fmt.Errorf("build TLS fingerprint transport: %w", err)
@@ -348,9 +348,6 @@ func (s *httpUpstreamService) getClientEntryWithTLS(proxyURL string, accountID i
 
 func (s *httpUpstreamService) shouldValidateResolvedIP() bool {
 	if s.cfg == nil {
-		return false
-	}
-	if !s.cfg.Security.URLAllowlist.Enabled {
 		return false
 	}
 	return !s.cfg.Security.URLAllowlist.AllowPrivateHosts
@@ -475,6 +472,9 @@ func (s *httpUpstreamService) getClientEntry(proxyURL string, accountID int64, a
 	if err != nil {
 		s.mu.Unlock()
 		return nil, fmt.Errorf("build transport: %w", err)
+	}
+	if s.shouldValidateResolvedIP() && parsedProxy == nil {
+		transport.DialContext = urlvalidator.NewPublicDialContext(nil)
 	}
 	client := &http.Client{Transport: transport}
 	if s.shouldValidateResolvedIP() {
@@ -1092,7 +1092,7 @@ func buildUpstreamTransport(settings poolSettings, proxyURL *url.URL, protocolMo
 //   - nil/空: 直连，使用 TLSFingerprintDialer
 //   - http/https: HTTP 代理，使用 HTTPProxyDialer（CONNECT 隧道 + utls 握手）
 //   - socks5: SOCKS5 代理，使用 SOCKS5ProxyDialer（SOCKS5 隧道 + utls 握手）
-func buildUpstreamTransportWithTLSFingerprint(settings poolSettings, proxyURL *url.URL, profile *tlsfingerprint.Profile) (*http.Transport, error) {
+func buildUpstreamTransportWithTLSFingerprint(settings poolSettings, proxyURL *url.URL, profile *tlsfingerprint.Profile, validateResolvedIP bool) (*http.Transport, error) {
 	transport := &http.Transport{
 		MaxIdleConns:          settings.maxIdleConns,
 		MaxIdleConnsPerHost:   settings.maxIdleConnsPerHost,
@@ -1107,7 +1107,11 @@ func buildUpstreamTransportWithTLSFingerprint(settings poolSettings, proxyURL *u
 	if proxyURL == nil {
 		// 直连：使用 TLSFingerprintDialer
 		slog.Debug("tls_fingerprint_transport_direct")
-		dialer := tlsfingerprint.NewDialer(profile, nil)
+		var baseDialer func(context.Context, string, string) (net.Conn, error)
+		if validateResolvedIP {
+			baseDialer = urlvalidator.NewPublicDialContext(nil)
+		}
+		dialer := tlsfingerprint.NewDialer(profile, baseDialer)
 		transport.DialTLSContext = dialer.DialTLSContext
 	} else {
 		scheme := strings.ToLower(proxyURL.Scheme)

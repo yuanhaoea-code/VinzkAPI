@@ -494,7 +494,7 @@ func (s *NotificationEmailService) sampleVariables(ctx context.Context, event, l
 	}
 	variables["site_name"] = s.siteName(ctx)
 	if variables["unsubscribe_url"] == "" && info.Optional {
-		variables["unsubscribe_url"] = "https://example.com/unsubscribe"
+		variables["unsubscribe_url"] = DefaultPublicAPIBaseURL + "/api/v1/settings/email-unsubscribe?token=preview"
 	}
 	return variables
 }
@@ -530,7 +530,7 @@ func (s *NotificationEmailService) siteName(ctx context.Context) string {
 
 func (s *NotificationEmailService) baseURL(ctx context.Context) string {
 	if s == nil || s.settingRepo == nil {
-		return ""
+		return DefaultPublicAPIBaseURL
 	}
 	for _, key := range []string{SettingKeyAPIBaseURL, SettingKeyFrontendURL} {
 		value, err := s.settingRepo.GetValue(ctx, key)
@@ -538,7 +538,7 @@ func (s *NotificationEmailService) baseURL(ctx context.Context) string {
 			return strings.TrimRight(strings.TrimSpace(value), "/")
 		}
 	}
-	return ""
+	return DefaultPublicAPIBaseURL
 }
 
 func (s *NotificationEmailService) buildUnsubscribeURL(ctx context.Context, email, event string) (string, error) {
@@ -847,20 +847,20 @@ func notificationEmailSampleVariables(locale string) map[string]string {
 		return map[string]string{
 			"site_name":           defaultSiteName,
 			"recipient_name":      "张三",
-			"recipient_email":     "user@example.com",
+			"recipient_email":     "user@vinzk.cn",
 			"verification_code":   "123456",
 			"expires_in_minutes":  "15",
-			"reset_url":           "https://example.com/reset-password?token=preview",
+			"reset_url":           DefaultPublicSiteURL + "/reset-password?token=preview",
 			"subscription_group":  "Claude Pro",
 			"subscription_days":   "30",
 			"expiry_time":         "2026-06-18 12:00",
 			"days_remaining":      "3",
 			"current_balance":     "12.34",
 			"threshold":           "20.00",
-			"recharge_url":        "https://example.com/recharge",
+			"recharge_url":        DefaultPublicSiteURL + "/recharge",
 			"recharge_amount":     "50.00",
 			"order_id":            "1024",
-			"unsubscribe_url":     "https://example.com/unsubscribe",
+			"unsubscribe_url":     DefaultPublicAPIBaseURL + "/api/v1/settings/email-unsubscribe?token=preview",
 			"account_id":          "1001",
 			"account_name":        "openai-main",
 			"platform":            "openai",
@@ -893,20 +893,20 @@ func notificationEmailSampleVariables(locale string) map[string]string {
 	return map[string]string{
 		"site_name":           defaultSiteName,
 		"recipient_name":      "Alex",
-		"recipient_email":     "user@example.com",
+		"recipient_email":     "user@vinzk.cn",
 		"verification_code":   "123456",
 		"expires_in_minutes":  "15",
-		"reset_url":           "https://example.com/reset-password?token=preview",
+		"reset_url":           DefaultPublicSiteURL + "/reset-password?token=preview",
 		"subscription_group":  "Claude Pro",
 		"subscription_days":   "30",
 		"expiry_time":         "2026-06-18 12:00",
 		"days_remaining":      "3",
 		"current_balance":     "12.34",
 		"threshold":           "20.00",
-		"recharge_url":        "https://example.com/recharge",
+		"recharge_url":        DefaultPublicSiteURL + "/recharge",
 		"recharge_amount":     "50.00",
 		"order_id":            "1024",
-		"unsubscribe_url":     "https://example.com/unsubscribe",
+		"unsubscribe_url":     DefaultPublicAPIBaseURL + "/api/v1/settings/email-unsubscribe?token=preview",
 		"account_id":          "1001",
 		"account_name":        "openai-main",
 		"platform":            "openai",

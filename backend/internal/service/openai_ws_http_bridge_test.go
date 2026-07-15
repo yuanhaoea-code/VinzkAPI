@@ -451,6 +451,7 @@ func TestOpenAIWSHTTPBridgeKeepsContinuationFramesOnHTTPWithoutPreviousResponseI
 	cfg := &config.Config{}
 	cfg.Security.URLAllowlist.Enabled = false
 	cfg.Security.URLAllowlist.AllowInsecureHTTP = true
+	cfg.Security.URLAllowlist.AllowPrivateHosts = true
 	cfg.Gateway.OpenAIWS.Enabled = true
 	cfg.Gateway.OpenAIWS.OAuthEnabled = true
 	cfg.Gateway.OpenAIWS.APIKeyEnabled = true

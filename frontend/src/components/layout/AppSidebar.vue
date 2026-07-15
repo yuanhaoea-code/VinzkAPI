@@ -2,22 +2,27 @@
   <aside
     class="sidebar"
     :class="[
-      sidebarCollapsed ? 'w-[72px]' : 'w-64',
+      sidebarCollapsed ? 'w-[72px]' : isPaperConsoleRoute ? 'w-[224px]' : 'w-64',
+      { 'sidebar--paper': isPaperConsoleRoute },
+      { 'sidebar--collapsed': sidebarCollapsed },
       { '-translate-x-full lg:translate-x-0': !mobileOpen }
     ]"
   >
     <!-- Logo/Brand -->
     <div class="sidebar-header" :class="{ 'sidebar-header-collapsed': sidebarCollapsed }">
       <!-- Custom Logo or Default Logo -->
-      <div class="sidebar-logo flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl shadow-glow">
+      <div
+        class="sidebar-logo flex items-center justify-center overflow-hidden rounded-xl"
+        :class="isPaperConsoleRoute ? 'sidebar-logo-paper' : 'h-9 w-9 shadow-glow'"
+      >
         <img v-if="settingsLoaded" :src="siteLogo || '/logo.png'" alt="Logo" class="h-full w-full object-contain" />
       </div>
       <div class="sidebar-brand" :class="{ 'sidebar-brand-collapsed': sidebarCollapsed }" :aria-hidden="sidebarCollapsed ? 'true' : 'false'">
         <span class="sidebar-brand-title text-lg font-bold text-gray-900 dark:text-white">
-          {{ siteName }}
+          {{ isPaperConsoleRoute ? t('home.landing.brand') : siteName }}
         </span>
         <!-- Version Badge -->
-        <VersionBadge :version="siteVersion" />
+        <VersionBadge v-if="!isPaperConsoleRoute" :version="siteVersion" />
       </div>
     </div>
 
@@ -120,7 +125,31 @@
 
       <!-- Regular User View -->
       <template v-else-if="!appStore.backendModeEnabled">
-        <div class="sidebar-section">
+        <template v-if="isUserPaperConsoleRoute && !sidebarCollapsed">
+          <div
+            v-for="group in userNavGroups"
+            :key="group.title"
+            class="sidebar-section"
+          >
+            <div class="sidebar-section-title">
+              <span class="sidebar-section-title-text">{{ group.title }}</span>
+            </div>
+            <router-link
+              v-for="item in group.items"
+              :key="item.path"
+              :to="item.path"
+              class="sidebar-link mb-1"
+              :class="{ 'sidebar-link-active': isActive(item.path) }"
+              :data-tour="item.path === '/keys' ? 'sidebar-my-keys' : undefined"
+              @click="handleMenuItemClick(item.path)"
+            >
+              <span v-if="item.iconSvg" class="h-5 w-5 flex-shrink-0 sidebar-svg-icon" v-html="sanitizeSvg(item.iconSvg)"></span>
+              <component v-else :is="item.icon" class="h-5 w-5 flex-shrink-0" />
+              <span class="sidebar-label">{{ item.label }}</span>
+            </router-link>
+          </div>
+        </template>
+        <div v-else class="sidebar-section">
           <router-link
             v-for="item in userNavItems"
             :key="item.path"
@@ -141,6 +170,11 @@
 
     <!-- Bottom Section -->
     <div class="mt-auto border-t border-gray-100 p-3 dark:border-dark-800">
+      <div v-if="isUserPaperConsoleRoute && !sidebarCollapsed" class="sidebar-console-support">
+        <strong>客服微信：13387544600</strong>
+        <span>充值、密钥、调用异常都可以联系处理。</span>
+      </div>
+
       <!-- Theme Toggle -->
       <button
         @click="toggleTheme"
@@ -201,16 +235,12 @@ interface NavItem {
    */
   expandOnly?: boolean
   /**
-   * 可选的功能开关 getter。返回 false 时菜单项被隐藏；返回 undefined/true 时显示。
-   * 宽容策略（undefined → 显示）避免 public settings 未加载完成时菜单闪烁消失。
-   * Getter 里访问的 reactive 来源（store / composable）会被 computed 自动追踪，
-   * 开关切换时菜单自动更新。
+   * Optional feature flag getter. Returning false hides the nav item.
+   * Undefined is treated as visible while public settings are still loading.
    */
   featureFlag?: () => boolean | undefined
 }
 
-// applyFeatureFlags 递归过滤掉 featureFlag() === false 的节点（含子节点）。
-// 使用 `!== false` 宽容语义：undefined（设置未加载）或 true 都视为显示。
 function applyFeatureFlags(items: NavItem[]): NavItem[] {
   const out: NavItem[] = []
   for (const item of items) {
@@ -237,6 +267,30 @@ const sidebarCollapsed = computed(() => appStore.sidebarCollapsed)
 const mobileOpen = computed(() => appStore.mobileOpen)
 const isAdmin = computed(() => authStore.isAdmin)
 const isDark = ref(document.documentElement.classList.contains('dark'))
+const userConsoleRouteNames = new Set([
+  'Dashboard',
+  'Keys',
+  'Usage',
+  'AvailableChannels',
+  'ChannelStatus',
+  'Subscriptions',
+  'Redeem',
+  'Recharge',
+  'ModelMarket',
+  'ImageGeneration',
+  'Affiliate',
+  'Profile',
+  'TutorialHome',
+  'TutorialArticle',
+])
+const isUserPaperConsoleRoute = computed(() => {
+  const path = route.path
+  const routeName = typeof route.name === 'string' ? route.name : ''
+  return userConsoleRouteNames.has(routeName) || (!path.startsWith('/admin') && path !== '/home' && !path.startsWith('/custom/'))
+})
+const isPaperConsoleRoute = computed(() => {
+  return route.path.startsWith('/admin') || isUserPaperConsoleRoute.value
+})
 
 // Track which parent nav groups are expanded
 const expandedGroups = ref<Set<string>>(new Set())
@@ -308,6 +362,21 @@ const GiftIcon = {
     )
 }
 
+const ImageIcon = {
+  render: () =>
+    h(
+      'svg',
+      { fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', 'stroke-width': '1.5' },
+      [
+        h('path', {
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+          d: 'M3 16.5l4.5-4.5a2.121 2.121 0 013 0L15 16.5m-1.5-1.5l1.5-1.5a2.121 2.121 0 013 0L21 16.5M3 6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75v10.5a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 17.25V6.75zM8.25 8.25h.008v.008H8.25V8.25z'
+        })
+      ]
+    )
+}
+
 const UserIcon = {
   render: () =>
     h(
@@ -318,6 +387,21 @@ const UserIcon = {
           'stroke-linecap': 'round',
           'stroke-linejoin': 'round',
           d: 'M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z'
+        })
+      ]
+    )
+}
+
+const BookIcon = {
+  render: () =>
+    h(
+      'svg',
+      { fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', 'stroke-width': '1.5' },
+      [
+        h('path', {
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+          d: 'M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25'
         })
       ]
     )
@@ -654,11 +738,6 @@ const flagRiskControl = makeSidebarFlag(FeatureFlags.riskControl)
 const flagOpsMonitoring = () => adminSettingsStore.opsMonitoringEnabled
 const flagAdminPayment = () => adminSettingsStore.paymentEnabled
 
-// buildSelfNavItems 构造用户自己的导航项（用户端主菜单和管理员的"我的账户"子菜单共享这组声明）。
-// withDashboard=true 时包含仪表盘（用户端），false 时不含（管理员的个人区已经有独立仪表盘入口）。
-//
-// 条目顺序：密钥 → 用量 → 可用渠道 → 渠道状态 → 订阅/支付 → 兑换/资料。
-// 可用渠道紧挨渠道状态之上，让用户"先看自己能用什么、再看对应状态"。
 function buildSelfNavItems(withDashboard: boolean): NavItem[] {
   const items: NavItem[] = []
   if (withDashboard) {
@@ -673,8 +752,12 @@ function buildSelfNavItems(withDashboard: boolean): NavItem[] {
     { path: '/purchase', label: t('nav.buySubscription'), icon: RechargeSubscriptionIcon, hideInSimpleMode: true, featureFlag: flagPayment },
     { path: '/orders', label: t('nav.myOrders'), icon: OrderListIcon, hideInSimpleMode: true, featureFlag: flagPayment },
     { path: '/redeem', label: t('nav.redeem'), icon: GiftIcon, hideInSimpleMode: true },
+    { path: '/recharge', label: t('nav.recharge'), icon: RechargeSubscriptionIcon, hideInSimpleMode: true },
+    { path: '/model-market', label: t('nav.modelMarket'), icon: GlobeIcon, hideInSimpleMode: true },
+    { path: '/image-generation', label: t('nav.imageGeneration'), icon: ImageIcon, hideInSimpleMode: true },
     { path: '/affiliate', label: t('nav.affiliate'), icon: UsersIcon, hideInSimpleMode: true, featureFlag: flagAffiliate },
     { path: '/profile', label: t('nav.profile'), icon: UserIcon },
+    { path: '/tutorials', label: t('nav.tutorials'), icon: BookIcon },
     ...customMenuItemsForUser.value.map((item): NavItem => ({
       path: `/custom/${item.id}`,
       label: item.label,
@@ -685,7 +768,6 @@ function buildSelfNavItems(withDashboard: boolean): NavItem[] {
   return items
 }
 
-// finalizeNav 合并三重过滤：featureFlag 过滤 + simple 模式过滤。
 function finalizeNav(items: NavItem[]): NavItem[] {
   const visible = applyFeatureFlags(items)
   return authStore.isSimpleMode ? visible.filter(item => !item.hideInSimpleMode) : visible
@@ -693,9 +775,39 @@ function finalizeNav(items: NavItem[]): NavItem[] {
 
 // User navigation items (for regular users)
 const userNavItems = computed((): NavItem[] => finalizeNav(buildSelfNavItems(true)))
+const paperHiddenUserPaths = new Set(['/purchase', '/orders'])
+const paperLabelByPath: Record<string, string> = {
+  '/redeem': '兑换中心',
+  '/recharge': '自助充值',
+}
+
+const userNavGroups = computed(() => {
+  const items = userNavItems.value
+    .filter((item) => !paperHiddenUserPaths.has(item.path))
+    .map((item) => ({
+      ...item,
+      label: paperLabelByPath[item.path] ?? item.label,
+    }))
+  const pick = (paths: string[]) => items.filter((item) => paths.includes(item.path))
+  const used = new Set<string>()
+  const groups = [
+    { title: 'OVERVIEW', items: pick(['/dashboard', '/keys', '/usage', '/available-channels', '/monitor']) },
+    { title: 'SERVICES', items: pick(['/subscriptions', '/purchase', '/orders', '/redeem', '/recharge']) },
+    { title: 'WORKSPACE', items: pick(['/model-market', '/image-generation', '/affiliate', '/profile', '/tutorials']) },
+  ].map((group) => {
+    group.items.forEach((item) => used.add(item.path))
+    return group
+  }).filter((group) => group.items.length > 0)
+
+  const custom = items.filter((item) => !used.has(item.path))
+  if (custom.length > 0) {
+    groups.push({ title: 'CUSTOM', items: custom })
+  }
+  return groups
+})
 
 // Personal navigation items (for admin's "My Account" section, without Dashboard).
-// Admins access 可用渠道 from this section just like regular users — there is no
+// Admins access available channels from this section just like regular users; there is no
 // separate admin entry, since the page is purely a user-facing view.
 const personalNavItems = computed((): NavItem[] => finalizeNav(buildSelfNavItems(false)))
 
@@ -769,7 +881,7 @@ const adminNavItems = computed((): NavItem[] => {
 
   const visible = applyFeatureFlags(baseItems)
 
-  // 简单模式下，在系统设置前插入 API密钥
+  // In simple mode, insert API keys before system settings.
   if (authStore.isSimpleMode) {
     const filtered = visible.filter(item => !item.hideInSimpleMode)
     filtered.push({ path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon })
@@ -898,6 +1010,18 @@ onMounted(() => {
   min-width: 2.25rem;
 }
 
+.sidebar-logo-paper {
+  flex: 0 0 30px;
+  min-width: 30px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.64);
+  padding: 0;
+  box-shadow: none;
+}
+
 .sidebar-header-collapsed {
   gap: 0;
   padding-left: 1.125rem;
@@ -928,6 +1052,248 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.sidebar-brand-subtitle {
+  display: none;
+}
+
+.sidebar--paper {
+  border-right-color: rgba(23, 20, 17, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(247, 242, 233, 0.96)),
+    #f8f3e9;
+}
+
+.sidebar--paper :global(.sidebar-header) {
+  height: 76px;
+  padding: 14px 14px 10px;
+  border-bottom-color: transparent;
+}
+
+.sidebar--paper :global(.sidebar-header:not(.sidebar-header-collapsed)) {
+  align-items: center;
+  gap: 12px;
+  margin: 0 14px 7px;
+  padding: 11px 2px 9px;
+  height: 56px;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.sidebar--paper .sidebar-brand-title {
+  font-family: var(--console-font-sans);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0;
+  color: #171411;
+}
+
+.sidebar--paper :global(.sidebar-nav) {
+  padding: 0 14px 8px;
+}
+
+.sidebar--paper :global(.sidebar-section) {
+  margin-bottom: 13px;
+  padding-bottom: 11px;
+  border-bottom: 1px solid rgba(23, 20, 17, 0.08);
+}
+
+.sidebar--paper :global(.sidebar-section:last-child) {
+  border-bottom: 0;
+}
+
+.sidebar--paper :global(.sidebar-link) {
+  border: 1px solid transparent;
+  border-radius: 13px;
+  padding: 8px 11px;
+  color: #171411;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.sidebar--paper :global(.sidebar-link > svg),
+.sidebar--paper .sidebar-svg-icon {
+  display: none;
+}
+
+.sidebar--paper :global(.sidebar-link:hover) {
+  border-color: rgba(23, 20, 17, 0.07);
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.sidebar--paper :global(.sidebar-link-active) {
+  border-color: rgba(127, 159, 152, 0.24);
+  background: rgba(127, 159, 152, 0.11);
+  color: #171411;
+}
+
+.sidebar--paper :global(.sidebar-section-title) {
+  color: #7c5f43;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+}
+
+.sidebar--paper.sidebar--collapsed {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(247, 242, 233, 0.98)),
+    #f8f3e9;
+}
+
+.sidebar--paper.sidebar--collapsed :global(.sidebar-header) {
+  justify-content: center;
+  height: 64px;
+  margin: 0;
+  padding: 14px 0 8px;
+}
+
+.sidebar--paper.sidebar--collapsed .sidebar-logo-paper {
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.64);
+  box-shadow: none;
+}
+
+.sidebar--paper.sidebar--collapsed :global(.sidebar-nav) {
+  padding: 8px 8px 10px;
+}
+
+.sidebar--paper.sidebar--collapsed :global(.sidebar-section) {
+  margin: 0;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(23, 20, 17, 0.07);
+}
+
+.sidebar--paper.sidebar--collapsed :global(.sidebar-link) {
+  width: 42px;
+  height: 42px;
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0;
+  border-radius: 14px;
+  color: #56655f;
+}
+
+.sidebar--paper.sidebar--collapsed :global(.sidebar-link > svg),
+.sidebar--paper.sidebar--collapsed .sidebar-svg-icon {
+  display: block;
+}
+
+.sidebar--paper.sidebar--collapsed :global(.sidebar-link:hover) {
+  border-color: rgba(127, 159, 152, 0.24);
+  background: rgba(255, 255, 255, 0.78);
+  color: #171411;
+}
+
+.sidebar--paper.sidebar--collapsed :global(.sidebar-link-active) {
+  border-color: rgba(15, 159, 143, 0.18);
+  background: rgba(15, 159, 143, 0.11);
+  color: #0f9f8f;
+}
+
+.sidebar--paper.sidebar--collapsed :global(.mt-auto) {
+  padding: 10px 8px 12px;
+}
+
+.sidebar-console-support {
+  margin-bottom: 10px;
+  padding: 10px 2px 11px;
+  border-top: 1px solid rgba(23, 20, 17, 0.08);
+  border-bottom: 0;
+}
+
+.sidebar-console-support strong {
+  display: block;
+  color: #171411;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.sidebar-console-support span {
+  display: block;
+  margin-top: 6px;
+  color: #7c7267;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+:global(.dark) .sidebar--paper {
+  border-right-color: rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(8, 13, 24, 0.98)),
+    #0b1220;
+}
+
+:global(.dark) .sidebar--paper :global(.sidebar-header) {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(.dark) .sidebar--paper :global(.sidebar-header:not(.sidebar-header-collapsed)) {
+  background: transparent;
+  box-shadow: none;
+}
+
+:global(.dark) .sidebar--paper :global(.sidebar-section),
+:global(.dark) .sidebar-console-support {
+  border-bottom-color: rgba(148, 163, 184, 0.12);
+}
+
+:global(.dark) .sidebar--paper .sidebar-logo-paper {
+  border-color: rgba(255, 255, 255, 0.13);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+:global(.dark) .sidebar--paper .sidebar-brand-title {
+  color: #f8fafc;
+}
+
+:global(.dark) .sidebar--paper .sidebar-brand-subtitle {
+  color: #94a3b8;
+}
+
+:global(.dark) .sidebar--paper :global(.sidebar-link) {
+  color: #cbd5e1;
+}
+
+:global(.dark) .sidebar--paper :global(.sidebar-link:hover),
+:global(.dark) .sidebar--paper :global(.sidebar-link-active) {
+  border-color: rgba(45, 212, 191, 0.18);
+  background: rgba(20, 184, 166, 0.12);
+  color: #f8fafc;
+}
+
+:global(.dark) .sidebar--paper.sidebar--collapsed {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(7, 12, 23, 0.98)),
+    #0b1220;
+}
+
+:global(.dark) .sidebar--paper.sidebar--collapsed :global(.sidebar-link) {
+  color: #94a3b8;
+}
+
+:global(.dark) .sidebar--paper.sidebar--collapsed :global(.sidebar-link:hover) {
+  border-color: rgba(45, 212, 191, 0.18);
+  background: rgba(20, 184, 166, 0.1);
+  color: #e5e7eb;
+}
+
+:global(.dark) .sidebar--paper.sidebar--collapsed :global(.sidebar-link-active) {
+  border-color: rgba(45, 212, 191, 0.2);
+  background: rgba(20, 184, 166, 0.16);
+  color: #2dd4bf;
+}
+
+:global(.dark) .sidebar-console-support strong {
+  color: #f8fafc;
+}
+
+:global(.dark) .sidebar-console-support span {
+  color: #94a3b8;
 }
 
 .sidebar-link-collapsed {

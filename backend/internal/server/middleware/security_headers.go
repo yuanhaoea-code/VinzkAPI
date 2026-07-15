@@ -20,6 +20,8 @@ const (
 	CloudflareInsightsDomain = "https://static.cloudflareinsights.com"
 	// StripeDomain is the domain for Stripe.js SDK
 	StripeDomain = "https://*.stripe.com"
+	// LDXPCheckoutDomain is the hosted recharge shop embedded by the user recharge page.
+	LDXPCheckoutDomain = "https://pay.ldxp.cn"
 	// AirwallexStaticDomain 是 Airwallex 生产环境 SDK 脚本域名。
 	AirwallexStaticDomain = "https://static.airwallex.com"
 	// AirwallexCheckoutDomain 是 Airwallex 生产环境收银台元素和 iframe 域名。
@@ -37,6 +39,7 @@ var requiredCSPDirectiveValues = []struct {
 	{"script-src", CloudflareInsightsDomain},
 	{"script-src", StripeDomain},
 	{"frame-src", StripeDomain},
+	{"frame-src", LDXPCheckoutDomain},
 	{"script-src", AirwallexStaticDomain},
 	{"script-src", AirwallexCheckoutDomain},
 	{"style-src", AirwallexStaticDomain},

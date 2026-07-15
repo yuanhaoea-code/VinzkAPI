@@ -22,7 +22,7 @@ const (
 	quotaDimWeekly = "weekly"
 	quotaDimTotal  = "total"
 
-	defaultSiteName = "Sub2API"
+	defaultSiteName = DefaultPublicSiteName
 )
 
 // quotaDimLabels maps dimension names to display labels.
@@ -262,7 +262,7 @@ func (s *BalanceNotifyService) getBalanceNotifyConfig(ctx context.Context) (enab
 			threshold = f
 		}
 	}
-	rechargeURL = settings[SettingKeyBalanceLowNotifyRechargeURL]
+	rechargeURL = productionPublicURLOrDefault(settings[SettingKeyBalanceLowNotifyRechargeURL], DefaultPublicRechargeURL)
 	return
 }
 

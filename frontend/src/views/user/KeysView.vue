@@ -1,8 +1,104 @@
 <template>
   <AppLayout>
-    <TablePageLayout>
+    <UserConsolePage
+      :kicker="t('keys.console.kicker')"
+      :title="t('keys.console.title')"
+      :description="t('keys.console.description')"
+      class="keys-console"
+    >
+      <template #heroAside>
+        <div class="console-summary">
+          <div>
+            <div class="console-summary__label">USABLE KEYS</div>
+            <div class="console-summary__value">{{ pagination.total }}</div>
+            <div class="console-summary__desc">
+              {{ t('keys.console.summaryDescription') }}
+            </div>
+          </div>
+          <div class="console-summary__micro">
+            <div>
+              <b>{{ activeVisibleCount }}</b>
+              <span>{{ t('common.active') }}</span>
+            </div>
+            <div>
+              <b>{{ guardedKeyCount }}</b>
+              <span>{{ t('keys.console.ruleKeys') }}</span>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template #heroNotes>
+        <div class="console-note">
+          <strong class="console-note__title">{{ t('keys.console.noteUseTitle') }}</strong>
+          <span class="console-note__copy">{{ t('keys.console.noteUseCopy') }}</span>
+        </div>
+        <div class="console-note">
+          <strong class="console-note__title">{{ t('keys.console.noteControlTitle') }}</strong>
+          <span class="console-note__copy">{{ t('keys.console.noteControlCopy') }}</span>
+        </div>
+        <div class="console-note">
+          <strong class="console-note__title">{{ t('keys.console.noteInspectTitle') }}</strong>
+          <span class="console-note__copy">{{ t('keys.console.noteInspectCopy') }}</span>
+        </div>
+      </template>
+
+      <div class="keys-console__stats">
+        <UserConsoleStatCard
+          :title="t('keys.console.filteredKeys')"
+          :value="pagination.total"
+          :hint="t('keys.console.filteredHint')"
+          meta="Total"
+          tone="sky"
+        >
+          <template #icon>
+            <Icon name="key" size="md" />
+          </template>
+        </UserConsoleStatCard>
+        <UserConsoleStatCard
+          :title="t('keys.console.activeKeys')"
+          :value="activeVisibleCount"
+          :hint="t('keys.console.activeHint')"
+          meta="Active"
+          tone="emerald"
+        >
+          <template #icon>
+            <Icon name="checkCircle" size="md" />
+          </template>
+        </UserConsoleStatCard>
+        <UserConsoleStatCard
+          :title="t('keys.console.quotaKeys')"
+          :value="quotaManagedCount"
+          :hint="t('keys.console.quotaHint')"
+          meta="Quota"
+          tone="amber"
+        >
+          <template #icon>
+            <Icon name="calculator" size="md" />
+          </template>
+        </UserConsoleStatCard>
+        <UserConsoleStatCard
+          :title="t('keys.console.ruleKeys')"
+          :value="guardedKeyCount"
+          :hint="t('keys.console.ruleHint')"
+          meta="Rules"
+          tone="violet"
+        >
+          <template #icon>
+            <Icon name="shield" size="md" />
+          </template>
+        </UserConsoleStatCard>
+      </div>
+
+      <TablePageLayout class="keys-console__table-layout">
       <template #filters>
-        <div class="flex flex-col gap-3">
+        <div class="keys-console__section keys-console__section--filters">
+          <div class="keys-console__section-head">
+            <div>
+              <p class="keys-console__section-title">{{ t('keys.console.filterTitle') }}</p>
+              <p class="keys-console__section-copy">{{ t('keys.console.filterCopy') }}</p>
+            </div>
+          </div>
           <div class="flex flex-wrap items-center gap-3">
             <SearchInput
               v-model="filterSearch"
@@ -24,20 +120,28 @@
             />
           </div>
           <EndpointPopover
-            v-if="publicSettings?.api_base_url || (publicSettings?.custom_endpoints?.length ?? 0) > 0"
-            :api-base-url="publicSettings?.api_base_url || ''"
+            v-if="effectiveApiBaseUrl || (publicSettings?.custom_endpoints?.length ?? 0) > 0"
+            :api-base-url="effectiveApiBaseUrl"
             :custom-endpoints="publicSettings?.custom_endpoints || []"
           />
         </div>
       </template>
 
       <template #actions>
-        <div class="flex justify-end gap-3">
+        <div class="keys-console__section keys-console__section--actions">
+          <div class="keys-console__section-head keys-console__section-head--inline">
+            <div>
+              <p class="keys-console__section-title">{{ t('keys.console.actionsTitle') }}</p>
+              <p class="keys-console__section-copy">{{ t('keys.console.actionsCopy') }}</p>
+            </div>
+          </div>
+          <div class="flex justify-end gap-3">
           <button
             @click="loadApiKeys"
             :disabled="loading"
             class="btn btn-secondary"
             :title="t('common.refresh')"
+            :aria-label="t('common.refresh')"
           >
             <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
           </button>
@@ -46,6 +150,7 @@
               @click="showColumnDropdown = !showColumnDropdown"
               class="btn btn-secondary px-2 md:px-3"
               :title="t('keys.columnSettings')"
+              :aria-label="t('keys.columnSettings')"
             >
               <svg class="h-4 w-4 md:mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125z" />
@@ -77,6 +182,7 @@
             <Icon name="plus" size="md" class="mr-2" />
             {{ t('keys.createKey') }}
           </button>
+          </div>
         </div>
       </template>
 
@@ -104,6 +210,7 @@
                     : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
                 "
                 :title="copiedKeyId === row.id ? t('keys.copied') : t('keys.copyToClipboard')"
+                :aria-label="copiedKeyId === row.id ? t('keys.copied') : t('keys.copyToClipboard')"
               >
                 <Icon
                   v-if="copiedKeyId === row.id"
@@ -418,7 +525,8 @@
           @update:pageSize="handlePageSizeChange"
         />
       </template>
-    </TablePageLayout>
+      </TablePageLayout>
+    </UserConsolePage>
 
     <!-- Create/Edit Modal -->
     <BaseDialog
@@ -968,7 +1076,7 @@
     <UseKeyModal
       :show="showUseKeyModal"
       :api-key="selectedKey?.key || ''"
-      :base-url="publicSettings?.api_base_url || ''"
+      :base-url="effectiveApiBaseUrl"
       :platform="selectedKey?.group?.platform || null"
       :allow-messages-dispatch="selectedKey?.group?.allow_messages_dispatch || false"
       @close="closeUseKeyModal"
@@ -1104,6 +1212,8 @@ const { t } = useI18n()
 import { keysAPI, authAPI, usageAPI, userGroupsAPI } from '@/api'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import TablePageLayout from '@/components/layout/TablePageLayout.vue'
+import UserConsolePage from '@/components/user/console/UserConsolePage.vue'
+import UserConsoleStatCard from '@/components/user/console/UserConsoleStatCard.vue'
 	import DataTable from '@/components/common/DataTable.vue'
 	import Pagination from '@/components/common/Pagination.vue'
 	import BaseDialog from '@/components/common/BaseDialog.vue'
@@ -1121,6 +1231,7 @@ import type { Column } from '@/components/common/types'
 import type { BatchApiKeyUsageStats } from '@/api/usage'
 import { formatDateTime } from '@/utils/format'
 import { maskApiKey } from '@/utils/maskApiKey'
+import { PUBLIC_API_BASE_URL, resolvePublicUrl } from '@/constants/site'
 import {
   buildCcSwitchImportDeeplink,
   type CcSwitchClientType
@@ -1263,6 +1374,9 @@ const selectedKey = ref<ApiKey | null>(null)
 const copiedKeyId = ref<number | null>(null)
 const groupSelectorKeyId = ref<number | null>(null)
 const publicSettings = ref<PublicSettings | null>(null)
+const effectiveApiBaseUrl = computed(() =>
+  resolvePublicUrl(publicSettings.value?.api_base_url, PUBLIC_API_BASE_URL),
+)
 const dropdownRef = ref<HTMLElement | null>(null)
 const columnDropdownRef = ref<HTMLElement | null>(null)
 const dropdownPosition = ref<{ top?: number; bottom?: number; left: number } | null>(null)
@@ -1390,6 +1504,23 @@ const filteredGroupOptions = computed(() => {
       (opt.description && opt.description.toLowerCase().includes(query))
   })
 })
+
+const activeVisibleCount = computed(
+  () => apiKeys.value.filter((key) => key.status === 'active').length
+)
+
+const quotaManagedCount = computed(
+  () => apiKeys.value.filter((key) => (key.quota ?? 0) > 0).length
+)
+
+const guardedKeyCount = computed(() =>
+  apiKeys.value.filter((key) => {
+    const hasIpRules = (key.ip_whitelist?.length ?? 0) > 0 || (key.ip_blacklist?.length ?? 0) > 0
+    const hasRateLimit =
+      (key.rate_limit_5h ?? 0) > 0 || (key.rate_limit_1d ?? 0) > 0 || (key.rate_limit_7d ?? 0) > 0
+    return hasIpRules || hasRateLimit || !!key.expires_at
+  }).length
+)
 
 const copyToClipboard = async (text: string, keyId: number) => {
   const success = await clipboardCopy(text, t('keys.copied'))
@@ -1837,7 +1968,7 @@ const importToCcswitch = (row: ApiKey) => {
 }
 
 const executeCcsImport = (row: ApiKey, clientType: CcSwitchClientType) => {
-  const baseUrl = publicSettings.value?.api_base_url || window.location.origin
+  const baseUrl = effectiveApiBaseUrl.value
   const platform = row.group?.platform || 'anthropic'
 
   const usageScript = `({
@@ -1921,3 +2052,196 @@ onUnmounted(() => {
   if (resetTimer) clearInterval(resetTimer)
 })
 </script>
+
+<style scoped>
+.keys-console__stats {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.keys-console__section {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.keys-console__section-title,
+.keys-console__section-copy {
+  margin: 0;
+}
+
+.keys-console__section-title {
+  color: #171411;
+  font-family: var(--console-font-sans);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.keys-console__section-copy {
+  margin-top: 3px;
+  color: #7c7267;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.keys-console__section-head {
+  margin-bottom: 9px;
+}
+
+.keys-console__section-head--inline {
+  margin-bottom: 10px;
+}
+
+.keys-console__table-layout {
+  height: auto;
+  min-height: 0;
+  gap: 10px;
+  border: 1px solid rgba(23, 20, 17, 0.08);
+  border-radius: 20px;
+  padding: 14px 16px 16px;
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: 0 1px 0 rgba(36, 29, 22, 0.025);
+}
+
+.keys-console__table-layout :deep(.layout-section-fixed) {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(23, 20, 17, 0.06);
+}
+
+.keys-console__table-layout :deep(.layout-section-fixed:last-child) {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.keys-console__table-layout :deep(.table-scroll-container) {
+  min-height: 328px;
+  border-radius: 16px;
+  border-color: rgba(23, 20, 17, 0.075);
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow: none;
+}
+
+.keys-console__table-layout :deep(.table-wrapper thead) {
+  background: rgba(248, 247, 244, 0.95);
+}
+
+.keys-console__table-layout :deep(th) {
+  color: #7c7267;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+.keys-console__table-layout :deep(td) {
+  color: #171411;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  font-size: 14px;
+}
+
+.keys-console__table-layout :deep(.code) {
+  border-radius: 8px;
+  background: rgba(23, 20, 17, 0.045);
+  color: #4d635f;
+}
+
+.keys-console__table-layout :deep(.badge) {
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.keys-console__section--actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.keys-console__section--actions .keys-console__section-head {
+  margin-bottom: 0;
+}
+
+.keys-console__section--filters {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 11px;
+  border-radius: 16px;
+  background: rgba(246, 244, 239, 0.74);
+  box-shadow: inset 0 0 0 1px rgba(23, 20, 17, 0.04);
+}
+
+.keys-console__section--filters .keys-console__section-head {
+  min-width: 11rem;
+  max-width: 18rem;
+  margin-bottom: 0;
+}
+
+:global(.dark) .keys-console__section,
+:global(.dark) .keys-console__table-layout :deep(.table-scroll-container) {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.78);
+}
+
+:global(.dark) .keys-console__section-copy,
+:global(.dark) .keys-console__table-layout :deep(th) {
+  color: #94a3b8;
+}
+
+:global(.dark) .keys-console__section-title,
+:global(.dark) .keys-console__table-layout :deep(td) {
+  color: #f8fafc;
+}
+
+:global(.dark) .keys-console__table-layout :deep(.table-wrapper thead) {
+  background: rgba(15, 23, 42, 0.96);
+}
+
+:global(.dark) .keys-console__table-layout {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.78);
+}
+
+:global(.dark) .keys-console__table-layout :deep(.layout-section-fixed) {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+@media (min-width: 700px) {
+  .keys-console__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .keys-console__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1180px) {
+  .keys-console__stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .keys-console__section--actions,
+  .keys-console__section--filters {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .keys-console__section--filters .keys-console__section-head {
+    max-width: none;
+  }
+}
+</style>

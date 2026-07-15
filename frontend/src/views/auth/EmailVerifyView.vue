@@ -163,6 +163,7 @@ import {
 } from '@/api/auth'
 import { apiClient } from '@/api/client'
 import { buildAuthErrorMessage } from '@/utils/authError'
+import { PUBLIC_SITE_NAME } from '@/constants/site'
 import {
   formatRegistrationEmailSuffixWhitelistForMessage,
   isRegistrationEmailSuffixAllowed,
@@ -212,6 +213,9 @@ type PendingOAuthCreateAccountResponse = {
 
 const email = ref<string>('')
 const password = ref<string>('')
+const realName = ref<string>('')
+const userType = ref<'个人用户' | '企业用户' | '学校用户'>('个人用户')
+const contactPhone = ref<string>('')
 const initialTurnstileToken = ref<string>('')
 const promoCode = ref<string>('')
 const invitationCode = ref<string>('')
@@ -229,7 +233,7 @@ const hasRegisterData = ref<boolean>(false)
 // Public settings
 const turnstileEnabled = ref<boolean>(false)
 const turnstileSiteKey = ref<string>('')
-const siteName = ref<string>('Sub2API')
+const siteName = ref<string>(PUBLIC_SITE_NAME)
 const registrationEmailSuffixWhitelist = ref<string[]>([])
 
 // Turnstile for resend
@@ -264,6 +268,11 @@ onMounted(async () => {
       const registerData = JSON.parse(registerDataStr)
       email.value = registerData.email || ''
       password.value = registerData.password || ''
+      realName.value = registerData.real_name || ''
+      userType.value = ['个人用户', '企业用户', '学校用户'].includes(registerData.user_type)
+        ? registerData.user_type
+        : '个人用户'
+      contactPhone.value = registerData.contact_phone || ''
       initialTurnstileToken.value = registerData.turnstile_token || ''
       promoCode.value = registerData.promo_code || ''
       invitationCode.value = registerData.invitation_code || ''
@@ -278,7 +287,7 @@ onMounted(async () => {
             adoptAvatar: registerData.pending_adoption_decision.adopt_avatar === true
           }
         : null
-      hasRegisterData.value = !!(email.value && password.value)
+      hasRegisterData.value = !!(email.value && password.value && realName.value && contactPhone.value)
     } catch {
       hasRegisterData.value = false
     }
@@ -294,7 +303,7 @@ onMounted(async () => {
     const settings = await getPublicSettings()
     turnstileEnabled.value = settings.turnstile_enabled
     turnstileSiteKey.value = settings.turnstile_site_key || ''
-    siteName.value = settings.site_name || 'Sub2API'
+    siteName.value = settings.site_name || PUBLIC_SITE_NAME
     registrationEmailSuffixWhitelist.value = normalizeRegistrationEmailSuffixWhitelist(
       settings.registration_email_suffix_whitelist || []
     )
@@ -503,6 +512,9 @@ async function handleVerify(): Promise<void> {
       const payload: Record<string, unknown> = {
         email: email.value,
         password: password.value,
+        real_name: realName.value,
+        user_type: userType.value,
+        contact_phone: contactPhone.value,
         verify_code: verifyCode.value.trim(),
         ...oauthAffiliatePayload(affCode.value || loadAffiliateReferralCode()),
       }
@@ -538,6 +550,9 @@ async function handleVerify(): Promise<void> {
       await authStore.register({
         email: email.value,
         password: password.value,
+        real_name: realName.value,
+        user_type: userType.value,
+        contact_phone: contactPhone.value,
         verify_code: verifyCode.value.trim(),
         turnstile_token: initialTurnstileToken.value || undefined,
         promo_code: promoCode.value || undefined,

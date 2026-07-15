@@ -20,7 +20,7 @@
             <button
               v-if="showCloseButton"
               @click="emit('close')"
-              class="-mr-2 rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-dark-500 dark:hover:bg-dark-700 dark:hover:text-dark-300"
+              class="modal-close-button -mr-2 rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-dark-500 dark:hover:bg-dark-700 dark:hover:text-dark-300"
               aria-label="Close modal"
             >
               <Icon name="x" size="md" />
@@ -53,6 +53,7 @@ const dialogId = `modal-title-${++dialogIdCounter}`
 // 焦点管理
 const dialogRef = ref<HTMLElement | null>(null)
 let previousActiveElement: HTMLElement | null = null
+let addedDialogThemeClass = false
 
 type DialogWidth = 'narrow' | 'normal' | 'wide' | 'extra-wide' | 'full'
 
@@ -120,6 +121,10 @@ watch(
       previousActiveElement = document.activeElement as HTMLElement
       // 使用CSS类而不是直接操作style,更易于管理多个对话框
       document.body.classList.add('modal-open')
+      if (!document.body.classList.contains('paper-console-active')) {
+        document.body.classList.add('paper-console-active')
+        addedDialogThemeClass = true
+      }
 
       // 等待DOM更新后设置焦点到对话框
       await nextTick()
@@ -131,6 +136,10 @@ watch(
       }
     } else {
       document.body.classList.remove('modal-open')
+      if (addedDialogThemeClass) {
+        document.body.classList.remove('paper-console-active')
+        addedDialogThemeClass = false
+      }
       // 恢复之前的焦点
       if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
         previousActiveElement.focus()
@@ -149,5 +158,8 @@ onUnmounted(() => {
   document.removeEventListener('keydown', handleEscape)
   // 确保组件卸载时移除滚动锁定
   document.body.classList.remove('modal-open')
+  if (addedDialogThemeClass) {
+    document.body.classList.remove('paper-console-active')
+  }
 })
 </script>

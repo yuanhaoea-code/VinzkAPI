@@ -352,6 +352,18 @@ func (_u *GroupUpdate) SetNillableAllowImageGeneration(v *bool) *GroupUpdate {
 	return _u
 }
 
+// SetImageAllowedTiers sets the "image_allowed_tiers" field.
+func (_u *GroupUpdate) SetImageAllowedTiers(v []string) *GroupUpdate {
+	_u.mutation.SetImageAllowedTiers(v)
+	return _u
+}
+
+// AppendImageAllowedTiers appends value to the "image_allowed_tiers" field.
+func (_u *GroupUpdate) AppendImageAllowedTiers(v []string) *GroupUpdate {
+	_u.mutation.AppendImageAllowedTiers(v)
+	return _u
+}
+
 // SetImageRateIndependent sets the "image_rate_independent" field.
 func (_u *GroupUpdate) SetImageRateIndependent(v bool) *GroupUpdate {
 	_u.mutation.SetImageRateIndependent(v)
@@ -1116,6 +1128,14 @@ func (_u *GroupUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AllowImageGeneration(); ok {
 		_spec.SetField(group.FieldAllowImageGeneration, field.TypeBool, value)
 	}
+	if value, ok := _u.mutation.ImageAllowedTiers(); ok {
+		_spec.SetField(group.FieldImageAllowedTiers, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedImageAllowedTiers(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, group.FieldImageAllowedTiers, value)
+		})
+	}
 	if value, ok := _u.mutation.ImageRateIndependent(); ok {
 		_spec.SetField(group.FieldImageRateIndependent, field.TypeBool, value)
 	}
@@ -1850,6 +1870,18 @@ func (_u *GroupUpdateOne) SetNillableAllowImageGeneration(v *bool) *GroupUpdateO
 	if v != nil {
 		_u.SetAllowImageGeneration(*v)
 	}
+	return _u
+}
+
+// SetImageAllowedTiers sets the "image_allowed_tiers" field.
+func (_u *GroupUpdateOne) SetImageAllowedTiers(v []string) *GroupUpdateOne {
+	_u.mutation.SetImageAllowedTiers(v)
+	return _u
+}
+
+// AppendImageAllowedTiers appends value to the "image_allowed_tiers" field.
+func (_u *GroupUpdateOne) AppendImageAllowedTiers(v []string) *GroupUpdateOne {
+	_u.mutation.AppendImageAllowedTiers(v)
 	return _u
 }
 
@@ -2646,6 +2678,14 @@ func (_u *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error)
 	}
 	if value, ok := _u.mutation.AllowImageGeneration(); ok {
 		_spec.SetField(group.FieldAllowImageGeneration, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.ImageAllowedTiers(); ok {
+		_spec.SetField(group.FieldImageAllowedTiers, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedImageAllowedTiers(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, group.FieldImageAllowedTiers, value)
+		})
 	}
 	if value, ok := _u.mutation.ImageRateIndependent(); ok {
 		_spec.SetField(group.FieldImageRateIndependent, field.TypeBool, value)

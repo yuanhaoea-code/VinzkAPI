@@ -133,8 +133,35 @@ func (s *AuthService) Register(ctx context.Context, email, password string) (str
 	return s.RegisterWithVerification(ctx, email, password, "", "", "", "")
 }
 
+type RegistrationProfile struct {
+	RealName     string
+	UserType     string
+	ContactPhone string
+}
+
+func registrationProfileNotes(profile *RegistrationProfile) string {
+	if profile == nil {
+		return ""
+	}
+	realName := strings.TrimSpace(profile.RealName)
+	userType := strings.TrimSpace(profile.UserType)
+	contactPhone := strings.TrimSpace(profile.ContactPhone)
+	if realName == "" && userType == "" && contactPhone == "" {
+		return ""
+	}
+	return fmt.Sprintf("注册姓名：%s\n用户类型：%s\n联系方式：%s", realName, userType, contactPhone)
+}
+
 // RegisterWithVerification 用户注册（支持邮件验证、优惠码、邀请码和邀请返利码），返回token和用户。
 func (s *AuthService) RegisterWithVerification(ctx context.Context, email, password, verifyCode, promoCode, invitationCode, affiliateCode string) (string, *User, error) {
+	return s.registerWithVerification(ctx, email, password, verifyCode, promoCode, invitationCode, affiliateCode, nil)
+}
+
+func (s *AuthService) RegisterWithVerificationProfile(ctx context.Context, email, password, verifyCode, promoCode, invitationCode, affiliateCode string, profile RegistrationProfile) (string, *User, error) {
+	return s.registerWithVerification(ctx, email, password, verifyCode, promoCode, invitationCode, affiliateCode, &profile)
+}
+
+func (s *AuthService) registerWithVerification(ctx context.Context, email, password, verifyCode, promoCode, invitationCode, affiliateCode string, profile *RegistrationProfile) (string, *User, error) {
 	// 检查是否开放注册（默认关闭：settingService 未配置时不允许注册）
 	if s.settingService == nil || !s.settingService.IsRegistrationEnabled(ctx) {
 		return "", nil, ErrRegDisabled
@@ -214,6 +241,7 @@ func (s *AuthService) RegisterWithVerification(ctx context.Context, email, passw
 		Email:        email,
 		PasswordHash: hashedPassword,
 		Role:         RoleUser,
+		Notes:        registrationProfileNotes(profile),
 		Balance:      grantPlan.Balance,
 		Concurrency:  grantPlan.Concurrency,
 		RPMLimit:     defaultRPMLimit,
@@ -308,7 +336,7 @@ func (s *AuthService) SendVerifyCode(ctx context.Context, email string, locale .
 	}
 
 	// 获取网站名称
-	siteName := "Sub2API"
+	siteName := DefaultPublicSiteName
 	if s.settingService != nil {
 		siteName = s.settingService.GetSiteName(ctx)
 	}
@@ -351,7 +379,7 @@ func (s *AuthService) SendVerifyCodeAsync(ctx context.Context, email string, loc
 	}
 
 	// 获取网站名称
-	siteName := "Sub2API"
+	siteName := DefaultPublicSiteName
 	if s.settingService != nil {
 		siteName = s.settingService.GetSiteName(ctx)
 	}
@@ -1310,7 +1338,7 @@ func (s *AuthService) preparePasswordReset(ctx context.Context, email, frontendB
 	}
 
 	// Get site name
-	siteName := "Sub2API"
+	siteName := DefaultPublicSiteName
 	if s.settingService != nil {
 		siteName = s.settingService.GetSiteName(ctx)
 	}

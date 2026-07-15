@@ -78,6 +78,23 @@ func TestSettingService_GetPublicSettings_ExposesTablePreferences(t *testing.T) 
 	require.Equal(t, []int{20, 50, 100}, settings.TablePageSizeOptions)
 }
 
+func TestSettingService_GetPublicSettings_ReplacesNonProductionPublicURLs(t *testing.T) {
+	repo := &settingPublicRepoStub{
+		values: map[string]string{
+			SettingKeyAPIBaseURL:                  "http://127.0.0.1:3001",
+			SettingKeyDocURL:                      "https://docs.example.com",
+			SettingKeyBalanceLowNotifyRechargeURL: "http://localhost:18080",
+		},
+	}
+	svc := NewSettingService(repo, &config.Config{})
+
+	settings, err := svc.GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, DefaultPublicAPIBaseURL, settings.APIBaseURL)
+	require.Equal(t, DefaultPublicTutorialURL, settings.DocURL)
+	require.Equal(t, DefaultPublicRechargeURL, settings.BalanceLowNotifyRechargeURL)
+}
+
 func TestSettingService_GetPublicSettings_ExposesForceEmailOnThirdPartySignup(t *testing.T) {
 	repo := &settingPublicRepoStub{
 		values: map[string]string{

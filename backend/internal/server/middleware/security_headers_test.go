@@ -359,6 +359,20 @@ func TestEnhanceCSPPolicy(t *testing.T) {
 		assert.Equal(t, 1, countDirectiveValue(enhanced, "style-src", AirwallexDemoCheckoutDomain))
 		assert.Equal(t, 1, countDirectiveValue(enhanced, "frame-src", AirwallexDemoCheckoutDomain))
 	})
+
+	t.Run("adds_ldxp_recharge_domain", func(t *testing.T) {
+		policy := "default-src 'self'; script-src 'self' __CSP_NONCE__; frame-src 'self'"
+		enhanced := enhanceCSPPolicy(policy)
+
+		assert.Equal(t, 1, countDirectiveValue(enhanced, "frame-src", LDXPCheckoutDomain))
+	})
+
+	t.Run("does_not_duplicate_ldxp_recharge_domain", func(t *testing.T) {
+		policy := "default-src 'self'; script-src 'self' __CSP_NONCE__; frame-src 'self' https://pay.ldxp.cn"
+		enhanced := enhanceCSPPolicy(policy)
+
+		assert.Equal(t, 1, countDirectiveValue(enhanced, "frame-src", LDXPCheckoutDomain))
+	})
 }
 
 func countDirectiveValue(policy, directive, value string) int {

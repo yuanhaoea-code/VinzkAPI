@@ -33,9 +33,9 @@ type Group struct {
 	RateMultiplier float64 `json:"rate_multiplier,omitempty"`
 	// 是否启用高峰时段倍率
 	PeakRateEnabled bool `json:"peak_rate_enabled,omitempty"`
-	// 高峰开始时间 HH:MM（含），如 14:00；空表示未配置
+	// 高峰开始时间 HH:MM（含），如 14:00；空表示未配置；不支持跨天
 	PeakStart string `json:"peak_start,omitempty"`
-	// 高峰结束时间 HH:MM（不含），如 18:00
+	// 高峰结束时间 HH:MM（不含），必须大于 peak_start；不支持跨天，如 22:00-02:00
 	PeakEnd string `json:"peak_end,omitempty"`
 	// 高峰时段叠加倍率，仅在 peak_rate_enabled 且处于 [peak_start, peak_end) 时乘入文本倍率
 	PeakRateMultiplier float64 `json:"peak_rate_multiplier,omitempty"`
@@ -57,6 +57,8 @@ type Group struct {
 	DefaultValidityDays int `json:"default_validity_days,omitempty"`
 	// 是否允许该分组使用图片生成能力
 	AllowImageGeneration bool `json:"allow_image_generation,omitempty"`
+	// 允许的图片产品规格：1K, 2K, 4K
+	ImageAllowedTiers []string `json:"image_allowed_tiers,omitempty"`
 	// 图片生成是否使用独立倍率；false 表示共享分组有效倍率
 	ImageRateIndependent bool `json:"image_rate_independent,omitempty"`
 	// 图片生成独立倍率，仅 image_rate_independent=true 时生效
@@ -203,7 +205,7 @@ func (*Group) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case group.FieldModelRouting, group.FieldSupportedModelScopes, group.FieldMessagesDispatchModelConfig, group.FieldModelsListConfig:
+		case group.FieldImageAllowedTiers, group.FieldModelRouting, group.FieldSupportedModelScopes, group.FieldMessagesDispatchModelConfig, group.FieldModelsListConfig:
 			values[i] = new([]byte)
 		case group.FieldPeakRateEnabled, group.FieldIsExclusive, group.FieldAllowImageGeneration, group.FieldImageRateIndependent, group.FieldClaudeCodeOnly, group.FieldModelRoutingEnabled, group.FieldMcpXMLInject, group.FieldAllowMessagesDispatch, group.FieldRequireOauthOnly, group.FieldRequirePrivacySet:
 			values[i] = new(sql.NullBool)
@@ -354,6 +356,14 @@ func (_m *Group) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field allow_image_generation", values[i])
 			} else if value.Valid {
 				_m.AllowImageGeneration = value.Bool
+			}
+		case group.FieldImageAllowedTiers:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field image_allowed_tiers", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.ImageAllowedTiers); err != nil {
+					return fmt.Errorf("unmarshal field image_allowed_tiers: %w", err)
+				}
 			}
 		case group.FieldImageRateIndependent:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -630,6 +640,9 @@ func (_m *Group) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("allow_image_generation=")
 	builder.WriteString(fmt.Sprintf("%v", _m.AllowImageGeneration))
+	builder.WriteString(", ")
+	builder.WriteString("image_allowed_tiers=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ImageAllowedTiers))
 	builder.WriteString(", ")
 	builder.WriteString("image_rate_independent=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ImageRateIndependent))

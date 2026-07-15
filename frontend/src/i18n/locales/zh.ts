@@ -1,6 +1,180 @@
 export default {
+  monitor: {
+    title: '渠道状态'
+  },
   // Home Page
   home: {
+    landing: {
+      brand: '维枢 AI',
+      nav: {
+        label: '维枢 AI 首页导航',
+        gateway: 'API 网关',
+        creative: 'AI 创作',
+        workspace: '智能体工作台',
+        pricing: '服务套餐'
+      },
+      hero: {
+        core: '枢',
+        eyebrow: 'AI 能力网关 · 智能体工作台 · 企业 AI 服务',
+        slogan: '一念既起，万象可成',
+        subtitle: '把多模型 API、AI 生图、生视频与智能体工作台汇入一个入口。从一句想法到一张图、一段视频、一个应用，让 AI 更快抵达结果。',
+        primaryCta: '进入控制台',
+        secondaryCta: '查看创作能力'
+      },
+      promise: {
+        eyebrow: 'OUR PROMISE · 我们的承诺',
+        title: '一个入口接模型，一张账单管消耗',
+        copyOne: '维枢 AI 不是单纯转发请求，而是把模型调用、工具接入、创作能力和服务交付整理成可使用、可统计、可交付的 AI 服务。',
+        copyTwo: '你可以把它接入 Codex CLI、Claude Code、Cursor、Cline，也可以在网页里调用智能体处理文档、报表、代码和创作任务。',
+        items: {
+          oneKey: '一个 Key · 多模型接入',
+          dispatch: '智能调度 · 长链路不断流',
+          billing: '透明账单 · 用量可查',
+          service: '企业/学校 · 可服务交付'
+        }
+      },
+      stats: {
+        requestsValue: '802541',
+        requestsUnit: '+',
+        requestsLabel: '累计处理 API 请求',
+        availabilityValue: '98.80',
+        availabilityUnit: '%',
+        availabilityLabel: '近 30 天可用率',
+        latencyValue: '378',
+        latencyUnit: 'ms',
+        latencyLabel: '平均首字延迟'
+      },
+      gateway: {
+        eyebrow: 'GATEWAY · API 网关',
+        title: '一把 Key，通向多种模型能力。',
+        lead: '兼容主流 API 协议，支持 GPT、Claude、Gemini、image2、seedance 等能力接入。适合 Agent、IDE、命令行工具和企业内部系统统一调用。'
+      },
+      creative: {
+        eyebrow: 'CREATE · AI 创作',
+        title: '一句话，生成图像与视频。',
+        lead: '接入 image2 生图、seedance 生视频等创作能力。用户描述想法，系统完成调用、排队、返回和用量记录。',
+        prompt: '一片宁静的海岸日落，柔和的体积光，照片级真实感',
+        generating: '生成中',
+        sizeLabel: '支持 1K / 2K / 4K 出图',
+        video: '从静态图到几秒视频，后续可扩展更多创作模型。'
+      },
+      playbook: {
+        eyebrow: 'PLAYBOOK · 玩法频道',
+        title: '不止 API，还有得玩。',
+        lead: '把 Token 消耗变成更有参与感的服务：签到、邀请返利、Token 排行榜、AI 开发任务，都可以成为平台运营的一部分。',
+        switch: '换台',
+        modes: {
+          signin: {
+            title: '签到',
+            caption: '每日签到，领取体验额度。'
+          },
+          agent: {
+            title: 'Agent Team',
+            caption: '邀请好友，佣金与返利可追踪。'
+          },
+          token: {
+            title: 'Token 排行榜',
+            caption: '消耗量前三，额外奖励定期开花。'
+          },
+          code: {
+            title: 'AI 开发',
+            prompt: '帮我做一个客户跟进系统',
+            caption: '一句需求，让智能体拆任务、写代码、跑测试。'
+          }
+        }
+      },
+      workspace: {
+        eyebrow: 'WORKSPACE · 智能体工作台',
+        title: '网页里，也能直接和智能体协作。',
+        lead: '后续接入 Hermes 或 OpenClaw，把你现有的 API 能力接到网页对话中。用户可以上传文件、报表和文档，让智能体分析、改写、生成方案。',
+        status: '正在接入 · 页面完成后可替换为真实工作台',
+        userMessage: '帮我整理这份报表，生成销售分析和下周行动计划。',
+        aiMessage: '已读取文件。我会先提取关键指标，再生成表格摘要、趋势判断和执行清单。'
+      },
+      why: {
+        eyebrow: 'WHY · 为什么选择维枢',
+        title: '少一些妨碍，多一份思维流速。',
+        items: {
+          multi: {
+            title: '多模型聚合',
+            body: 'GPT、Claude、Gemini 等能力统一接入，兼容常见工作流，免去多个平台之间反复切换。',
+            previewTitle: 'ONE KEY · ALL MODELS'
+          },
+          reliable: {
+            title: '稳定调度',
+            body: '多账号、多线路与长响应保持能力配合，减少上游慢响应、断流和排队带来的中断。',
+            previewTitle: 'ROUTING · STREAM SAFE'
+          },
+          billing: {
+            title: '透明计费',
+            body: '请求、模型、Token、余额和成本都可追踪，方便企业、学校和团队做成本分摊。',
+            previewTitle: 'BILLING · TRACEABLE'
+          },
+          enterprise: {
+            title: '服务交付',
+            body: '提供 API 调用、AI 使用配额、行业模板和技术支持，便于企业或学校统一采购和使用。',
+            previewTitle: 'SERVICE · INVOICE READY'
+          },
+          market: {
+            title: '模型广场',
+            body: '按分组展示可用模型和能力边界，让用户知道自己能调用什么、适合做什么。',
+            previewTitle: 'MODEL MARKET · CLEAR CHOICE'
+          },
+          recharge: {
+            title: '自助充值',
+            body: '用户可在控制台自助购买额度、兑换充值码，余额实时到账，减少人工确认和等待。',
+            previewTitle: 'RECHARGE · SELF SERVICE'
+          }
+        }
+      },
+      onboarding: {
+        eyebrow: 'ONBOARD · 快速接入',
+        title: '一行代码不用写，也能先跑起来。',
+        lead: '控制台复制 API Key，填进你正在用的工具；网页工作台上线后，也可以直接在浏览器里发起任务。',
+        idea: '一句话开发一个内部工单系统',
+        steps: {
+          copy: {
+            title: '创建 API Key',
+            body: '在控制台选择分组、额度和模型范围。'
+          },
+          paste: {
+            title: '接入工具',
+            body: '填入 base_url 和密钥，连接 Codex、Cursor、Cline 等工作流。'
+          },
+          create: {
+            title: '开始创作',
+            body: '对话、写代码、生图、生视频和文档处理逐步汇入同一个入口。'
+          }
+        }
+      },
+      pricing: {
+        eyebrow: 'SERVICE · AI 服务',
+        title: '提供 API 调用服务、AI 智能支持与算力支撑。',
+        lead: '面向个人、企业和学校，提供稳定的 API 调用、网页版 AI 协作、模型能力接入和配套技术支持。',
+        cta: '开始使用维枢 AI',
+        services: {
+          api: {
+            tag: 'API',
+            title: 'API 调用服务',
+            body: '适合 Agent、IDE、自动化脚本和企业内部系统，按量使用，统一管理。'
+          },
+          workspace: {
+            tag: 'AI Support',
+            title: 'AI 智能支持',
+            body: '支持网页对话、文件处理、报表分析和智能体任务，降低普通用户的使用门槛。'
+          },
+          invoice: {
+            tag: 'Compute',
+            title: '算力与技术支撑',
+            body: '为企业、学校和团队提供模型接入、额度管理、技术协助和持续服务支持。'
+          }
+        }
+      },
+      footer: {
+        tagline: '维枢 · 让万象更快成形',
+        copyright: "{'@'}2026 www.Vinzk.cn"
+      }
+    },
     viewOnGithub: '在 GitHub 上查看',
     viewDocs: '查看文档',
     docs: '文档',
@@ -187,8 +361,8 @@ export default {
 
   // Setup Wizard
   setup: {
-    title: 'Sub2API 安装向导',
-    description: '配置您的 Sub2API 实例',
+    title: 'VinzkAPI 安装向导',
+    description: '配置您的 VinzkAPI 实例',
     database: {
       title: '数据库配置',
       description: '连接到您的 PostgreSQL 数据库',
@@ -404,6 +578,7 @@ export default {
     affiliateRebateRecords: '返利记录',
     affiliateTransferRecords: '提取记录',
     profile: '个人资料',
+    tutorials: '教程文档',
     users: '用户管理',
     groups: '分组管理',
     channels: '渠道管理',
@@ -424,6 +599,9 @@ export default {
     github: 'GitHub',
     mySubscriptions: '我的订阅',
     buySubscription: '充值/订阅',
+    modelMarket: '模型广场',
+    imageGeneration: 'AI 生图',
+    recharge: '充值',
     docs: '文档',
     myOrders: '我的订单',
     orderManagement: '订单管理',
@@ -437,14 +615,53 @@ export default {
     riskControl: '风控中心',
   },
 
+  authLayout: {
+    brand: '维枢 AI',
+    brandMark: '维',
+    backHome: '返回首页',
+    cardSubtitle: 'AI 服务能力入口',
+    kicker: 'API 调用服务 · AI 智能支持 · 算力支撑',
+    titleOne: '把想法交给模型，',
+    titleTwo: '把结果交给维枢',
+    lead: '为个人、团队、企业和学校提供稳定的模型能力接入、网页 AI 协作、文件处理与技术服务支持。',
+    service: {
+      api: {
+        label: 'API',
+        value: '统一调用入口'
+      },
+      ai: {
+        label: 'AI',
+        value: '网页智能协作'
+      },
+      compute: {
+        label: 'COMPUTE',
+        value: '服务与算力支撑'
+      }
+    },
+    capabilities: {
+      api: '支持 API 接入 Agent / IDE / 自动化工具',
+      workspace: '支持网页 AI 对话与文件、报表、文档处理',
+      support: '提供企业、学校、个人 AI 服务支持'
+    },
+    support: {
+      label: 'SUPPORT · 人工协助',
+      text: '如遇登录 / 注册 / 充值或使用问题，欢迎随时联系',
+      qq: '客服 QQ'
+    }
+  },
+
   // Auth
   auth: {
     welcomeBack: '欢迎回来',
     signInToAccount: '登录您的账户以继续',
+    loginVinzkTitle: '欢迎使用维枢 AI',
+    loginVinzkSubtitle: '登录后继续使用 API、创作与智能体服务',
     signIn: '登录',
     signingIn: '登录中...',
     createAccount: '创建账户',
     signUpToStart: '注册以开始使用 {siteName}',
+    registerVinzkTitle: '加入维枢 AI',
+    registerVinzkSubtitle: '创建账号，开始使用 AI 服务能力',
     signUp: '注册',
     processing: '处理中...',
     continue: '继续',
@@ -462,6 +679,17 @@ export default {
     invalidEmail: '请输入有效的邮箱地址',
     passwordRequired: '请输入密码',
     passwordMinLength: '密码至少需要 6 个字符',
+    realNameLabel: '姓名',
+    realNamePlaceholder: '请输入真实姓名',
+    realNameRequired: '请输入姓名',
+    userTypeLabel: '用户类型',
+    userTypePersonal: '个人用户',
+    userTypeEnterprise: '企业用户',
+    userTypeSchool: '学校用户',
+    userTypeRequired: '请选择用户类型',
+    contactPhoneLabel: '联系方式',
+    contactPhonePlaceholder: '请输入手机号或其他联系方式',
+    contactPhoneRequired: '请输入联系方式',
     loginFailed: '登录失败，请检查您的凭据后重试。',
     errors: {
       USER_NOT_ACTIVE: '账号已被禁用',
@@ -661,6 +889,32 @@ export default {
   dashboard: {
     title: '仪表盘',
     welcomeMessage: '欢迎回来！这是您账户的概览。',
+    console: {
+      kicker: 'DASHBOARD',
+      title: '仪表盘',
+      description: '集中查看账户余额、调用请求、Token 消耗、费用趋势与响应表现，快速掌握账户使用情况。',
+      summaryDescription: '当前可用余额与今日调用概览，便于及时安排充值和使用计划。',
+      noteOverviewTitle: '账户概览',
+      noteOverviewCopy: '余额、今日请求、累计 Token、实际费用和平均响应集中展示。',
+      noteAnalysisTitle: '用量分析',
+      noteAnalysisCopy: '通过模型分布和趋势变化，了解主要消耗集中在哪些模型与时段。',
+      noteNextTitle: '快捷入口',
+      noteNextCopy: '可直接前往 API 密钥、使用记录、兑换中心或模型广场继续操作。',
+      platformDescription: '按平台查看费用、请求数、Token 和额度窗口，便于判断哪一侧正在累积消耗。',
+      balanceHint: '钱包可用余额',
+      keysDetail: '创建、停用或调整密钥分组，统一管理访问权限。',
+      requestsDetail: '用当前时间范围判断今天的调用强度和峰值。',
+      performanceDetail: '当前分钟级请求量与 Token 吞吐。',
+      responseDetail: '最近请求的平均端到端耗时。',
+      chartTitle: '统计与趋势',
+      chartDescription: '切换时间范围和统计粒度，对比模型分布、请求变化与 Token 消耗趋势。',
+      chartMeta: '调用趋势与模型分布',
+      chartViewLabel: '视图',
+      modelDescription: '先看模型占比，再决定去哪个分组或哪个账号池继续排查。',
+      recentDescription: '最近成功请求可以帮助你快速确认模型、时间点和实际费用。',
+      quickActionsDescription: '快速进入常用功能，减少重复查找和页面切换。',
+      monitorDescription: '查看当前渠道与路由状态。',
+    },
     balance: '余额',
     apiKeys: 'API 密钥',
     todayRequests: '今日请求',
@@ -725,6 +979,35 @@ export default {
   keys: {
     title: 'API 密钥',
     description: '管理您的 API 密钥和访问令牌',
+    console: {
+      kicker: 'API KEYS',
+      title: 'API 密钥',
+      description: '创建并管理 API 密钥，可按名称、分组和状态快速筛选，并查看使用情况与费用。',
+      summaryDescription: '当前密钥数量、启用状态及安全规则概览。',
+      filteredKeys: '当前结果',
+      activeKeys: '本页启用中',
+      todayActualCost: '今日实际费用',
+      filteredHint: '统计当前筛选条件下的密钥数量',
+      filteredDetail: '搜索、分组和状态筛选都会同步作用到这里。',
+      activeHint: '当前页仍可正常发起请求的密钥',
+      activeDetail: '可随时停用、调整分组、复制密钥或查看接入方式。',
+      quotaKeys: '已设额度',
+      quotaHint: '设置了消费额度上限的密钥',
+      quotaDetail: '额度、重置和过期时间都保留在同一套数据里。',
+      ruleKeys: '已设规则',
+      ruleHint: '开启了 IP 规则、速率限制或过期时间',
+      ruleDetail: '在流量真正打上来之前，就能先看清哪些密钥受约束。',
+      noteUseTitle: '多客户端接入',
+      noteUseCopy: '查看 Codex CLI、Claude Code、Gemini CLI 等工具的配置方式，并可直接复制使用。',
+      noteControlTitle: '同页维护控制项',
+      noteControlCopy: '在同一页面管理分组、IP 白黑名单、额度、过期时间和速率限制。',
+      noteInspectTitle: '先看费用再轮换',
+      noteInspectCopy: '通过今日费用与累计费用判断密钥使用情况，及时暂停或调整限制。',
+      filterTitle: '筛选与定位',
+      filterCopy: '先按名称、分组、状态缩小范围，再去操作额度、过期或接入方式会更稳。',
+      actionsTitle: '常用操作',
+      actionsCopy: '可刷新列表、调整显示列或创建新密钥，常用操作集中处理。',
+    },
     searchPlaceholder: '搜索名称或Key...',
     endpoints: {
       title: 'API 端点',
@@ -896,6 +1179,28 @@ export default {
   usage: {
     title: '使用记录',
     description: '查看和分析您的 API 使用历史',
+    console: {
+      kicker: 'USAGE',
+      title: '使用记录',
+      description: '按时间范围查看请求量、Token、标准费用与实际扣费，并通过筛选和导出完成用量分析。',
+      summaryDescription: '当前时间范围内的请求总量，可结合 Token、费用和平均时长综合查看。',
+      requestsInRange: '范围内请求数',
+      actualCost: '实际扣费',
+      range: '当前范围',
+      noteBillingTitle: '原价与实付对照',
+      noteBillingCopy: '对比标准费用与实际扣费，快速了解倍率和结算差异。',
+      noteExportTitle: '按当前条件导出',
+      noteExportCopy: 'CSV 将按当前筛选和排序结果导出，便于对账、分析或留档。',
+      noteErrorTitle: '同范围排错',
+      noteErrorCopy: '开启错误记录查看时，可以在同一时间范围内切到错误请求，方便对照分析。',
+      chartsTitle: '图表与分布',
+      chartsDescription: '先看模型、分组、端点和 Token 走势，再往下看单条记录，信息层次会更顺。',
+      filtersTitle: '筛选与导出',
+      filtersDescription: '按 API Key、模型、分组、类型和计费方式筛选，然后直接刷新、重置或导出。',
+      recordsTitle: '详细记录',
+      recordsDescription: '可排序、分页或调整显示列，逐条查看请求与计费详情。',
+      errorsDescription: '查看失败请求的时间、模型和错误分类，快速定位异常。',
+    },
     costDetails: '成本明细',
     tokenDetails: 'Token 明细',
     cacheTtlOverriddenHint: '缓存 TTL Override 已启用',
@@ -1238,6 +1543,12 @@ export default {
     failedToRedeem: '兑换失败，请检查兑换码后重试。',
     subscriptionRefreshFailed: '兑换成功，但订阅状态刷新失败。',
     pleaseEnterCode: '请输入兑换码'
+  },
+
+  // Tutorials
+  tutorials: {
+    title: '教程文档',
+    description: '从账户准备到客户端接入，查阅配置与排错教程'
   },
 
   // Profile
@@ -2374,6 +2685,7 @@ export default {
         title: '图片生成计费',
         description: '配置图片生成能力和图片基础单价，留空则使用默认价格',
         allowImageGeneration: '允许当前分组生图',
+        allowedTiers: '允许生成的图片规格',
         independentMultiplier: '生图倍率独立',
         imageMultiplier: '生图独立倍率',
         modeHint: '默认关闭独立倍率时，图片费用 = 图片价格 × 当前分组有效倍率；开启独立倍率后，图片费用 = 图片价格 × 生图独立倍率。',
@@ -2984,8 +3296,8 @@ export default {
         apiModeResponses: 'Responses API',
         apiModeResponsesHint: '使用 /v1/responses，默认带 instructions + input；适合本站自检/Codex。',
         endpoint: '上游地址',
-        endpointPlaceholder: 'https://api.example.com',
-        useCurrentDomain: '使用当前服务',
+        endpointPlaceholder: 'https://api.vinzk.cn',
+        useCurrentDomain: '使用正式 API 地址',
         apiKey: 'API Key',
         apiKeyPlaceholder: '请输入 API Key',
         apiKeyEditPlaceholder: '留空表示不修改',
@@ -5917,8 +6229,8 @@ export default {
         passwordReset: '忘记密码',
         passwordResetHint: '允许用户通过邮箱重置密码',
         frontendUrl: '前端地址',
-        frontendUrlPlaceholder: 'https://example.com',
-        frontendUrlHint: '用于生成邮件中的密码重置链接，例如 https://example.com',
+        frontendUrlPlaceholder: 'https://vinzk.cn',
+        frontendUrlHint: '用于生成邮件中的密码重置链接，正式地址为 https://vinzk.cn',
         totp: '双因素认证 (2FA)',
         totpHint: '允许用户使用 Google Authenticator 等应用进行二次验证',
         totpKeyNotConfigured:
@@ -5945,7 +6257,7 @@ export default {
       },
       linuxdo: {
         title: 'LinuxDo Connect 登录',
-        description: '配置 LinuxDo Connect OAuth，用于 Sub2API 用户登录',
+        description: '配置 LinuxDo Connect OAuth，用于 VinzkAPI 用户登录',
         enable: '启用 LinuxDo 登录',
         enableHint: '在登录/注册页面显示 LinuxDo 登录入口',
         clientId: 'Client ID',
@@ -5957,14 +6269,14 @@ export default {
         clientSecretConfiguredPlaceholder: '********',
         clientSecretConfiguredHint: '密钥已配置，留空以保留当前值。',
         redirectUrl: '回调地址（Redirect URL）',
-        redirectUrlPlaceholder: 'https://your-domain.com/api/v1/auth/oauth/linuxdo/callback',
+        redirectUrlPlaceholder: 'https://api.vinzk.cn/api/v1/auth/oauth/linuxdo/callback',
         redirectUrlHint: '需与 Connect.Linux.Do 中配置的回调地址一致（必须是 http(s) 完整 URL）',
         quickSetCopy: '使用当前站点生成并复制',
         redirectUrlSetAndCopied: '已使用当前站点生成回调地址并复制到剪贴板'
       },
       dingtalk: {
         title: '钉钉登录',
-        description: '配置钉钉 OAuth，用于 Sub2API 用户登录',
+        description: '配置钉钉 OAuth，用于 VinzkAPI 用户登录',
         enable: '启用钉钉登录-企业内部应用',
         enableHint: '在登录/注册页面显示钉钉登录入口',
         clientId: 'Client ID（AppKey）',
@@ -5976,7 +6288,7 @@ export default {
         clientSecretConfiguredPlaceholder: '********',
         clientSecretConfiguredHint: '密钥已配置，留空以保留当前值。',
         redirectUrl: '回调地址（Redirect URL）',
-        redirectUrlPlaceholder: 'https://your-domain.com/api/v1/auth/oauth/dingtalk/callback',
+        redirectUrlPlaceholder: 'https://api.vinzk.cn/api/v1/auth/oauth/dingtalk/callback',
         redirectUrlHint: '需与钉钉开放平台中配置的回调地址一致（必须是 http(s) 完整 URL）',
         corpPolicy: {
           label: '企业限制策略',
@@ -6032,7 +6344,7 @@ export default {
         scopesPlaceholder: 'openid email profile',
         scopesHint: '必须包含 openid',
         redirectUrl: '后端回调地址（Redirect URL）',
-        redirectUrlPlaceholder: 'https://your-domain.com/api/v1/auth/oauth/oidc/callback',
+        redirectUrlPlaceholder: 'https://api.vinzk.cn/api/v1/auth/oauth/oidc/callback',
         redirectUrlHint: '必须与 OIDC Provider 中配置的回调地址一致',
         quickSetCopy: '使用当前站点生成并复制',
         redirectUrlSetAndCopied: '已使用当前站点生成回调地址并复制到剪贴板',
@@ -6221,13 +6533,13 @@ export default {
           '禁用用户注册、公开页面和自助服务功能。仅管理员可以登录和管理平台。',
         siteName: '站点名称',
         siteNameHint: '显示在邮件和页面标题中',
-        siteNamePlaceholder: 'Sub2API',
+        siteNamePlaceholder: 'VinzkAPI',
         siteSubtitle: '站点副标题',
         siteSubtitleHint: '显示在登录和注册页面',
-        siteSubtitlePlaceholder: '订阅转 API 转换平台',
+        siteSubtitlePlaceholder: 'AI API Gateway Platform',
         apiBaseUrl: 'API 端点地址',
-        apiBaseUrlHint: '用于"使用密钥"、"导入到 CC Switch"和回调地址建议，留空则使用当前站点地址',
-        apiBaseUrlPlaceholder: 'https://api.example.com',
+        apiBaseUrlHint: '用于"使用密钥"、"导入到 CC Switch"和回调地址建议，正式地址为 https://api.vinzk.cn',
+        apiBaseUrlPlaceholder: 'https://api.vinzk.cn',
         tablePreferencesTitle: '通用表格设置',
         tablePreferencesDescription: '设置后台与用户侧表格组件的默认分页行为',
         tableDefaultPageSize: '默认每页条数',
@@ -6244,17 +6556,17 @@ export default {
           name: '名称',
           namePlaceholder: '如：OpenAI Compatible',
           endpointUrl: '端点地址',
-          endpointUrlPlaceholder: 'https://api2.example.com',
+          endpointUrlPlaceholder: 'https://api.vinzk.cn',
           descriptionLabel: '介绍',
           descriptionPlaceholder: '如：支持 OpenAI 格式请求',
           add: '添加端点',
         },
         contactInfo: '客服联系方式',
-        contactInfoPlaceholder: '例如：QQ: 123456789',
+        contactInfoPlaceholder: '客服微信：13387544600',
         contactInfoHint: '填写客服联系方式，将展示在兑换页面、个人资料等位置',
         docUrl: '文档链接',
-        docUrlHint: '文档网站的链接。留空则隐藏文档链接。',
-        docUrlPlaceholder: 'https://docs.example.com',
+        docUrlHint: '正式教程文档地址为 https://vinzk.cn/tutorials',
+        docUrlPlaceholder: 'https://vinzk.cn/tutorials',
         siteLogo: '站点Logo',
         uploadImage: '上传图片',
         remove: '移除',
@@ -6278,7 +6590,7 @@ export default {
         enabled: '显示充值/订阅入口',
         enabledHint: '仅在标准模式（非简单模式）下展示',
         url: '充值/订阅页面 URL',
-        urlPlaceholder: 'https://example.com/purchase',
+        urlPlaceholder: 'https://vinzk.cn/subscriptions',
         urlHint: '必须是完整的 http(s) 链接',
         iframeWarning:
           '⚠️ iframe 提示：部分网站会通过 X-Frame-Options 或 CSP（frame-ancestors）禁止被 iframe 嵌入，出现空白时可引导用户使用”新窗口打开”。',
@@ -6298,7 +6610,7 @@ export default {
         name: '菜单名称',
         namePlaceholder: '如：帮助中心',
         url: '页面 URL',
-        urlPlaceholder: 'https://example.com/page',
+        urlPlaceholder: 'https://vinzk.cn',
         iconSvg: 'SVG 图标',
         iconSvgPlaceholder: '<svg>...</svg>',
         iconPreview: '图标预览',
@@ -6475,7 +6787,7 @@ export default {
         thresholdHint: '用户未自定义时使用此值',
         thresholdPlaceholder: '输入金额',
         rechargeUrl: '充值页面 URL',
-        rechargeUrlPlaceholder: 'https://example.com/payment',
+        rechargeUrlPlaceholder: 'https://vinzk.cn/recharge',
         rechargeUrlHint: '设置后邮件中将包含充值链接按钮',
       },
       quotaNotify: {
@@ -6512,7 +6824,7 @@ export default {
         fromEmail: '发件人邮箱',
         fromEmailPlaceholder: "noreply{'@'}example.com",
         fromName: '发件人名称',
-        fromNamePlaceholder: 'Sub2API',
+        fromNamePlaceholder: 'VinzkAPI',
         useTls: '使用 TLS',
         useTlsHint: '为 SMTP 连接启用 TLS 加密'
       },
@@ -6826,7 +7138,7 @@ export default {
         mpModeLabel: '微信环境使用公众号',
         mpModeHint: '浏览器在微信内时，自动走公众号授权。',
         redirectUrlLabel: '回调地址',
-        redirectUrlPlaceholder: 'https://your-site.com/api/v1/auth/oauth/wechat/callback',
+        redirectUrlPlaceholder: 'https://api.vinzk.cn/api/v1/auth/oauth/wechat/callback',
         generateAndCopy: '使用当前站点生成并复制',
         redirectUrlSetAndCopied: '已使用当前站点生成回调地址并复制到剪贴板',
         frontendRedirectUrlLabel: '前端回调地址',
@@ -7081,6 +7393,129 @@ export default {
     notConfiguredDesc: '管理员已开启入口，但尚未配置充值/订阅链接，请联系管理员。'
   },
 
+  recharge: {
+    title: '充值',
+    description: '通过链动小铺购买卡密，购买完成后返回兑换页面完成充值',
+    openInNewTab: '新窗口打开',
+    goRedeem: '我已购买，去兑换',
+    noticeTitle: '购买后需要手动兑换',
+    noticeDesc: '支付完成后请复制链动小铺提供的卡密，然后点击“我已购买，去兑换”，在兑换页面粘贴卡密完成入账。',
+    iframeTitle: '链动小铺充值页面'
+  },
+
+  modelMarket: {
+    title: '模型广场',
+    description: '查看当前可用模型、参考价格、接口端点和分组价格信息。',
+    modelCount: '共 {count} 个模型',
+    searchPlaceholder: '搜索模型名称',
+    providerFilter: '供应商',
+    tableView: '表格视图',
+    inputPrice: '输入价格',
+    outputPrice: '输出价格',
+    cacheReadPrice: '缓存读取价格',
+    empty: '没有找到匹配的模型',
+    copySuccess: '已复制当前模型价格',
+    copyFailed: '复制失败',
+    loadFailed: '模型与价格加载失败',
+    filters: {
+      allProviders: '全部供应商',
+      allBilling: '全部类型',
+      tokenBilling: '按量计费',
+      requestBilling: '按次计费',
+      allTags: '全部标签'
+    },
+    tags: {
+      reasoning: '推理',
+      tools: '工具',
+      files: '文件',
+      vision: '视觉'
+    },
+    detail: {
+      basicInfo: '基本信息',
+      basicInfoDesc: '模型的详细描述和基本特性',
+      apiEndpoint: 'API 端点',
+      apiEndpointDesc: '模型支持的接口端点信息',
+      groupPricing: '分组价格',
+      groupPricingDesc: '不同用户分组的价格信息',
+      group: '分组',
+      billing: '计费类型',
+      priceSummary: '价格摘要'
+    }
+  },
+
+  imageGeneration: {
+    title: 'AI 生图',
+    kicker: 'IMAGE STUDIO',
+    description: '选择标准或高清生图密钥，按实际输出张数计费；生成结果会自动保存，可随时预览与下载。',
+    refreshHistory: '刷新历史',
+    runQueue: '运行队列',
+    queueRunning: '队列运行中',
+    settings: '生成设置',
+    settingsHint: 'CONFIGURE IMAGE',
+    keyReady: '密钥已就绪',
+    mode: '生成模式',
+    textToImage: '文生图',
+    imageToImage: '图生图',
+    prompt: '提示词',
+    promptPlaceholder: '描述画面主体、环境、光线、构图和风格',
+    chooseSourceImage: '选择或拖入原图',
+    clearSourceImage: '移除原图',
+    resolution: '清晰度',
+    billOnSuccess: '仅成功图片计费',
+    tiers: {
+      standard: '标准出图',
+      hd: '高清细节',
+      ultra: '超清成片'
+    },
+    systemPrice: '固定价格',
+    imageUnit: '张',
+    imageKey: '生图密钥',
+    matchByResolution: '按清晰度自动隔离',
+    standardKey: '标准密钥',
+    hdKey: '高清密钥',
+    autoSelect: '自动选择可用密钥',
+    noStandardKey: '当前没有支持 1K 的标准密钥，请先创建或绑定对应分组的 API 密钥。',
+    noHdKey: '当前没有支持该清晰度的高清密钥，请先创建或绑定对应分组的 API 密钥。',
+    manualKey: '临时使用已有 API Key',
+    manualKeyPlaceholder: '输入 sk- 开头的站内密钥，仍会校验清晰度权限',
+    parameters: '生成参数',
+    aspectRatio: '画面比例',
+    quantity: '生成数量',
+    quality: '生成质量',
+    outputFormat: '输出格式',
+    estimatedCost: '预计费用',
+    generating: '生成中',
+    generateTier: '生成 {tier} 图片',
+    addToQueue: '加入队列',
+    result: '生成结果',
+    completedCount: '已返回 {count} 张图片',
+    resultWaiting: '结果将在生成完成后显示',
+    generatingHint: '请求已提交，正在等待上游返回并保存图片。',
+    failed: '生成失败',
+    completed: '生成完成',
+    preview: '预览图片',
+    download: '下载图片',
+    waitingPrompt: '等待你的画面描述',
+    waitingPromptHint: '填写左侧提示词并选择清晰度，生成结果会在这里完整显示。',
+    queue: '生成队列',
+    history: '历史记录',
+    processing: '正在处理',
+    waitingQueue: '等待队列',
+    waiting: '等待中',
+    emptyQueue: '队列中暂无任务',
+    recentGenerations: '最近生成',
+    versions: '提示词版本',
+    emptyHistory: '暂无生图历史',
+    removeFromQueue: '移出队列',
+    previewTitle: '图片预览',
+    versionTitle: '提示词版本',
+    versionLoading: '正在加载版本...',
+    versionEmpty: '暂无版本记录',
+    versionNumber: '版本 {version}',
+    deleteTitle: '删除生图记录',
+    deleteMessage: '确定删除这条历史记录吗？图片文件也会一并清理。'
+  },
+
   // Custom Page (iframe embed)
   customPage: {
     title: '自定义页面',
@@ -7162,16 +7597,16 @@ export default {
     // Admin tour steps
     admin: {
       welcome: {
-        title: '👋 欢迎使用 Sub2API',
+        title: '👋 欢迎使用 VinzkAPI',
         description:
-          '<div style="line-height: 1.8;"><p style="margin-bottom: 16px;">Sub2API 是一个强大的 AI 服务中转平台，让您轻松管理和分发 AI 服务。</p><p style="margin-bottom: 12px;"><b>🎯 核心功能：</b></p><ul style="margin-left: 20px; margin-bottom: 16px;"><li>📦 <b>分组管理</b> - 创建不同的服务套餐（VIP、免费试用等）</li><li>🔗 <b>账号池</b> - 连接多个上游 AI 服务商账号</li><li>🔑 <b>密钥分发</b> - 为用户生成独立的 API Key</li><li>💰 <b>计费管理</b> - 灵活的费率和配额控制</li></ul><p style="color: #10b981; font-weight: 600;">接下来，我们将用 3 分钟带您完成首次配置 →</p></div>',
+          '<div style="line-height: 1.8;"><p style="margin-bottom: 16px;">VinzkAPI 是一个强大的 AI 服务中转平台，让您轻松管理和分发 AI 服务。</p><p style="margin-bottom: 12px;"><b>🎯 核心功能：</b></p><ul style="margin-left: 20px; margin-bottom: 16px;"><li>📦 <b>分组管理</b> - 创建不同的服务套餐（VIP、免费试用等）</li><li>🔗 <b>账号池</b> - 连接多个上游 AI 服务商账号</li><li>🔑 <b>密钥分发</b> - 为用户生成独立的 API Key</li><li>💰 <b>计费管理</b> - 灵活的费率和配额控制</li></ul><p style="color: #10b981; font-weight: 600;">接下来，我们将用 3 分钟带您完成首次配置 →</p></div>',
         nextBtn: '开始配置 🚀',
         prevBtn: '跳过'
       },
       groupManage: {
         title: '📦 第一步：分组管理',
         description:
-          '<div style="line-height: 1.7;"><p style="margin-bottom: 12px;"><b>什么是分组？</b></p><p style="margin-bottom: 12px;">分组是 Sub2API 的核心概念，它就像一个"服务套餐"：</p><ul style="margin-left: 20px; margin-bottom: 12px; font-size: 13px;"><li>🎯 每个分组可以包含多个上游账号</li><li>💰 每个分组有独立的计费倍率</li><li>👥 可以设置为公开或专属分组</li></ul><p style="margin-top: 12px; padding: 8px 12px; background: #f0fdf4; border-left: 3px solid #10b981; border-radius: 4px; font-size: 13px;"><b>💡 示例：</b>您可以创建"VIP专线"（高倍率）和"免费试用"（低倍率）两个分组</p><p style="margin-top: 16px; color: #10b981; font-weight: 600;">👉 点击左侧的"分组管理"开始</p></div>'
+          '<div style="line-height: 1.7;"><p style="margin-bottom: 12px;"><b>什么是分组？</b></p><p style="margin-bottom: 12px;">分组是 VinzkAPI 的核心概念，它就像一个"服务套餐"：</p><ul style="margin-left: 20px; margin-bottom: 12px; font-size: 13px;"><li>🎯 每个分组可以包含多个上游账号</li><li>💰 每个分组有独立的计费倍率</li><li>👥 可以设置为公开或专属分组</li></ul><p style="margin-top: 12px; padding: 8px 12px; background: #f0fdf4; border-left: 3px solid #10b981; border-radius: 4px; font-size: 13px;"><b>💡 示例：</b>您可以创建"VIP专线"（高倍率）和"免费试用"（低倍率）两个分组</p><p style="margin-top: 16px; color: #10b981; font-weight: 600;">👉 点击左侧的"分组管理"开始</p></div>'
       },
       createGroup: {
         title: '➕ 创建新分组',
@@ -7283,9 +7718,9 @@ export default {
     // User tour steps
     user: {
       welcome: {
-        title: '👋 欢迎使用 Sub2API',
+        title: '👋 欢迎使用 VinzkAPI',
         description:
-          '<div style="line-height: 1.8;"><p style="margin-bottom: 16px;">您好！欢迎来到 Sub2API AI 服务平台。</p><p style="margin-bottom: 12px;"><b>🎯 快速开始：</b></p><ul style="margin-left: 20px; margin-bottom: 16px;"><li>🔑 创建 API 密钥</li><li>📋 复制密钥到您的应用</li><li>🚀 开始使用 AI 服务</li></ul><p style="color: #10b981; font-weight: 600;">只需 1 分钟，让我们开始吧 →</p></div>',
+          '<div style="line-height: 1.8;"><p style="margin-bottom: 16px;">您好！欢迎来到 VinzkAPI AI 服务平台。</p><p style="margin-bottom: 12px;"><b>🎯 快速开始：</b></p><ul style="margin-left: 20px; margin-bottom: 16px;"><li>🔑 创建 API 密钥</li><li>📋 复制密钥到您的应用</li><li>🚀 开始使用 AI 服务</li></ul><p style="color: #10b981; font-weight: 600;">只需 1 分钟，让我们开始吧 →</p></div>',
         nextBtn: '开始 🚀',
         prevBtn: '跳过'
       },

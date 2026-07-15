@@ -126,12 +126,20 @@ func TestGetBalanceNotifyConfig_AllFields(t *testing.T) {
 	s, repo := newBalanceNotifyServiceForTest()
 	repo.data[SettingKeyBalanceLowNotifyEnabled] = "true"
 	repo.data[SettingKeyBalanceLowNotifyThreshold] = "12.5"
-	repo.data[SettingKeyBalanceLowNotifyRechargeURL] = "https://example.com/pay"
+	repo.data[SettingKeyBalanceLowNotifyRechargeURL] = "https://vinzk.cn/recharge"
 
 	enabled, threshold, url := s.getBalanceNotifyConfig(context.Background())
 	require.True(t, enabled)
 	require.Equal(t, 12.5, threshold)
-	require.Equal(t, "https://example.com/pay", url)
+	require.Equal(t, DefaultPublicRechargeURL, url)
+}
+
+func TestGetBalanceNotifyConfig_ReplacesLocalRechargeURL(t *testing.T) {
+	s, repo := newBalanceNotifyServiceForTest()
+	repo.data[SettingKeyBalanceLowNotifyRechargeURL] = "http://localhost:18080"
+
+	_, _, rechargeURL := s.getBalanceNotifyConfig(context.Background())
+	require.Equal(t, DefaultPublicRechargeURL, rechargeURL)
 }
 
 func TestGetBalanceNotifyConfig_Disabled(t *testing.T) {

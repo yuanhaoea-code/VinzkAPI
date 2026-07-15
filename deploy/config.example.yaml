@@ -22,8 +22,8 @@ server:
   mode: "release"
   # Frontend base URL used to generate external links in emails (e.g. password reset)
   # 用于生成邮件中的外部链接（例如：重置密码链接）的前端基础地址
-  # Example: "https://example.com"
-  frontend_url: ""
+  # Production site / 正式站点
+  frontend_url: "https://vinzk.cn"
   # Trusted proxies for X-Forwarded-For parsing (CIDR/IP). Empty disables trusted proxies.
   # 信任的代理地址（CIDR/IP 格式），用于解析 X-Forwarded-For 头。留空则禁用代理信任。
   trusted_proxies: []
@@ -84,8 +84,8 @@ cors:
 # =============================================================================
 security:
   url_allowlist:
-    # Enable URL allowlist validation (disable to skip all URL checks)
-    # 启用 URL 白名单验证（禁用则跳过所有 URL 检查）
+    # Enable a vendor host allowlist. When disabled, public HTTPS and SSRF checks still apply.
+    # 启用供应商域名白名单；禁用后仍保留公网 HTTPS 与 SSRF 校验。
     enabled: false
     # Allowed upstream hosts for API proxying
     # 允许代理的上游 API 主机列表
@@ -107,10 +107,10 @@ security:
     crs_hosts: []
     # Allow localhost/private IPs for upstream/pricing/CRS (use only in trusted networks)
     # 允许本地/私有 IP 地址用于上游/定价/CRS（仅在可信网络中使用）
-    allow_private_hosts: true
+    allow_private_hosts: false
     # Allow http:// URLs when allowlist is disabled (default: false, require https)
     # 白名单禁用时是否允许 http:// URL（默认: false，要求 https）
-    allow_insecure_http: true
+    allow_insecure_http: false
   response_headers:
     # Enable configurable response header filtering (default: true)
     # 启用可配置的响应头过滤（默认启用，过滤上游敏感响应头）
@@ -129,7 +129,7 @@ security:
     # 默认 CSP 策略（如果静态资源托管在其他域名，请自行覆盖）
     # Note: __CSP_NONCE__ will be replaced with 'nonce-xxx' at request time for inline script security
     # 注意：__CSP_NONCE__ 会在请求时被替换为 'nonce-xxx'，用于内联脚本安全
-    policy: "default-src 'self'; script-src 'self' __CSP_NONCE__ https://challenges.cloudflare.com https://static.cloudflareinsights.com https://*.stripe.com https://static.airwallex.com https://checkout.airwallex.com https://static-demo.airwallex.com https://checkout-demo.airwallex.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.airwallex.com https://checkout.airwallex.com https://static-demo.airwallex.com https://checkout-demo.airwallex.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; frame-src https://challenges.cloudflare.com https://*.stripe.com https://checkout.airwallex.com https://checkout-demo.airwallex.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    policy: "default-src 'self'; script-src 'self' __CSP_NONCE__ https://challenges.cloudflare.com https://static.cloudflareinsights.com https://*.stripe.com https://static.airwallex.com https://checkout.airwallex.com https://static-demo.airwallex.com https://checkout-demo.airwallex.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.airwallex.com https://checkout.airwallex.com https://static-demo.airwallex.com https://checkout-demo.airwallex.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; frame-src https://challenges.cloudflare.com https://*.stripe.com https://pay.ldxp.cn https://checkout.airwallex.com https://checkout-demo.airwallex.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
   proxy_probe:
     # Allow skipping TLS verification for proxy probe (debug only)
     # 允许代理探测时跳过 TLS 证书验证（仅用于调试）
@@ -373,7 +373,7 @@ gateway:
   concurrency_slot_ttl_minutes: 30
   # Stream data interval timeout (seconds), 0=disable
   # 流数据间隔超时（秒），0=禁用
-  stream_data_interval_timeout: 180
+  stream_data_interval_timeout: 600
   # Stream keepalive interval (seconds), 0=disable
   # 流式 keepalive 间隔（秒），0=禁用
   stream_keepalive_interval: 10

@@ -29,7 +29,7 @@ const (
 
 // DefaultCSPPolicy is the default Content-Security-Policy with nonce support
 // __CSP_NONCE__ will be replaced with actual nonce at request time by the SecurityHeaders middleware
-const DefaultCSPPolicy = "default-src 'self'; script-src 'self' __CSP_NONCE__ https://challenges.cloudflare.com https://static.cloudflareinsights.com https://*.stripe.com https://static.airwallex.com https://checkout.airwallex.com https://static-demo.airwallex.com https://checkout-demo.airwallex.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.airwallex.com https://checkout.airwallex.com https://static-demo.airwallex.com https://checkout-demo.airwallex.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; frame-src https://challenges.cloudflare.com https://*.stripe.com https://checkout.airwallex.com https://checkout-demo.airwallex.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+const DefaultCSPPolicy = "default-src 'self'; script-src 'self' __CSP_NONCE__ https://challenges.cloudflare.com https://static.cloudflareinsights.com https://*.stripe.com https://static.airwallex.com https://checkout.airwallex.com https://static-demo.airwallex.com https://checkout-demo.airwallex.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.airwallex.com https://checkout.airwallex.com https://static-demo.airwallex.com https://checkout-demo.airwallex.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; frame-src https://challenges.cloudflare.com https://*.stripe.com https://pay.ldxp.cn https://checkout.airwallex.com https://checkout-demo.airwallex.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 
 // UMQ（用户消息队列）模式常量
 const (
@@ -1528,7 +1528,7 @@ func load(allowMissingJWTSecret bool) (*Config, error) {
 	}
 
 	if !cfg.Security.URLAllowlist.Enabled {
-		slog.Warn("security.url_allowlist.enabled=false; allowlist/SSRF checks disabled (minimal format validation only).")
+		slog.Info("security.url_allowlist.enabled=false; vendor allowlist disabled while URL and public-network validation remain active.")
 	}
 	if !cfg.Security.ResponseHeaders.Enabled {
 		slog.Warn("security.response_headers.enabled=false; configurable header filtering disabled (default allowlist only).")
@@ -1554,7 +1554,7 @@ func setDefaults() {
 	viper.SetDefault("server.host", "0.0.0.0")
 	viper.SetDefault("server.port", 8080)
 	viper.SetDefault("server.mode", "release")
-	viper.SetDefault("server.frontend_url", "")
+	viper.SetDefault("server.frontend_url", "https://vinzk.cn")
 	viper.SetDefault("server.read_header_timeout", 30) // 30秒读取请求头
 	viper.SetDefault("server.idle_timeout", 120)       // 120秒空闲超时
 	viper.SetDefault("server.trusted_proxies", []string{})
@@ -1606,8 +1606,8 @@ func setDefaults() {
 		"raw.githubusercontent.com",
 	})
 	viper.SetDefault("security.url_allowlist.crs_hosts", []string{})
-	viper.SetDefault("security.url_allowlist.allow_private_hosts", true)
-	viper.SetDefault("security.url_allowlist.allow_insecure_http", true)
+	viper.SetDefault("security.url_allowlist.allow_private_hosts", false)
+	viper.SetDefault("security.url_allowlist.allow_insecure_http", false)
 	viper.SetDefault("security.response_headers.enabled", true)
 	viper.SetDefault("security.response_headers.additional_allowed", []string{})
 	viper.SetDefault("security.response_headers.force_remove", []string{})
@@ -1917,7 +1917,7 @@ func setDefaults() {
 	viper.SetDefault("gateway.max_upstream_clients", 5000)
 	viper.SetDefault("gateway.client_idle_ttl_seconds", 900)
 	viper.SetDefault("gateway.concurrency_slot_ttl_minutes", 30) // 并发槽位过期时间（支持超长请求）
-	viper.SetDefault("gateway.stream_data_interval_timeout", 180)
+	viper.SetDefault("gateway.stream_data_interval_timeout", 600)
 	viper.SetDefault("gateway.stream_keepalive_interval", 10)
 	viper.SetDefault("gateway.image_stream_data_interval_timeout", 900)
 	viper.SetDefault("gateway.image_stream_keepalive_interval", 10)
@@ -2525,8 +2525,8 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("gateway.stream_data_interval_timeout must be non-negative")
 	}
 	if c.Gateway.StreamDataIntervalTimeout != 0 &&
-		(c.Gateway.StreamDataIntervalTimeout < 30 || c.Gateway.StreamDataIntervalTimeout > 300) {
-		return fmt.Errorf("gateway.stream_data_interval_timeout must be 0 or between 30-300 seconds")
+		(c.Gateway.StreamDataIntervalTimeout < 30 || c.Gateway.StreamDataIntervalTimeout > 1800) {
+		return fmt.Errorf("gateway.stream_data_interval_timeout must be 0 or between 30-1800 seconds")
 	}
 	if c.Gateway.StreamKeepaliveInterval < 0 {
 		return fmt.Errorf("gateway.stream_keepalive_interval must be non-negative")

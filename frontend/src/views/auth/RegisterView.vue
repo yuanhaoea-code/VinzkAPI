@@ -4,10 +4,10 @@
       <!-- Title -->
       <div class="text-center">
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-          {{ t('auth.createAccount') }}
+          {{ t('auth.registerVinzkTitle') }}
         </h2>
         <p class="mt-2 text-sm text-gray-500 dark:text-dark-400">
-          {{ t('auth.signUpToStart', { siteName }) }}
+          {{ t('auth.registerVinzkSubtitle') }}
         </p>
       </div>
 
@@ -48,6 +48,71 @@
               class="input pl-11"
               :class="{ 'input-error': errors.email }"
               :placeholder="t('auth.emailPlaceholder')"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="real_name" class="input-label">
+            {{ t('auth.realNameLabel') }}
+          </label>
+          <div class="relative">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+              <Icon name="user" size="md" class="text-gray-400 dark:text-dark-500" />
+            </div>
+            <input
+              id="real_name"
+              v-model="formData.real_name"
+              type="text"
+              required
+              autocomplete="name"
+              :disabled="registrationActionDisabled"
+              class="input pl-11"
+              :class="{ 'input-error': errors.real_name }"
+              :placeholder="t('auth.realNamePlaceholder')"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="user_type" class="input-label">
+            {{ t('auth.userTypeLabel') }}
+          </label>
+          <div class="auth-user-type-select relative">
+            <div class="auth-select-leading-icon pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+              <Icon name="users" size="md" class="text-gray-400 dark:text-dark-500" />
+            </div>
+            <Select
+              :model-value="formData.user_type"
+              :options="userTypeOptions"
+              :disabled="registrationActionDisabled"
+              :error="!!errors.user_type"
+              :searchable="false"
+              class="auth-select"
+              dropdown-class="auth-select-dropdown"
+              @update:model-value="handleUserTypeChange"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="contact_phone" class="input-label">
+            {{ t('auth.contactPhoneLabel') }}
+          </label>
+          <div class="relative">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+              <Icon name="mail" size="md" class="text-gray-400 dark:text-dark-500" />
+            </div>
+            <input
+              id="contact_phone"
+              v-model="formData.contact_phone"
+              type="text"
+              required
+              autocomplete="tel"
+              :disabled="registrationActionDisabled"
+              class="input pl-11"
+              :class="{ 'input-error': errors.contact_phone }"
+              :placeholder="t('auth.contactPhonePlaceholder')"
             />
           </div>
         </div>
@@ -307,6 +372,7 @@ import OidcOAuthSection from '@/components/auth/OidcOAuthSection.vue'
 import WechatOAuthSection from '@/components/auth/WechatOAuthSection.vue'
 import EmailOAuthButtons from '@/components/auth/EmailOAuthButtons.vue'
 import LoginAgreementPrompt from '@/components/auth/LoginAgreementPrompt.vue'
+import Select from '@/components/common/Select.vue'
 import Icon from '@/components/icons/Icon.vue'
 import TurnstileWidget from '@/components/TurnstileWidget.vue'
 import { useAuthStore, useAppStore } from '@/stores'
@@ -317,6 +383,7 @@ import {
   validateInvitationCode
 } from '@/api/auth'
 import { buildAuthErrorMessage } from '@/utils/authError'
+import { PUBLIC_SITE_NAME } from '@/constants/site'
 import {
   formatRegistrationEmailSuffixWhitelistForMessage,
   isRegistrationEmailSuffixAllowed,
@@ -353,7 +420,7 @@ const promoCodeEnabled = ref<boolean>(true)
 const invitationCodeEnabled = ref<boolean>(false)
 const turnstileEnabled = ref<boolean>(false)
 const turnstileSiteKey = ref<string>('')
-const siteName = ref<string>('Sub2API')
+const siteName = ref<string>(PUBLIC_SITE_NAME)
 const linuxdoOAuthEnabled = ref<boolean>(false)
 const wechatOAuthEnabled = ref<boolean>(false)
 const oidcOAuthEnabled = ref<boolean>(false)
@@ -392,8 +459,15 @@ const invitationValidation = reactive({
 })
 let invitationValidateTimeout: ReturnType<typeof setTimeout> | null = null
 
+type UserType = '个人用户' | '企业用户' | '学校用户'
+
+const userTypeValues: readonly UserType[] = ['个人用户', '企业用户', '学校用户']
+
 const formData = reactive({
   email: '',
+  real_name: '',
+  user_type: '个人用户' as UserType,
+  contact_phone: '',
   password: '',
   promo_code: '',
   invitation_code: '',
@@ -402,6 +476,9 @@ const formData = reactive({
 
 const errors = reactive({
   email: '',
+  real_name: '',
+  user_type: '',
+  contact_phone: '',
   password: '',
   turnstile: '',
   invitation_code: ''
@@ -409,6 +486,9 @@ const errors = reactive({
 
 const validationToastMessage = computed(() =>
   errors.email ||
+  errors.real_name ||
+  errors.user_type ||
+  errors.contact_phone ||
   errors.password ||
   (invitationValidation.invalid ? invitationValidation.message : '') ||
   errors.invitation_code ||
@@ -434,6 +514,21 @@ const registrationActionDisabled = computed(
   () => isLoading.value || !settingsLoaded.value || agreementGateActive.value
 )
 
+const userTypeOptions = computed(() => [
+  {
+    value: '个人用户',
+    label: t('auth.userTypePersonal')
+  },
+  {
+    value: '企业用户',
+    label: t('auth.userTypeEnterprise')
+  },
+  {
+    value: '学校用户',
+    label: t('auth.userTypeSchool')
+  }
+])
+
 watch(validationToastMessage, (value, previousValue) => {
   if (value && value !== previousValue) {
     appStore.showError(value)
@@ -446,6 +541,12 @@ function syncAffiliateReferralCode(): string {
     formData.aff_code = code
   }
   return code
+}
+
+function handleUserTypeChange(value: string | number | boolean | null): void {
+  if (typeof value !== 'string') return
+  if (!userTypeValues.includes(value as UserType)) return
+  formData.user_type = value as UserType
 }
 
 // ==================== Lifecycle ====================
@@ -461,7 +562,7 @@ onMounted(async () => {
     invitationCodeEnabled.value = settings.invitation_code_enabled
     turnstileEnabled.value = settings.turnstile_enabled
     turnstileSiteKey.value = settings.turnstile_site_key || ''
-    siteName.value = settings.site_name || 'Sub2API'
+    siteName.value = settings.site_name || PUBLIC_SITE_NAME
     linuxdoOAuthEnabled.value = settings.linuxdo_oauth_enabled
     wechatOAuthEnabled.value = isWeChatWebOAuthEnabled(settings)
     oidcOAuthEnabled.value = settings.oidc_oauth_enabled
@@ -750,6 +851,9 @@ function buildEmailSuffixNotAllowedMessage(): string {
 function validateForm(): boolean {
   // Reset errors
   errors.email = ''
+  errors.real_name = ''
+  errors.user_type = ''
+  errors.contact_phone = ''
   errors.password = ''
   errors.turnstile = ''
   errors.invitation_code = ''
@@ -775,6 +879,21 @@ function validateForm(): boolean {
     !isRegistrationEmailSuffixAllowed(formData.email, registrationEmailSuffixWhitelist.value)
   ) {
     errors.email = buildEmailSuffixNotAllowedMessage()
+    isValid = false
+  }
+
+  if (!formData.real_name.trim()) {
+    errors.real_name = t('auth.realNameRequired')
+    isValid = false
+  }
+
+  if (!['个人用户', '企业用户', '学校用户'].includes(formData.user_type)) {
+    errors.user_type = t('auth.userTypeRequired')
+    isValid = false
+  }
+
+  if (!formData.contact_phone.trim()) {
+    errors.contact_phone = t('auth.contactPhoneRequired')
     isValid = false
   }
 
@@ -868,6 +987,9 @@ async function handleRegister(): Promise<void> {
         'register_data',
         JSON.stringify({
           email: formData.email,
+          real_name: formData.real_name,
+          user_type: formData.user_type,
+          contact_phone: formData.contact_phone,
           password: formData.password,
           turnstile_token: turnstileToken.value,
           promo_code: formData.promo_code || undefined,
@@ -884,6 +1006,9 @@ async function handleRegister(): Promise<void> {
     // Otherwise, directly register
     await authStore.register({
       email: formData.email,
+      real_name: formData.real_name,
+      user_type: formData.user_type,
+      contact_phone: formData.contact_phone,
       password: formData.password,
       turnstile_token: turnstileEnabled.value ? turnstileToken.value : undefined,
       promo_code: formData.promo_code || undefined,

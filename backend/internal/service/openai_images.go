@@ -59,35 +59,38 @@ type OpenAIImagesUpload struct {
 }
 
 type OpenAIImagesRequest struct {
-	Endpoint           string
-	ContentType        string
-	Multipart          bool
-	Model              string
-	ExplicitModel      bool
-	Prompt             string
-	Stream             bool
-	N                  int
-	Size               string
-	ExplicitSize       bool
-	SizeTier           string
-	ResponseFormat     string
-	Quality            string
-	Background         string
-	OutputFormat       string
-	Moderation         string
-	InputFidelity      string
-	Style              string
-	OutputCompression  *int
-	PartialImages      *int
-	HasMask            bool
-	HasNativeOptions   bool
-	RequiredCapability OpenAIImagesCapability
-	InputImageURLs     []string
-	MaskImageURL       string
-	Uploads            []OpenAIImagesUpload
-	MaskUpload         *OpenAIImagesUpload
-	Body               []byte
-	bodyHash           string
+	Endpoint               string
+	ContentType            string
+	Multipart              bool
+	Model                  string
+	ExplicitModel          bool
+	Prompt                 string
+	Stream                 bool
+	N                      int
+	Size                   string
+	ExplicitSize           bool
+	SizeTier               string
+	ResolutionTier         string
+	ExplicitResolutionTier bool
+	AspectRatio            string
+	ResponseFormat         string
+	Quality                string
+	Background             string
+	OutputFormat           string
+	Moderation             string
+	InputFidelity          string
+	Style                  string
+	OutputCompression      *int
+	PartialImages          *int
+	HasMask                bool
+	HasNativeOptions       bool
+	RequiredCapability     OpenAIImagesCapability
+	InputImageURLs         []string
+	MaskImageURL           string
+	Uploads                []OpenAIImagesUpload
+	MaskUpload             *OpenAIImagesUpload
+	Body                   []byte
+	bodyHash               string
 }
 
 func (r *OpenAIImagesRequest) ModerationBody() []byte {
@@ -218,7 +221,29 @@ func (s *OpenAIGatewayService) ParseOpenAIImagesRequest(c *gin.Context, body []b
 	if err := validateOpenAIImagesModel(req.Model); err != nil {
 		return nil, err
 	}
-	req.SizeTier = normalizeOpenAIImageSizeTier(req.Size)
+	if req.ExplicitResolutionTier {
+		req.ResolutionTier = NormalizeImageBillingTier(req.ResolutionTier)
+		if req.ResolutionTier == "" {
+			return nil, fmt.Errorf("resolution_tier must be one of 1K, 2K, 4K")
+		}
+		if req.AspectRatio == "" {
+			req.AspectRatio = InferImageAspectRatio(req.Size)
+		} else {
+			req.AspectRatio = NormalizeImageAspectRatio(req.AspectRatio)
+			if req.AspectRatio == "" {
+				return nil, fmt.Errorf("aspect_ratio must be one of 1:1, 2:3, 3:2")
+			}
+		}
+		resolvedSize, ok := ResolveImageGenerationSize(req.ResolutionTier, req.AspectRatio)
+		if !ok {
+			return nil, fmt.Errorf("unsupported image resolution and aspect ratio")
+		}
+		req.Size = resolvedSize
+		req.ExplicitSize = true
+		req.SizeTier = req.ResolutionTier
+	} else {
+		req.SizeTier = normalizeOpenAIImageSizeTier(req.Size)
+	}
 	req.RequiredCapability = classifyOpenAIImagesCapability(req)
 	return req, nil
 }
@@ -251,6 +276,11 @@ func parseOpenAIImagesJSONRequest(body []byte, req *OpenAIImagesRequest) error {
 		req.Size = strings.TrimSpace(sizeResult.String())
 		req.ExplicitSize = req.Size != ""
 	}
+	if tierResult := gjson.GetBytes(body, "resolution_tier"); tierResult.Exists() {
+		req.ResolutionTier = strings.TrimSpace(tierResult.String())
+		req.ExplicitResolutionTier = req.ResolutionTier != ""
+	}
+	req.AspectRatio = strings.TrimSpace(gjson.GetBytes(body, "aspect_ratio").String())
 	req.ResponseFormat = strings.ToLower(strings.TrimSpace(gjson.GetBytes(body, "response_format").String()))
 	req.Quality = strings.TrimSpace(gjson.GetBytes(body, "quality").String())
 	req.Background = strings.TrimSpace(gjson.GetBytes(body, "background").String())
@@ -377,6 +407,11 @@ func parseOpenAIImagesMultipartRequest(body []byte, contentType string, req *Ope
 		case "size":
 			req.Size = value
 			req.ExplicitSize = value != ""
+		case "resolution_tier":
+			req.ResolutionTier = value
+			req.ExplicitResolutionTier = value != ""
+		case "aspect_ratio":
+			req.AspectRatio = value
 		case "response_format":
 			req.ResponseFormat = strings.ToLower(value)
 		case "stream":
@@ -584,7 +619,7 @@ func (s *OpenAIGatewayService) forwardOpenAIImagesAPIKey(
 		parsed.Endpoint,
 		account.Type,
 	)
-	forwardBody, forwardContentType, err := rewriteOpenAIImagesModel(body, parsed.ContentType, upstreamModel)
+	forwardBody, forwardContentType, err := rewriteOpenAIImagesModel(body, parsed.ContentType, upstreamModel, parsed.Size)
 	if err != nil {
 		return nil, err
 	}
@@ -697,9 +732,9 @@ func (s *OpenAIGatewayService) forwardOpenAIImagesAPIKey(
 			return nil, err
 		}
 		usage = nonStreamUsage
-		if nonStreamCount > 0 {
-			imageCount = nonStreamCount
-		}
+		// Non-streaming billing must follow the images actually returned. A 2xx
+		// response with an empty data array is not a successful generated image.
+		imageCount = nonStreamCount
 		return &OpenAIForwardResult{
 			RequestID:        resp.Header.Get("x-request-id"),
 			Usage:            usage,
@@ -767,24 +802,32 @@ func buildOpenAIImagesURL(base string, endpoint string) string {
 	return buildOpenAIEndpointURL(base, endpoint)
 }
 
-func rewriteOpenAIImagesModel(body []byte, contentType string, model string) ([]byte, string, error) {
+func rewriteOpenAIImagesModel(body []byte, contentType string, model string, size string) ([]byte, string, error) {
 	model = strings.TrimSpace(model)
 	if model == "" {
 		return body, contentType, nil
 	}
 	mediaType, _, err := mime.ParseMediaType(contentType)
 	if err == nil && strings.EqualFold(mediaType, "multipart/form-data") {
-		rewrittenBody, rewrittenType, rewriteErr := rewriteOpenAIImagesMultipartModel(body, contentType, model)
+		rewrittenBody, rewrittenType, rewriteErr := rewriteOpenAIImagesMultipartModel(body, contentType, model, size)
 		return rewrittenBody, rewrittenType, rewriteErr
 	}
 	rewritten, err := sjson.SetBytes(body, "model", model)
 	if err != nil {
 		return nil, "", fmt.Errorf("rewrite image request model: %w", err)
 	}
+	if strings.TrimSpace(size) != "" {
+		rewritten, err = sjson.SetBytes(rewritten, "size", strings.TrimSpace(size))
+		if err != nil {
+			return nil, "", fmt.Errorf("rewrite image request size: %w", err)
+		}
+	}
+	rewritten, _ = sjson.DeleteBytes(rewritten, "resolution_tier")
+	rewritten, _ = sjson.DeleteBytes(rewritten, "aspect_ratio")
 	return rewritten, contentType, nil
 }
 
-func rewriteOpenAIImagesMultipartModel(body []byte, contentType string, model string) ([]byte, string, error) {
+func rewriteOpenAIImagesMultipartModel(body []byte, contentType string, model string, size string) ([]byte, string, error) {
 	_, params, err := mime.ParseMediaType(contentType)
 	if err != nil {
 		return nil, "", fmt.Errorf("parse multipart content-type: %w", err)
@@ -798,6 +841,7 @@ func rewriteOpenAIImagesMultipartModel(body []byte, contentType string, model st
 	var buffer bytes.Buffer
 	writer := multipart.NewWriter(&buffer)
 	modelWritten := false
+	sizeWritten := false
 
 	for {
 		part, err := reader.NextPart()
@@ -809,6 +853,10 @@ func rewriteOpenAIImagesMultipartModel(body []byte, contentType string, model st
 		}
 
 		formName := strings.TrimSpace(part.FormName())
+		if (formName == "resolution_tier" || formName == "aspect_ratio") && part.FileName() == "" {
+			_ = part.Close()
+			continue
+		}
 		partHeader := cloneMultipartHeader(part.Header)
 		target, err := writer.CreatePart(partHeader)
 		if err != nil {
@@ -825,6 +873,15 @@ func rewriteOpenAIImagesMultipartModel(body []byte, contentType string, model st
 			_ = part.Close()
 			continue
 		}
+		if formName == "size" && part.FileName() == "" && strings.TrimSpace(size) != "" {
+			if _, err := target.Write([]byte(strings.TrimSpace(size))); err != nil {
+				_ = part.Close()
+				return nil, "", fmt.Errorf("rewrite multipart size: %w", err)
+			}
+			sizeWritten = true
+			_ = part.Close()
+			continue
+		}
 		if _, err := io.Copy(target, part); err != nil {
 			_ = part.Close()
 			return nil, "", fmt.Errorf("copy multipart part: %w", err)
@@ -835,6 +892,11 @@ func rewriteOpenAIImagesMultipartModel(body []byte, contentType string, model st
 	if !modelWritten {
 		if err := writer.WriteField("model", model); err != nil {
 			return nil, "", fmt.Errorf("append multipart model field: %w", err)
+		}
+	}
+	if !sizeWritten && strings.TrimSpace(size) != "" {
+		if err := writer.WriteField("size", strings.TrimSpace(size)); err != nil {
+			return nil, "", fmt.Errorf("append multipart size field: %w", err)
 		}
 	}
 	if err := writer.Close(); err != nil {

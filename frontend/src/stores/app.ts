@@ -8,6 +8,13 @@ import { ref, computed } from 'vue'
 import type { Toast, ToastType, PublicSettings } from '@/types'
 import { i18n } from '@/i18n'
 import {
+  PUBLIC_API_BASE_URL,
+  PUBLIC_CONTACT_INFO,
+  PUBLIC_SITE_NAME,
+  PUBLIC_TUTORIAL_URL,
+  resolvePublicUrl,
+} from '@/constants/site'
+import {
   checkUpdates as checkUpdatesAPI,
   type VersionInfo,
   type ReleaseInfo
@@ -25,12 +32,12 @@ export const useAppStore = defineStore('app', () => {
   // Public settings cache state
   const publicSettingsLoaded = ref<boolean>(false)
   const publicSettingsLoading = ref<boolean>(false)
-  const siteName = ref<string>('Sub2API')
+  const siteName = ref<string>(PUBLIC_SITE_NAME)
   const siteLogo = ref<string>('')
   const siteVersion = ref<string>('')
-  const contactInfo = ref<string>('')
-  const apiBaseUrl = ref<string>('')
-  const docUrl = ref<string>('')
+  const contactInfo = ref<string>(PUBLIC_CONTACT_INFO)
+  const apiBaseUrl = ref<string>(PUBLIC_API_BASE_URL)
+  const docUrl = ref<string>(PUBLIC_TUTORIAL_URL)
   const cachedPublicSettings = ref<PublicSettings | null>(null)
 
   // Version cache state
@@ -292,12 +299,12 @@ export const useAppStore = defineStore('app', () => {
       window.__APP_CONFIG__ = { ...config }
     }
     cachedPublicSettings.value = config
-    siteName.value = config.site_name || 'Sub2API'
+    siteName.value = config.site_name || PUBLIC_SITE_NAME
     siteLogo.value = config.site_logo || ''
     siteVersion.value = config.version || ''
-    contactInfo.value = config.contact_info || ''
-    apiBaseUrl.value = config.api_base_url || ''
-    docUrl.value = config.doc_url || ''
+    contactInfo.value = config.contact_info || PUBLIC_CONTACT_INFO
+    apiBaseUrl.value = resolvePublicUrl(config.api_base_url, PUBLIC_API_BASE_URL)
+    docUrl.value = resolvePublicUrl(config.doc_url, PUBLIC_TUTORIAL_URL)
     publicSettingsLoaded.value = true
   }
 

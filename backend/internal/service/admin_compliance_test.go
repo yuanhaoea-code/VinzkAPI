@@ -100,6 +100,26 @@ func TestAcceptAdminCompliancePersistsCurrentVersion(t *testing.T) {
 	require.Equal(t, AdminComplianceDocumentPathZH, stored.DocumentZH)
 }
 
+func TestAdminComplianceUsesConfiguredSiteNameInPhrase(t *testing.T) {
+	repo := &adminComplianceRepoStub{
+		values: map[string]string{SettingKeySiteName: "VinzkAPI"},
+	}
+	svc := NewSettingService(repo, &config.Config{})
+
+	status, err := svc.GetAdminComplianceStatus(context.Background(), 1)
+	require.NoError(t, err)
+	require.Equal(t, "我已阅读、理解并同意 VinzkAPI 部署与运营合规承诺", status.AckPhraseZH)
+	require.Equal(t, "I have read, understood, and agree to the VinzkAPI Deployment and Operation Compliance Commitment", status.AckPhraseEN)
+
+	accepted, err := svc.AcceptAdminCompliance(context.Background(), AdminComplianceAcceptInput{
+		AdminUserID: 1,
+		Language:    "zh-CN",
+		Phrase:      status.AckPhraseZH,
+	})
+	require.NoError(t, err)
+	require.False(t, accepted.Required)
+}
+
 func TestAdminComplianceStatusRequiresAckOnOldVersion(t *testing.T) {
 	old, err := json.Marshal(AdminComplianceAcknowledgement{Version: "v2026.01.01"})
 	require.NoError(t, err)

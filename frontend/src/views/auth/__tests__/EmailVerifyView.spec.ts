@@ -42,6 +42,12 @@ const {
   },
 }))
 
+const requiredRegistrationFields = {
+  real_name: 'Test User',
+  user_type: '个人用户',
+  contact_phone: '13800138000',
+}
+
 vi.mock('vue-router', () => ({
   useRouter: () => ({
     push: pushMock,
@@ -137,6 +143,7 @@ describe('EmailVerifyView', () => {
       JSON.stringify({
         email: 'fresh@example.com',
         password: 'secret-123',
+        ...requiredRegistrationFields,
       })
     )
 
@@ -178,6 +185,7 @@ describe('EmailVerifyView', () => {
       JSON.stringify({
         email: 'fresh@example.com',
         password: 'secret-123',
+        ...requiredRegistrationFields,
       })
     )
 
@@ -219,6 +227,7 @@ describe('EmailVerifyView', () => {
       JSON.stringify({
         email: 'fresh@example.com',
         password: 'secret-123',
+        ...requiredRegistrationFields,
       })
     )
 
@@ -266,6 +275,7 @@ describe('EmailVerifyView', () => {
       JSON.stringify({
         email: 'fresh@example.com',
         password: 'secret-123',
+        ...requiredRegistrationFields,
       })
     )
 
@@ -305,6 +315,7 @@ describe('EmailVerifyView', () => {
         email: 'fresh@example.com',
         password: 'secret-123',
         aff_code: 'AFF123',
+        ...requiredRegistrationFields,
       })
     )
     apiClientPostMock.mockResolvedValue({
@@ -337,6 +348,7 @@ describe('EmailVerifyView', () => {
       password: 'secret-123',
       verify_code: '123456',
       aff_code: 'AFF123',
+      ...requiredRegistrationFields,
     })
     expect(persistOAuthTokenContextMock).toHaveBeenCalledWith({
       access_token: 'oauth-access-token',
@@ -368,6 +380,7 @@ describe('EmailVerifyView', () => {
       JSON.stringify({
         email: 'fresh@example.com',
         password: 'secret-123',
+        ...requiredRegistrationFields,
       })
     )
     apiClientPostMock.mockResolvedValue({
@@ -400,6 +413,7 @@ describe('EmailVerifyView', () => {
       email: 'fresh@example.com',
       password: 'secret-123',
       verify_code: '123456',
+      ...requiredRegistrationFields,
     })
     expect(setPendingAuthSessionMock).toHaveBeenCalledWith({
       token: '',
@@ -422,6 +436,7 @@ describe('EmailVerifyView', () => {
         password: 'secret-456',
         promo_code: 'PROMO',
         invitation_code: 'INVITE',
+        ...requiredRegistrationFields,
       })
     )
     registerMock.mockResolvedValue({})
@@ -449,6 +464,7 @@ describe('EmailVerifyView', () => {
       turnstile_token: undefined,
       promo_code: 'PROMO',
       invitation_code: 'INVITE',
+      ...requiredRegistrationFields,
     })
     expect(apiClientPostMock).not.toHaveBeenCalled()
     expect(pushMock).toHaveBeenCalledWith('/dashboard')
