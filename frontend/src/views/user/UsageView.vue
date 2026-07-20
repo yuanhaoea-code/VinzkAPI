@@ -3,43 +3,61 @@
     <UserConsolePage
       :kicker="t('usage.console.kicker')"
       :title="t('usage.console.title')"
-      :description="t('usage.console.description')"
+      compact
       class="usage-console"
     >
-      <template #heroAside>
-        <div class="console-summary">
-          <div>
-            <div class="console-summary__label">SELECTED RANGE</div>
-            <div class="console-summary__value">{{ usageStats?.total_requests?.toLocaleString() || '0' }}</div>
-            <div class="console-summary__desc">
-              {{ t('usage.console.summaryDescription') }}
+      <template #headerActions>
+        <div class="usage-console__header-actions">
+          <button
+            v-if="errorViewEnabled"
+            type="button"
+            class="btn btn-secondary"
+            @click="switchToErrors"
+          >
+            <Icon name="exclamationCircle" size="sm" class="mr-1.5" />
+            {{ t('usage.tabs.errors') }}
+          </button>
+          <div ref="columnDropdownRef" class="relative">
+            <button
+              type="button"
+              class="btn btn-secondary px-2 md:px-3"
+              :title="t('admin.users.columnSettings')"
+              :aria-label="t('admin.users.columnSettings')"
+              @click="showColumnDropdown = !showColumnDropdown"
+            >
+              <Icon name="grid" size="sm" class="md:mr-1.5" />
+              <span class="hidden md:inline">{{ t('admin.users.columnSettings') }}</span>
+            </button>
+            <div
+              v-if="showColumnDropdown"
+              class="absolute right-0 top-full z-50 mt-1 max-h-80 w-48 overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-dark-600 dark:bg-dark-800"
+            >
+              <button
+                v-for="col in toggleableColumns"
+                :key="col.key"
+                type="button"
+                class="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700"
+                @click="toggleColumn(col.key)"
+              >
+                <span>{{ col.label }}</span>
+                <Icon
+                  v-if="isColumnVisible(col.key)"
+                  name="check"
+                  size="sm"
+                  class="text-primary-500"
+                />
+              </button>
             </div>
           </div>
-          <div class="console-summary__micro">
-            <div>
-              <b>{{ formatCompactTokens(usageStats?.total_tokens || 0) }}</b>
-              <span>{{ t('usage.tokens') }}</span>
-            </div>
-            <div>
-              <b>${{ (usageStats?.total_actual_cost || 0).toFixed(2) }}</b>
-              <span>{{ t('usage.console.actualCost') }}</span>
-            </div>
-          </div>
-        </div>
-      </template>
-
-      <template #heroNotes>
-        <div class="console-note">
-          <strong class="console-note__title">{{ t('usage.console.noteBillingTitle') }}</strong>
-          <span class="console-note__copy">{{ t('usage.console.noteBillingCopy') }}</span>
-        </div>
-        <div class="console-note">
-          <strong class="console-note__title">{{ t('usage.console.noteExportTitle') }}</strong>
-          <span class="console-note__copy">{{ t('usage.console.noteExportCopy') }}</span>
-        </div>
-        <div class="console-note">
-          <strong class="console-note__title">{{ t('usage.console.noteErrorTitle') }}</strong>
-          <span class="console-note__copy">{{ t('usage.console.noteErrorCopy') }}</span>
+          <button
+            type="button"
+            class="btn btn-primary"
+            :disabled="exporting"
+            @click="exportToCSV"
+          >
+            <Icon name="download" size="sm" class="mr-1.5" />
+            {{ exporting ? t('usage.exporting') : t('usage.exportCsv') }}
+          </button>
         </div>
       </template>
 
@@ -56,10 +74,7 @@
         />
       </div>
 
-      <UserConsolePanel
-        :title="t('usage.console.chartsTitle')"
-        :description="t('usage.console.chartsDescription')"
-      >
+      <UserConsolePanel :title="t('usage.console.chartsTitle')">
         <template #headerActions>
           <div class="usage-console__chart-controls">
             <div class="usage-console__chart-control">
@@ -158,38 +173,8 @@
             <button type="button" @click="resetFilters" class="btn btn-secondary">
               {{ t('common.reset') }}
             </button>
-            <div class="relative" ref="columnDropdownRef">
-              <button
-                type="button"
-                @click="showColumnDropdown = !showColumnDropdown"
-                class="btn btn-secondary px-2 md:px-3"
-                :title="t('admin.users.columnSettings')"
-                :aria-label="t('admin.users.columnSettings')"
-              >
-                <Icon name="grid" size="sm" />
-                <span class="hidden md:inline">{{ t('admin.users.columnSettings') }}</span>
-              </button>
-              <div
-                v-if="showColumnDropdown"
-                class="absolute right-0 top-full z-50 mt-1 max-h-80 w-48 overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-dark-600 dark:bg-dark-800"
-              >
-                <button
-                  v-for="col in toggleableColumns"
-                  :key="col.key"
-                  type="button"
-                  @click="toggleColumn(col.key)"
-                  class="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700"
-                >
-                  <span>{{ col.label }}</span>
-                  <Icon v-if="isColumnVisible(col.key)" name="check" size="sm" class="text-primary-500" />
-                </button>
-              </div>
-            </div>
-            <button type="button" @click="exportToCSV" :disabled="exporting" class="btn btn-primary">
-              {{ exporting ? t('usage.exporting') : t('usage.exportCsv') }}
-            </button>
-            </div>
           </div>
+        </div>
       </UserConsolePanel>
 
       <UserConsolePanel
@@ -872,6 +857,14 @@ watch(endpointDistributionSource, () => {
 </script>
 
 <style scoped>
+.usage-console__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .usage-console__stats {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -1050,6 +1043,11 @@ watch(endpointDistributionSource, () => {
 }
 
 @media (max-width: 640px) {
+  .usage-console__header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
   .usage-console__chart-controls {
     justify-content: stretch;
   }

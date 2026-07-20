@@ -3,43 +3,23 @@
     <UserConsolePage
       :kicker="t('dashboard.console.kicker')"
       :title="t('dashboard.console.title')"
-      :description="t('dashboard.console.description')"
+      compact
     >
-      <template #heroAside>
-        <div class="console-summary">
-          <div>
-            <div class="console-summary__label">ACCOUNT BALANCE</div>
-            <div class="console-summary__value">¥{{ formatBalance(user?.balance || 0) }}</div>
-            <div class="console-summary__desc">
-              {{ t('dashboard.console.summaryDescription') }}
-            </div>
-          </div>
-          <div class="console-summary__micro">
-            <div>
-              <b>{{ stats?.total_api_keys || 0 }}</b>
-              <span>{{ t('dashboard.apiKeys') }}</span>
-            </div>
-            <div>
-              <b>{{ formatNumber(stats?.today_requests || 0) }}</b>
-              <span>{{ t('dashboard.todayRequests') }}</span>
-            </div>
-          </div>
-        </div>
-      </template>
-
-      <template #heroNotes>
-        <div class="console-note">
-          <strong class="console-note__title">{{ t('dashboard.console.noteOverviewTitle') }}</strong>
-          <span class="console-note__copy">{{ t('dashboard.console.noteOverviewCopy') }}</span>
-        </div>
-        <div class="console-note">
-          <strong class="console-note__title">{{ t('dashboard.console.noteAnalysisTitle') }}</strong>
-          <span class="console-note__copy">{{ t('dashboard.console.noteAnalysisCopy') }}</span>
-        </div>
-        <div class="console-note">
-          <strong class="console-note__title">{{ t('dashboard.console.noteNextTitle') }}</strong>
-          <span class="console-note__copy">{{ t('dashboard.console.noteNextCopy') }}</span>
-        </div>
+      <template #headerActions>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          :title="t('common.refresh')"
+          :aria-label="t('common.refresh')"
+          :disabled="loading || loadingCharts || loadingUsage"
+          @click="refreshAll"
+        >
+          <Icon
+            name="refresh"
+            size="md"
+            :class="loading || loadingCharts || loadingUsage ? 'animate-spin' : ''"
+          />
+        </button>
       </template>
 
       <div v-if="loading" class="dashboard-loading">
@@ -80,6 +60,7 @@ import { useAuthStore } from '@/stores/auth'
 import { usageAPI, type UserDashboardStats as UserStatsType } from '@/api/usage'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import Icon from '@/components/icons/Icon.vue'
 import UserConsolePage from '@/components/user/console/UserConsolePage.vue'
 import UserDashboardStats from '@/components/user/dashboard/UserDashboardStats.vue'
 import UserDashboardCharts from '@/components/user/dashboard/UserDashboardCharts.vue'
@@ -105,13 +86,6 @@ const formatLocalDate = (date: Date) => date.toISOString().split('T')[0]
 const startDate = ref(formatLocalDate(new Date(Date.now() - 6 * 86400000)))
 const endDate = ref(formatLocalDate(new Date()))
 const granularity = ref('day')
-const formatBalance = (value: number) =>
-  Number(value || 0).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-const formatNumber = (value: number) => Number(value || 0).toLocaleString()
-
 const loadStats = async () => {
   loading.value = true
   try {

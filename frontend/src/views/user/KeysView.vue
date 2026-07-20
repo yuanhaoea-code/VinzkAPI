@@ -3,43 +3,63 @@
     <UserConsolePage
       :kicker="t('keys.console.kicker')"
       :title="t('keys.console.title')"
-      :description="t('keys.console.description')"
+      compact
       class="keys-console"
     >
-      <template #heroAside>
-        <div class="console-summary">
-          <div>
-            <div class="console-summary__label">USABLE KEYS</div>
-            <div class="console-summary__value">{{ pagination.total }}</div>
-            <div class="console-summary__desc">
-              {{ t('keys.console.summaryDescription') }}
+      <template #headerActions>
+        <div class="keys-console__header-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            :title="t('common.refresh')"
+            :aria-label="t('common.refresh')"
+            :disabled="loading"
+            @click="loadApiKeys"
+          >
+            <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+          </button>
+          <div ref="columnDropdownRef" class="relative">
+            <button
+              type="button"
+              class="btn btn-secondary px-2 md:px-3"
+              :title="t('keys.columnSettings')"
+              :aria-label="t('keys.columnSettings')"
+              @click="showColumnDropdown = !showColumnDropdown"
+            >
+              <Icon name="grid" size="sm" class="md:mr-1.5" />
+              <span class="hidden md:inline">{{ t('keys.columnSettings') }}</span>
+            </button>
+            <div
+              v-if="showColumnDropdown"
+              class="absolute right-0 top-full z-50 mt-1 max-h-80 w-48 overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-dark-600 dark:bg-dark-800"
+            >
+              <button
+                v-for="col in toggleableColumns"
+                :key="col.key"
+                type="button"
+                class="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700"
+                @click="toggleColumn(col.key)"
+              >
+                <span>{{ col.label }}</span>
+                <Icon
+                  v-if="isColumnVisible(col.key)"
+                  name="check"
+                  size="sm"
+                  class="text-primary-500"
+                  :stroke-width="2"
+                />
+              </button>
             </div>
           </div>
-          <div class="console-summary__micro">
-            <div>
-              <b>{{ activeVisibleCount }}</b>
-              <span>{{ t('common.active') }}</span>
-            </div>
-            <div>
-              <b>{{ guardedKeyCount }}</b>
-              <span>{{ t('keys.console.ruleKeys') }}</span>
-            </div>
-          </div>
-        </div>
-      </template>
-
-      <template #heroNotes>
-        <div class="console-note">
-          <strong class="console-note__title">{{ t('keys.console.noteUseTitle') }}</strong>
-          <span class="console-note__copy">{{ t('keys.console.noteUseCopy') }}</span>
-        </div>
-        <div class="console-note">
-          <strong class="console-note__title">{{ t('keys.console.noteControlTitle') }}</strong>
-          <span class="console-note__copy">{{ t('keys.console.noteControlCopy') }}</span>
-        </div>
-        <div class="console-note">
-          <strong class="console-note__title">{{ t('keys.console.noteInspectTitle') }}</strong>
-          <span class="console-note__copy">{{ t('keys.console.noteInspectCopy') }}</span>
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-tour="keys-create-btn"
+            @click="showCreateModal = true"
+          >
+            <Icon name="plus" size="md" class="mr-2" />
+            {{ t('keys.createKey') }}
+          </button>
         </div>
       </template>
 
@@ -93,12 +113,6 @@
       <TablePageLayout class="keys-console__table-layout">
       <template #filters>
         <div class="keys-console__section keys-console__section--filters">
-          <div class="keys-console__section-head">
-            <div>
-              <p class="keys-console__section-title">{{ t('keys.console.filterTitle') }}</p>
-              <p class="keys-console__section-copy">{{ t('keys.console.filterCopy') }}</p>
-            </div>
-          </div>
           <div class="flex flex-wrap items-center gap-3">
             <SearchInput
               v-model="filterSearch"
@@ -124,65 +138,6 @@
             :api-base-url="effectiveApiBaseUrl"
             :custom-endpoints="publicSettings?.custom_endpoints || []"
           />
-        </div>
-      </template>
-
-      <template #actions>
-        <div class="keys-console__section keys-console__section--actions">
-          <div class="keys-console__section-head keys-console__section-head--inline">
-            <div>
-              <p class="keys-console__section-title">{{ t('keys.console.actionsTitle') }}</p>
-              <p class="keys-console__section-copy">{{ t('keys.console.actionsCopy') }}</p>
-            </div>
-          </div>
-          <div class="flex justify-end gap-3">
-          <button
-            @click="loadApiKeys"
-            :disabled="loading"
-            class="btn btn-secondary"
-            :title="t('common.refresh')"
-            :aria-label="t('common.refresh')"
-          >
-            <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
-          </button>
-          <div class="relative" ref="columnDropdownRef">
-            <button
-              @click="showColumnDropdown = !showColumnDropdown"
-              class="btn btn-secondary px-2 md:px-3"
-              :title="t('keys.columnSettings')"
-              :aria-label="t('keys.columnSettings')"
-            >
-              <svg class="h-4 w-4 md:mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125z" />
-              </svg>
-              <span class="hidden md:inline">{{ t('keys.columnSettings') }}</span>
-            </button>
-            <div
-              v-if="showColumnDropdown"
-              class="absolute right-0 top-full z-50 mt-1 max-h-80 w-48 overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-dark-600 dark:bg-dark-800"
-            >
-              <button
-                v-for="col in toggleableColumns"
-                :key="col.key"
-                @click="toggleColumn(col.key)"
-                class="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700"
-              >
-                <span>{{ col.label }}</span>
-                <Icon
-                  v-if="isColumnVisible(col.key)"
-                  name="check"
-                  size="sm"
-                  class="text-primary-500"
-                  :stroke-width="2"
-                />
-              </button>
-            </div>
-          </div>
-          <button @click="showCreateModal = true" class="btn btn-primary" data-tour="keys-create-btn">
-            <Icon name="plus" size="md" class="mr-2" />
-            {{ t('keys.createKey') }}
-          </button>
-          </div>
         </div>
       </template>
 
@@ -2060,39 +2015,20 @@ onUnmounted(() => {
   gap: 12px;
 }
 
+.keys-console__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
 .keys-console__section {
   border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
   padding: 0;
-}
-
-.keys-console__section-title,
-.keys-console__section-copy {
-  margin: 0;
-}
-
-.keys-console__section-title {
-  color: #171411;
-  font-family: var(--console-font-sans);
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.keys-console__section-copy {
-  margin-top: 3px;
-  color: #7c7267;
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.keys-console__section-head {
-  margin-bottom: 9px;
-}
-
-.keys-console__section-head--inline {
-  margin-bottom: 10px;
 }
 
 .keys-console__table-layout {
@@ -2160,17 +2096,6 @@ onUnmounted(() => {
   font-weight: 600;
 }
 
-.keys-console__section--actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.keys-console__section--actions .keys-console__section-head {
-  margin-bottom: 0;
-}
-
 .keys-console__section--filters {
   display: flex;
   align-items: center;
@@ -2182,24 +2107,16 @@ onUnmounted(() => {
   box-shadow: inset 0 0 0 1px rgba(23, 20, 17, 0.04);
 }
 
-.keys-console__section--filters .keys-console__section-head {
-  min-width: 11rem;
-  max-width: 18rem;
-  margin-bottom: 0;
-}
-
 :global(.dark) .keys-console__section,
 :global(.dark) .keys-console__table-layout :deep(.table-scroll-container) {
   border-color: rgba(255, 255, 255, 0.08);
   background: rgba(15, 23, 42, 0.78);
 }
 
-:global(.dark) .keys-console__section-copy,
 :global(.dark) .keys-console__table-layout :deep(th) {
   color: #94a3b8;
 }
 
-:global(.dark) .keys-console__section-title,
 :global(.dark) .keys-console__table-layout :deep(td) {
   color: #f8fafc;
 }
@@ -2222,9 +2139,6 @@ onUnmounted(() => {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .keys-console__stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (min-width: 1180px) {
@@ -2234,14 +2148,16 @@ onUnmounted(() => {
 }
 
 @media (max-width: 860px) {
-  .keys-console__section--actions,
   .keys-console__section--filters {
     align-items: stretch;
     flex-direction: column;
   }
+}
 
-  .keys-console__section--filters .keys-console__section-head {
-    max-width: none;
+@media (max-width: 640px) {
+  .keys-console__header-actions {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
 </style>

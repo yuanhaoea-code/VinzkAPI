@@ -1,18 +1,38 @@
 <script setup lang="ts">
-defineProps<{
-  kicker: string
-  title: string
-  description: string
-}>()
+withDefaults(
+  defineProps<{
+    kicker: string
+    title: string
+    description?: string
+    compact?: boolean
+  }>(),
+  {
+    description: '',
+    compact: false,
+  }
+)
 </script>
 
 <template>
   <section class="user-console-page">
-    <header class="user-console-page__head">
+    <header
+      v-if="compact"
+      class="user-console-page__head user-console-page__head--compact"
+    >
+      <div class="user-console-page__heading">
+        <p class="user-console-page__kicker">{{ kicker }}</p>
+        <h1 class="user-console-page__title user-console-page__title--compact">{{ title }}</h1>
+      </div>
+      <div v-if="$slots.headerActions" class="user-console-page__actions">
+        <slot name="headerActions" />
+      </div>
+    </header>
+
+    <header v-else class="user-console-page__head">
       <div class="user-console-page__hero">
         <p class="user-console-page__kicker">{{ kicker }}</p>
         <h1 class="user-console-page__title">{{ title }}</h1>
-        <p class="user-console-page__description">{{ description }}</p>
+        <p v-if="description" class="user-console-page__description">{{ description }}</p>
         <div v-if="$slots.heroNotes" class="user-console-page__notes">
           <slot name="heroNotes" />
         </div>
@@ -53,6 +73,27 @@ defineProps<{
   align-items: start;
 }
 
+.user-console-page__head--compact {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 4px;
+}
+
+.user-console-page__heading {
+  min-width: 0;
+}
+
+.user-console-page__actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .user-console-page__hero,
 .user-console-page__summary {
   border: 1px solid var(--console-line);
@@ -84,6 +125,11 @@ defineProps<{
   letter-spacing: 0;
   font-weight: 700;
   color: var(--console-ink);
+}
+
+.user-console-page__title--compact {
+  margin-top: 5px;
+  margin-bottom: 0;
 }
 
 .user-console-page__description {
@@ -238,7 +284,7 @@ defineProps<{
 }
 
 @media (min-width: 1024px) {
-  .user-console-page__head {
+  .user-console-page__head:not(.user-console-page__head--compact) {
     grid-template-columns: minmax(0, 1fr) 300px;
   }
 }
@@ -252,6 +298,17 @@ defineProps<{
 
   .user-console-page__title {
     font-size: 24px;
+  }
+
+  .user-console-page__head--compact {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+    padding: 2px 0;
+  }
+
+  .user-console-page__actions {
+    justify-content: flex-start;
   }
 
   .user-console-page__description {
