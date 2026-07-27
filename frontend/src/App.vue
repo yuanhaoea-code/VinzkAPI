@@ -8,6 +8,8 @@ import { resolveRouteDocumentTitle } from '@/router/title'
 import AnnouncementPopup from '@/components/common/AnnouncementPopup.vue'
 import { useAppStore, useAuthStore, useSubscriptionStore, useAnnouncementStore, useAdminComplianceStore, useAdminSettingsStore } from '@/stores'
 import { getSetupStatus } from '@/api/setup'
+import { resetImageGenerationWorkspace } from '@/composables/useImageGenerationWorkspace'
+import { resetWorkbenchWorkspace } from '@/composables/useWorkbench'
 
 const router = useRouter()
 const route = useRoute()
@@ -111,6 +113,8 @@ watch(
       subscriptionStore.clear()
       announcementStore.reset()
       adminComplianceStore.reset()
+      resetImageGenerationWorkspace()
+      resetWorkbenchWorkspace()
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }
   },

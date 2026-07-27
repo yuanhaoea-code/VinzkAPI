@@ -60,6 +60,7 @@ const userConsoleRouteNames = new Set([
   'Redeem',
   'Recharge',
   'ModelMarket',
+  'Workbench',
   'ImageGeneration',
   'Affiliate',
   'Profile',

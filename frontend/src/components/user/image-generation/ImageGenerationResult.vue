@@ -3,9 +3,11 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
 import type { ImageGenerationRecord } from '@/api/imageGenerations'
+import type { ImageGenerationResultMetadata } from './types'
 
 const props = defineProps<{
   record: ImageGenerationRecord | null
+  activeGeneration: ImageGenerationResultMetadata | null
   generating: boolean
   errorMessage: string
   previewUrl: (recordId: number, imageIndex: number, fallback?: string) => string
@@ -20,6 +22,17 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const primaryImage = computed(() => props.record?.images?.[0] || null)
 const secondaryImages = computed(() => props.record?.images?.slice(1) || [])
+const displayMetadata = computed(() => {
+  if ((props.generating || props.errorMessage) && props.activeGeneration) {
+    return props.activeGeneration
+  }
+  if (!props.record) return null
+  return {
+    model: props.record.model,
+    resolution_tier: props.record.resolution_tier || props.record.size,
+    size: props.record.size
+  }
+})
 
 function formatBytes(bytes: number): string {
   if (!bytes) return '0 KB'
@@ -46,9 +59,9 @@ function formatDate(value?: string): string {
         <p v-if="record?.status === 'success'">{{ t('imageGeneration.completedCount', { count: record.image_count }) }}</p>
         <p v-else>{{ t('imageGeneration.resultWaiting') }}</p>
       </div>
-      <div v-if="record" class="result-tags">
-        <span>{{ record.model }}</span>
-        <span class="accent">{{ record.resolution_tier || record.size }} · {{ record.size }}</span>
+      <div v-if="displayMetadata" class="result-tags">
+        <span>{{ displayMetadata.model }}</span>
+        <span class="accent">{{ displayMetadata.resolution_tier }} · {{ displayMetadata.size }}</span>
       </div>
     </header>
 

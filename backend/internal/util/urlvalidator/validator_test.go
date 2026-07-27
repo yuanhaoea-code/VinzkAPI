@@ -138,6 +138,66 @@ func TestDialPublicContextRejectsMixedPublicAndPrivateAnswers(t *testing.T) {
 	}
 }
 
+func TestResolvedIPOptionsAllowFakeIPOnlyForConfiguredHostname(t *testing.T) {
+	lookup := func(_ context.Context, _ string, _ string) ([]net.IP, error) {
+		return []net.IP{net.ParseIP("198.18.0.37")}, nil
+	}
+	opts := ResolvedIPOptions{AllowedFakeIPHosts: []string{"sub.geiliapi.com"}}
+
+	if _, err := resolvePublicIPsWithOptions(context.Background(), "sub.geiliapi.com", lookup, opts); err != nil {
+		t.Fatalf("expected configured Fake-IP hostname to pass: %v", err)
+	}
+	if _, err := resolvePublicIPsWithOptions(context.Background(), "untrusted.example", lookup, opts); err == nil {
+		t.Fatal("expected an unconfigured hostname resolving to Fake-IP to be rejected")
+	}
+	if _, err := resolvePublicIPsWithOptions(context.Background(), "198.18.0.37", lookup, opts); err == nil {
+		t.Fatal("expected a literal Fake-IP target to remain blocked")
+	}
+}
+
+func TestResolvedIPOptionsNeverAllowPrivateAddress(t *testing.T) {
+	lookup := func(_ context.Context, _ string, _ string) ([]net.IP, error) {
+		return []net.IP{net.ParseIP("127.0.0.1")}, nil
+	}
+	opts := ResolvedIPOptions{AllowedFakeIPHosts: []string{"sub.geiliapi.com"}}
+
+	if _, err := resolvePublicIPsWithOptions(context.Background(), "sub.geiliapi.com", lookup, opts); err == nil {
+		t.Fatal("expected loopback address to remain blocked for a configured Fake-IP hostname")
+	}
+}
+
+func TestDialPublicContextAllowsConfiguredFakeIP(t *testing.T) {
+	lookup := func(_ context.Context, _ string, _ string) ([]net.IP, error) {
+		return []net.IP{net.ParseIP("198.18.0.37")}, nil
+	}
+	clientConn, serverConn := net.Pipe()
+	defer clientConn.Close()
+	defer serverConn.Close()
+	dialedAddress := ""
+	dial := func(_ context.Context, _ string, address string) (net.Conn, error) {
+		dialedAddress = address
+		return clientConn, nil
+	}
+
+	conn, err := dialPublicContextWithOptions(
+		context.Background(),
+		"tcp",
+		"sub.geiliapi.com:443",
+		lookup,
+		dial,
+		ResolvedIPOptions{AllowedFakeIPHosts: []string{"sub.geiliapi.com"}},
+	)
+	if err != nil {
+		t.Fatalf("expected configured Fake-IP hostname to dial: %v", err)
+	}
+	if conn != clientConn {
+		t.Fatal("expected dialed connection to be returned")
+	}
+	if dialedAddress != "198.18.0.37:443" {
+		t.Fatalf("expected proxy Fake-IP to be dialed, got %s", dialedAddress)
+	}
+}
+
 func TestValidateHTTPURL(t *testing.T) {
 	if _, err := ValidateHTTPURL("http://example.com", false, ValidationOptions{}); err == nil {
 		t.Fatalf("expected http to fail when allow_insecure_http is false")

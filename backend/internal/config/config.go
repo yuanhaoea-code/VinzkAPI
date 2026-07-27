@@ -610,6 +610,7 @@ type URLAllowlistConfig struct {
 	UpstreamHosts     []string `mapstructure:"upstream_hosts"`
 	PricingHosts      []string `mapstructure:"pricing_hosts"`
 	CRSHosts          []string `mapstructure:"crs_hosts"`
+	FakeIPHosts       []string `mapstructure:"fake_ip_hosts"`
 	AllowPrivateHosts bool     `mapstructure:"allow_private_hosts"`
 	// 关闭 URL 白名单校验时，是否允许 http URL（默认只允许 https）
 	AllowInsecureHTTP bool `mapstructure:"allow_insecure_http"`
@@ -1129,6 +1130,8 @@ type DatabaseConfig struct {
 	ConnMaxLifetimeMinutes int `mapstructure:"conn_max_lifetime_minutes"`
 	// ConnMaxIdleTimeMinutes: 空闲连接最大存活时间，及时释放不活跃连接
 	ConnMaxIdleTimeMinutes int `mapstructure:"conn_max_idle_time_minutes"`
+	// StartupWaitSeconds is the maximum time to wait for PostgreSQL before migrations run.
+	StartupWaitSeconds int `mapstructure:"startup_wait_seconds"`
 	// UserPlatformQuotaFlusherEnabled: 是否启用 user×platform 配额写聚合 flusher
 	UserPlatformQuotaFlusherEnabled bool `mapstructure:"user_platform_quota_flusher_enabled"`
 	// UserPlatformQuotaFlushIntervalMs: flusher 刷写间隔（毫秒）
@@ -1190,6 +1193,8 @@ type RedisConfig struct {
 	MinIdleConns int `mapstructure:"min_idle_conns"`
 	// EnableTLS: 是否启用 TLS/SSL 连接
 	EnableTLS bool `mapstructure:"enable_tls"`
+	// StartupWaitSeconds is the maximum time to wait for Redis during process startup.
+	StartupWaitSeconds int `mapstructure:"startup_wait_seconds"`
 }
 
 func (r *RedisConfig) Address() string {
@@ -1606,6 +1611,7 @@ func setDefaults() {
 		"raw.githubusercontent.com",
 	})
 	viper.SetDefault("security.url_allowlist.crs_hosts", []string{})
+	viper.SetDefault("security.url_allowlist.fake_ip_hosts", []string{})
 	viper.SetDefault("security.url_allowlist.allow_private_hosts", false)
 	viper.SetDefault("security.url_allowlist.allow_insecure_http", false)
 	viper.SetDefault("security.response_headers.enabled", true)
@@ -1713,6 +1719,7 @@ func setDefaults() {
 	viper.SetDefault("database.max_idle_conns", 128)
 	viper.SetDefault("database.conn_max_lifetime_minutes", 30)
 	viper.SetDefault("database.conn_max_idle_time_minutes", 5)
+	viper.SetDefault("database.startup_wait_seconds", 90)
 	viper.SetDefault("database.user_platform_quota_flusher_enabled", false)
 	viper.SetDefault("database.user_platform_quota_flush_interval_ms", 2000)
 	viper.SetDefault("database.user_platform_quota_flush_batch_size", 1000)
@@ -1725,9 +1732,10 @@ func setDefaults() {
 	viper.SetDefault("redis.dial_timeout_seconds", 5)
 	viper.SetDefault("redis.read_timeout_seconds", 3)
 	viper.SetDefault("redis.write_timeout_seconds", 3)
-	viper.SetDefault("redis.pool_size", 1024)
-	viper.SetDefault("redis.min_idle_conns", 128)
+	viper.SetDefault("redis.pool_size", 128)
+	viper.SetDefault("redis.min_idle_conns", 10)
 	viper.SetDefault("redis.enable_tls", false)
+	viper.SetDefault("redis.startup_wait_seconds", 60)
 
 	// Ops (vNext)
 	viper.SetDefault("ops.enabled", true)
@@ -2307,6 +2315,9 @@ func (c *Config) Validate() error {
 	if c.Database.ConnMaxIdleTimeMinutes < 0 {
 		return fmt.Errorf("database.conn_max_idle_time_minutes must be non-negative")
 	}
+	if c.Database.StartupWaitSeconds < 0 {
+		return fmt.Errorf("database.startup_wait_seconds must be non-negative")
+	}
 	if c.Redis.DialTimeoutSeconds <= 0 {
 		return fmt.Errorf("redis.dial_timeout_seconds must be positive")
 	}
@@ -2324,6 +2335,9 @@ func (c *Config) Validate() error {
 	}
 	if c.Redis.MinIdleConns > c.Redis.PoolSize {
 		return fmt.Errorf("redis.min_idle_conns cannot exceed redis.pool_size")
+	}
+	if c.Redis.StartupWaitSeconds < 0 {
+		return fmt.Errorf("redis.startup_wait_seconds must be non-negative")
 	}
 	if c.Dashboard.Enabled {
 		if c.Dashboard.StatsFreshTTLSeconds <= 0 {

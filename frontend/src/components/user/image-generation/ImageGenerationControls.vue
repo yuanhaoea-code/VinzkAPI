@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
-import type { ApiKey } from '@/types'
+import type { ImageGenerationKeyCapability } from '@/api/imageGenerations'
 import type {
   ImageGenerationFormState,
   ImageGenerationMode,
@@ -10,8 +10,8 @@ import type {
 } from './types'
 
 const props = defineProps<{
-  standardKeys: ApiKey[]
-  hdKeys: ApiKey[]
+  standardKeys: ImageGenerationKeyCapability[]
+  hdKeys: ImageGenerationKeyCapability[]
   loadingKeys: boolean
   generating: boolean
   canGenerate: boolean
@@ -72,6 +72,7 @@ function formatPrice(value: number | null): string {
 
 <template>
   <section class="image-controls">
+    <div class="image-controls__scroll">
     <div class="image-pane-heading">
       <div>
         <h2>{{ t('imageGeneration.settings') }}</h2>
@@ -147,14 +148,14 @@ function formatPrice(value: number | null): string {
         <span class="key-pool-title"><b>{{ t('imageGeneration.standardKey') }}</b><small>1K</small></span>
         <select v-model="standardKeyId" :disabled="form.resolution_tier !== '1K' || loadingKeys">
           <option value="">{{ t('imageGeneration.autoSelect') }}</option>
-          <option v-for="key in standardKeys" :key="key.id" :value="String(key.id)">{{ key.name }} · {{ key.key.slice(-5) }}</option>
+          <option v-for="key in standardKeys" :key="key.api_key_id" :value="String(key.api_key_id)">{{ key.key_name }}</option>
         </select>
       </label>
       <label class="key-pool" :class="{ active: form.resolution_tier !== '1K', muted: form.resolution_tier === '1K' }">
         <span class="key-pool-title"><b>{{ t('imageGeneration.hdKey') }}</b><small>2K / 4K</small></span>
         <select v-model="hdKeyId" :disabled="form.resolution_tier === '1K' || loadingKeys">
           <option value="">{{ t('imageGeneration.autoSelect') }}</option>
-          <option v-for="key in hdKeys" :key="key.id" :value="String(key.id)">{{ key.name }} · {{ key.key.slice(-5) }}</option>
+          <option v-for="key in hdKeys" :key="key.api_key_id" :value="String(key.api_key_id)">{{ key.key_name }}</option>
         </select>
       </label>
     </div>
@@ -208,24 +209,30 @@ function formatPrice(value: number | null): string {
       </label>
     </div>
 
-    <div class="cost-row">
+    </div>
+
+    <div class="image-controls__footer">
+      <div class="cost-row">
       <span>{{ t('imageGeneration.estimatedCost') }} <small>· {{ resolvedSize }}</small></span>
       <strong>{{ formatPrice(estimatedTotalPrice) }}</strong>
-    </div>
-    <button type="button" class="generate-button" :disabled="!canGenerate" @click="emit('generate')">
-      <Icon v-if="generating" name="refresh" size="sm" class="spin" />
-      <Icon v-else name="sparkles" size="sm" />
-      {{ generating ? t('imageGeneration.generating') : t('imageGeneration.generateTier', { tier: form.resolution_tier }) }}
-    </button>
-    <div class="secondary-actions">
-      <button type="button" :disabled="!canGenerate" @click="emit('enqueue')">{{ t('imageGeneration.addToQueue') }}</button>
-      <button type="button" @click="emit('reset')">{{ t('common.reset') }}</button>
+      </div>
+      <button type="button" class="generate-button" :disabled="!canGenerate" @click="emit('generate')">
+        <Icon v-if="generating" name="refresh" size="sm" class="spin" />
+        <Icon v-else name="sparkles" size="sm" />
+        {{ generating ? t('imageGeneration.generating') : t('imageGeneration.generateTier', { tier: form.resolution_tier }) }}
+      </button>
+      <div class="secondary-actions">
+        <button type="button" :disabled="!canGenerate" @click="emit('enqueue')">{{ t('imageGeneration.addToQueue') }}</button>
+        <button type="button" @click="emit('reset')">{{ t('common.reset') }}</button>
+      </div>
     </div>
   </section>
 </template>
 
 <style scoped>
-.image-controls { min-width: 0; padding: 15px; border-right: 1px solid var(--ig-line); background: var(--ig-panel-soft); overflow-y: auto; }
+.image-controls { min-width: 0; min-height: 0; padding: 15px; border-right: 1px solid var(--ig-line); background: var(--ig-panel-soft); display: flex; flex-direction: column; overflow: hidden; }
+.image-controls__scroll { min-height: 0; flex: 1; overflow-y: auto; padding-right: 2px; }
+.image-controls__footer { flex: 0 0 auto; margin: 8px -2px -2px; padding: 8px 2px 2px; border-top: 1px solid var(--ig-line); background: var(--ig-panel-soft); }
 .image-pane-heading { min-height: 40px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .image-pane-heading h2 { margin: 0; color: var(--ig-ink); font-size: 16px; font-weight: 650; }
 .image-pane-heading p { margin: 3px 0 0; color: var(--ig-muted); font-size: 13px; }
@@ -265,7 +272,7 @@ function formatPrice(value: number | null): string {
 .parameter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
 .parameter-grid label > span { display: block; color: var(--ig-ink-soft); font-size: 13px; font-weight: 600; }
 .parameter-grid select { margin-top: 5px; font-size: 13px; }
-.cost-row { margin-top: 10px; padding: 9px 1px; border-top: 1px solid var(--ig-line); border-bottom: 1px solid var(--ig-line); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cost-row { padding: 2px 1px 9px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .cost-row span { color: var(--ig-muted); font-size: 13px; }
 .cost-row small { color: var(--ig-muted-light); }
 .cost-row strong { color: var(--ig-ink); font: 700 15px/1 ui-monospace, SFMono-Regular, Consolas, monospace; }

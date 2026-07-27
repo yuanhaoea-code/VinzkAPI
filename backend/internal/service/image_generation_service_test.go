@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -87,4 +88,16 @@ func TestImageGenerationResolveImagePayloadDataURLRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, data, got)
 	require.Equal(t, "image/png", mimeType)
+}
+
+func TestFriendlyImageGatewayErrorExplainsProxyFakeIP(t *testing.T) {
+	message := friendlyImageGatewayError(http.StatusBadGateway, `{"error":{"message":"upstream request failed: resolved ip 198.18.0.37 is not allowed"}}`)
+	require.Contains(t, message, "fake-ip-filter")
+	require.Contains(t, message, "安全校验已拦截")
+}
+
+func TestFriendlyImageGatewayTransportErrorExplainsProxyFakeIP(t *testing.T) {
+	message := friendlyImageGatewayTransportError(errors.New("upstream request failed: resolved ip 198.18.0.37 is not allowed"))
+	require.Contains(t, message, "fake-ip-filter")
+	require.Contains(t, message, "安全校验已拦截")
 }

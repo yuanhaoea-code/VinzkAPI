@@ -328,7 +328,6 @@ const startDate = ref(defaultRange.start)
 const endDate = ref(defaultRange.end)
 const granularity = ref<'day' | 'hour'>(getGranularityForRange(startDate.value, endDate.value))
 const formatCompactTokens = (value: number) => {
-  if (value >= 1e9) return `${(value / 1e9).toFixed(1)}B`
   if (value >= 1e6) return `${Math.round(value / 1e6)}M`
   if (value >= 1e3) return `${Math.round(value / 1e3)}K`
   return Number(value || 0).toLocaleString()

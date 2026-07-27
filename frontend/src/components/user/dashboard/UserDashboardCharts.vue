@@ -142,7 +142,7 @@ const granularityOptions = computed<SelectOption[]>(() => [
   { value: 'hour', label: t('dashboard.hour') },
 ])
 
-const chartColors = ['#7f9f98', '#d4b165', '#8eaaae', '#b99a89', '#7ea27e', '#ba948e', '#a7b0a3', '#c8c2b6']
+const chartColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
 
 const modelData = computed(() => {
   if (!props.models?.length) return null
@@ -255,10 +255,6 @@ const doughnutOptions = {
   background: rgba(255, 255, 255, 0.5);
   box-shadow: inset 0 0 0 1px rgba(23, 20, 17, 0.02);
   padding: 13px;
-}
-
-.dashboard-chart-box :deep(canvas) {
-  filter: saturate(0.72) sepia(0.08) hue-rotate(8deg);
 }
 
 .dashboard-chart-box__head {

@@ -294,7 +294,7 @@ func (s *ImageGenerationService) Generate(ctx context.Context, input CreateImage
 			Status:        ImageGenerationStatusFailed,
 			StorageStatus: ImageStorageStatusFailed,
 			ResponseJSON:  json.RawMessage(`{}`),
-			ErrorMessage:  err.Error(),
+			ErrorMessage:  friendlyImageGatewayTransportError(err),
 			CompletedAt:   &now,
 		})
 	}
@@ -699,6 +699,8 @@ func friendlyImageGatewayError(statusCode int, rawMessage string) string {
 	upper := strings.ToUpper(msg)
 
 	switch {
+	case strings.Contains(lower, "resolved ip") && strings.Contains(lower, "not allowed"):
+		return "生图上游域名被本机代理解析到了保留地址，安全校验已拦截请求。请把该上游域名加入代理的 fake-ip-filter，或改用能返回真实公网 IP 的 DNS 后重试。"
 	case strings.Contains(lower, "no available compatible accounts") || strings.Contains(lower, "no available accounts"):
 		return "当前生图分组没有可用上游账号，请检查渠道管理里的生图账号是否已加入该分组，并确认账号状态为启用。"
 	case strings.Contains(upper, "INSUFFICIENT_BALANCE") || strings.Contains(lower, "insufficient account balance") || strings.Contains(lower, "insufficient balance"):
@@ -709,6 +711,8 @@ func friendlyImageGatewayError(statusCode int, rawMessage string) string {
 		return "生图请求触发上游限流，请稍后再试，或更换生图号池账号。"
 	case statusCode == http.StatusGatewayTimeout || strings.Contains(lower, "timeout") || strings.Contains(lower, "deadline exceeded"):
 		return "图片生成超时了，请稍后重试；如果提示词复杂，生成时间可能会更久。"
+	case isImageGatewayEOFMessage(lower):
+		return "生图上游连接在返回结果前中断（EOF）。请先检查上游记录；确认没有创建生成任务后再重试。"
 	case statusCode >= 500:
 		return "生图上游暂时不可用或没有返回可用结果，请稍后重试；如果持续出现，请检查生图号池账号和上游服务状态。"
 	case msg != "":
@@ -716,6 +720,29 @@ func friendlyImageGatewayError(statusCode int, rawMessage string) string {
 	default:
 		return fmt.Sprintf("生图失败，上游返回 HTTP %d。", statusCode)
 	}
+}
+
+func friendlyImageGatewayTransportError(err error) string {
+	if err == nil {
+		return "生图网关请求失败，请稍后重试。"
+	}
+	message := strings.TrimSpace(err.Error())
+	lower := strings.ToLower(message)
+	if strings.Contains(lower, "resolved ip") && strings.Contains(lower, "not allowed") {
+		return "生图上游域名被本机代理解析到了保留地址，安全校验已拦截请求。请把该上游域名加入代理的 fake-ip-filter，或改用能返回真实公网 IP 的 DNS 后重试。"
+	}
+	if isImageGatewayEOFMessage(lower) {
+		return "生图上游连接在返回结果前中断（EOF）。请先检查上游记录；确认没有创建生成任务后再重试。"
+	}
+	return message
+}
+
+func isImageGatewayEOFMessage(message string) bool {
+	lower := strings.ToLower(strings.TrimSpace(message))
+	return lower == "eof" ||
+		strings.Contains(lower, "unexpected eof") ||
+		strings.HasSuffix(lower, ": eof") ||
+		strings.Contains(lower, ": eof\"")
 }
 
 func newImageGenerationRequestID() string {

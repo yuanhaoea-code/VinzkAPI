@@ -600,6 +600,7 @@ export default {
     mySubscriptions: '我的订阅',
     buySubscription: '充值/订阅',
     modelMarket: '模型广场',
+    workbench: 'AI 工作台',
     imageGeneration: 'AI 生图',
     recharge: '充值',
     docs: '文档',

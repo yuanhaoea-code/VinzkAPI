@@ -600,6 +600,7 @@ export default {
     mySubscriptions: 'My Subscriptions',
     buySubscription: 'Recharge / Subscription',
     modelMarket: 'Model Market',
+    workbench: 'AI Workbench',
     imageGeneration: 'AI Images',
     recharge: 'Recharge',
     docs: 'Docs',

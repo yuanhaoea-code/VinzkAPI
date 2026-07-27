@@ -179,6 +179,10 @@ func (s *httpUpstreamService) Do(req *http.Request, proxyURL string, accountID i
 	resp, err := entry.client.Do(req)
 	if err != nil {
 		s.recordOpenAIHTTP2Failure(profile, entry.protocolMode, entry.proxyKey, err)
+		// Clear only idle connections so the next request gets a fresh transport
+		// path. The caller still decides whether a non-idempotent request is safe
+		// to retry.
+		entry.client.CloseIdleConnections()
 		// 请求失败，立即减少计数
 		atomic.AddInt64(&entry.inFlight, -1)
 		atomic.StoreInt64(&entry.lastUsed, time.Now().UnixNano())
@@ -234,6 +238,7 @@ func (s *httpUpstreamService) DoWithTLS(req *http.Request, proxyURL string, acco
 
 	resp, err := entry.client.Do(req)
 	if err != nil {
+		entry.client.CloseIdleConnections()
 		atomic.AddInt64(&entry.inFlight, -1)
 		atomic.StoreInt64(&entry.lastUsed, time.Now().UnixNano())
 		slog.Debug("tls_fingerprint_request_failed", "account_id", accountID, "error", err)
@@ -318,7 +323,7 @@ func (s *httpUpstreamService) getClientEntryWithTLS(proxyURL string, accountID i
 
 	// 创建带 TLS 指纹的 Transport
 	slog.Debug("tls_fingerprint_creating_new_client", "account_id", accountID, "cache_key", cacheKey, "proxy", proxyKey)
-	transport, err := buildUpstreamTransportWithTLSFingerprint(settings, parsedProxy, profile, s.shouldValidateResolvedIP())
+	transport, err := buildUpstreamTransportWithTLSFingerprint(settings, parsedProxy, profile, s.shouldValidateResolvedIP(), s.allowedFakeIPHosts())
 	if err != nil {
 		s.mu.Unlock()
 		return nil, fmt.Errorf("build TLS fingerprint transport: %w", err)
@@ -353,6 +358,13 @@ func (s *httpUpstreamService) shouldValidateResolvedIP() bool {
 	return !s.cfg.Security.URLAllowlist.AllowPrivateHosts
 }
 
+func (s *httpUpstreamService) allowedFakeIPHosts() []string {
+	if s.cfg == nil {
+		return nil
+	}
+	return s.cfg.Security.URLAllowlist.FakeIPHosts
+}
+
 func (s *httpUpstreamService) validateRequestHost(req *http.Request) error {
 	if !s.shouldValidateResolvedIP() {
 		return nil
@@ -364,7 +376,9 @@ func (s *httpUpstreamService) validateRequestHost(req *http.Request) error {
 	if host == "" {
 		return errors.New("request host is empty")
 	}
-	if err := urlvalidator.ValidateResolvedIP(host); err != nil {
+	if err := urlvalidator.ValidateResolvedIPWithOptions(host, urlvalidator.ResolvedIPOptions{
+		AllowedFakeIPHosts: s.allowedFakeIPHosts(),
+	}); err != nil {
 		return err
 	}
 	return nil
@@ -474,7 +488,9 @@ func (s *httpUpstreamService) getClientEntry(proxyURL string, accountID int64, a
 		return nil, fmt.Errorf("build transport: %w", err)
 	}
 	if s.shouldValidateResolvedIP() && parsedProxy == nil {
-		transport.DialContext = urlvalidator.NewPublicDialContext(nil)
+		transport.DialContext = urlvalidator.NewPublicDialContextWithOptions(nil, urlvalidator.ResolvedIPOptions{
+			AllowedFakeIPHosts: s.allowedFakeIPHosts(),
+		})
 	}
 	client := &http.Client{Transport: transport}
 	if s.shouldValidateResolvedIP() {
@@ -1092,7 +1108,7 @@ func buildUpstreamTransport(settings poolSettings, proxyURL *url.URL, protocolMo
 //   - nil/空: 直连，使用 TLSFingerprintDialer
 //   - http/https: HTTP 代理，使用 HTTPProxyDialer（CONNECT 隧道 + utls 握手）
 //   - socks5: SOCKS5 代理，使用 SOCKS5ProxyDialer（SOCKS5 隧道 + utls 握手）
-func buildUpstreamTransportWithTLSFingerprint(settings poolSettings, proxyURL *url.URL, profile *tlsfingerprint.Profile, validateResolvedIP bool) (*http.Transport, error) {
+func buildUpstreamTransportWithTLSFingerprint(settings poolSettings, proxyURL *url.URL, profile *tlsfingerprint.Profile, validateResolvedIP bool, allowedFakeIPHosts []string) (*http.Transport, error) {
 	transport := &http.Transport{
 		MaxIdleConns:          settings.maxIdleConns,
 		MaxIdleConnsPerHost:   settings.maxIdleConnsPerHost,
@@ -1109,7 +1125,9 @@ func buildUpstreamTransportWithTLSFingerprint(settings poolSettings, proxyURL *u
 		slog.Debug("tls_fingerprint_transport_direct")
 		var baseDialer func(context.Context, string, string) (net.Conn, error)
 		if validateResolvedIP {
-			baseDialer = urlvalidator.NewPublicDialContext(nil)
+			baseDialer = urlvalidator.NewPublicDialContextWithOptions(nil, urlvalidator.ResolvedIPOptions{
+				AllowedFakeIPHosts: allowedFakeIPHosts,
+			})
 		}
 		dialer := tlsfingerprint.NewDialer(profile, baseDialer)
 		transport.DialTLSContext = dialer.DialTLSContext

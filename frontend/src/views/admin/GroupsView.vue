@@ -912,15 +912,6 @@
               <span>{{ t("admin.groups.peakRate.enable") }}</span>
             </label>
           </div>
-          <div v-if="editForm.allow_image_generation" class="mb-4">
-            <label class="input-label">{{ t("admin.groups.imagePricing.allowedTiers") }}</label>
-            <div class="flex flex-wrap gap-3">
-              <label v-for="tier in imageResolutionTiers" :key="tier" class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                <input v-model="editForm.image_allowed_tiers" type="checkbox" :value="tier" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                {{ tier }}
-              </label>
-            </div>
-          </div>
           <div
             v-if="createForm.peak_rate_enabled"
             class="mb-4 grid grid-cols-3 gap-3"
@@ -2178,6 +2169,15 @@
               />
               {{ t("admin.groups.imagePricing.independentMultiplier") }}
             </label>
+          </div>
+          <div v-if="editForm.allow_image_generation" class="mb-4">
+            <label class="input-label">{{ t("admin.groups.imagePricing.allowedTiers") }}</label>
+            <div class="flex flex-wrap gap-3">
+              <label v-for="tier in imageResolutionTiers" :key="tier" class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <input v-model="editForm.image_allowed_tiers" type="checkbox" :value="tier" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                {{ tier }}
+              </label>
+            </div>
           </div>
           <div
             v-if="editForm.image_rate_independent"

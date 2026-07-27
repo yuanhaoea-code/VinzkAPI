@@ -53,6 +53,15 @@ func InitEnt(cfg *config.Config) (*ent.Client, *sql.DB, error) {
 		return nil, nil, err
 	}
 	applyDBPoolSettings(drv.DB(), cfg)
+	if err := waitForDependency(
+		context.Background(),
+		"postgres",
+		time.Duration(cfg.Database.StartupWaitSeconds)*time.Second,
+		drv.DB().PingContext,
+	); err != nil {
+		_ = drv.Close()
+		return nil, nil, err
+	}
 
 	// 确保数据库 schema 已准备就绪。
 	// SQL 迁移文件是 schema 的权威来源（source of truth）。

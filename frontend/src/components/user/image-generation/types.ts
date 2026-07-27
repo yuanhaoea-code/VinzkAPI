@@ -27,6 +27,12 @@ export interface ImageGenerationQueueItem extends ImageGenerationFormState {
   status: 'waiting' | 'running'
 }
 
+export interface ImageGenerationResultMetadata {
+  model: string
+  resolution_tier: ImageResolutionTier
+  size: string
+}
+
 export interface ImageGenerationTierOption {
   value: ImageResolutionTier
   label: string

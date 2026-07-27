@@ -254,6 +254,17 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/workbench',
+    name: 'Workbench',
+    component: () => import('@/views/user/WorkbenchView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: false,
+      title: 'AI Workbench',
+      titleKey: 'nav.workbench'
+    }
+  },
+  {
     path: '/image-generation',
     name: 'ImageGeneration',
     component: () => import('@/views/user/ImageGenerationView.vue'),

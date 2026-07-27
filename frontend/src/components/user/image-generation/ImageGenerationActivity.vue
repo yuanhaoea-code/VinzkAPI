@@ -23,6 +23,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const activeTab = shallowRef<'queue' | 'history'>('queue')
+const recentGenerationLimit = 5
 
 function formatDate(value: string): string {
   return new Date(value).toLocaleString('zh-CN', {
@@ -73,7 +74,7 @@ function formatDate(value: string): string {
       <div class="recent-label">{{ t('imageGeneration.recentGenerations') }}</div>
       <div class="history-list">
         <button
-          v-for="record in history.slice(0, 3)"
+          v-for="record in history.slice(0, recentGenerationLimit)"
           :key="record.id"
           type="button"
           class="history-item"

@@ -1,18 +1,18 @@
-import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue'
-import { keysAPI } from '@/api/keys'
+import { computed, effectScope, onMounted, reactive, ref, shallowRef, watch, type EffectScope } from 'vue'
 import {
   imageGenerationsAPI,
+  type ImageGenerationKeyCapability,
   type ImageGenerationImage,
   type ImageGenerationPromptVersion,
   type ImageGenerationRecord
 } from '@/api/imageGenerations'
 import { useAppStore } from '@/stores'
-import type { ApiKey, Group } from '@/types'
 import type {
   ImageAspectRatio,
   ImageGenerationFormState,
   ImageGenerationMode,
   ImageGenerationQueueItem,
+  ImageGenerationResultMetadata,
   ImageGenerationViewer,
   ImageKeyPool,
   ImageResolutionTier
@@ -30,19 +30,13 @@ const defaultTierPrices: Record<ImageResolutionTier, number> = {
   '4K': 0.2
 }
 
-function groupTiers(group?: Group): ImageResolutionTier[] {
-  if (!group?.allow_image_generation) return []
-  const configured = (group.image_allowed_tiers || []).filter((tier): tier is ImageResolutionTier => (
-    tier === '1K' || tier === '2K' || tier === '4K'
-  ))
-  const tiers: ImageResolutionTier[] = configured.length ? configured : ['1K']
-  return tiers.includes('2K') || tiers.includes('4K')
-    ? tiers.filter((tier) => tier !== '1K')
-    : ['1K']
-}
+const imagePreviewPlaceholder = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='
 
-function groupAllowsTier(group: Group | undefined, tier: ImageResolutionTier): boolean {
-  return !!group && group.status === 'active' && groupTiers(group).includes(tier)
+function safeInlinePreview(fallback?: string): string {
+  const value = fallback?.trim() || ''
+  return value.startsWith('data:image/') || value.startsWith('blob:')
+    ? value
+    : imagePreviewPlaceholder
 }
 
 function blobToDataURL(blob: Blob): Promise<string> {
@@ -63,7 +57,7 @@ function fileToDataURL(file: File): Promise<string> {
   })
 }
 
-export function useImageGenerationWorkspace() {
+function createImageGenerationWorkspace() {
   const appStore = useAppStore()
 
   const form = reactive<ImageGenerationFormState>({
@@ -84,8 +78,9 @@ export function useImageGenerationWorkspace() {
   const manualApiKey = shallowRef('')
   const sourceImageName = shallowRef('')
   const currentRecord = shallowRef<ImageGenerationRecord | null>(null)
+  const activeGeneration = shallowRef<ImageGenerationResultMetadata | null>(null)
   const history = ref<ImageGenerationRecord[]>([])
-  const availableApiKeys = ref<ApiKey[]>([])
+  const availableApiKeys = ref<ImageGenerationKeyCapability[]>([])
   const tierPrices = ref<Record<ImageResolutionTier, number>>({ ...defaultTierPrices })
   const selectedKeyByPool = reactive<Record<ImageKeyPool, string>>({ standard: '', hd: '' })
   const imageDataUrls = ref<Record<string, string>>({})
@@ -99,13 +94,11 @@ export function useImageGenerationWorkspace() {
   const versionItems = ref<ImageGenerationPromptVersion[]>([])
   const deleteTarget = shallowRef<ImageGenerationRecord | null>(null)
 
-  const activeKeys = computed(() => availableApiKeys.value.filter((key) => (
-    key.status === 'active' && key.group?.status === 'active' && key.group.allow_image_generation
-  )))
-  const keysByTier = computed<Record<ImageResolutionTier, ApiKey[]>>(() => ({
-    '1K': activeKeys.value.filter((key) => groupAllowsTier(key.group, '1K')),
-    '2K': activeKeys.value.filter((key) => groupAllowsTier(key.group, '2K')),
-    '4K': activeKeys.value.filter((key) => groupAllowsTier(key.group, '4K'))
+  const activeKeys = computed(() => availableApiKeys.value.filter((key) => key.available))
+  const keysByTier = computed<Record<ImageResolutionTier, ImageGenerationKeyCapability[]>>(() => ({
+    '1K': activeKeys.value.filter((key) => key.allowed_tiers.includes('1K')),
+    '2K': activeKeys.value.filter((key) => key.allowed_tiers.includes('2K')),
+    '4K': activeKeys.value.filter((key) => key.allowed_tiers.includes('4K'))
   }))
   const standardKeys = computed(() => keysByTier.value['1K'])
   const hdKeys = computed(() => (
@@ -119,12 +112,7 @@ export function useImageGenerationWorkspace() {
   })
   const selectedApiKey = computed(() => {
     const selected = selectedApiKeyId.value
-    return currentPoolKeys.value.find((key) => String(key.id) === selected) || currentPoolKeys.value[0]
-  })
-  const manualSelectedApiKey = computed(() => {
-    const raw = manualApiKey.value.trim()
-    if (!raw) return undefined
-    return currentPoolKeys.value.find((key) => key.key === raw)
+    return currentPoolKeys.value.find((key) => String(key.api_key_id) === selected) || currentPoolKeys.value[0]
   })
   const resolvedSize = computed(() => tierSizes[form.resolution_tier][form.aspect_ratio])
   const hasCurrentImages = computed(() => (
@@ -142,11 +130,11 @@ export function useImageGenerationWorkspace() {
   ))
 
   function ensureKeySelections() {
-    if (!standardKeys.value.some((key) => String(key.id) === selectedKeyByPool.standard)) {
-      selectedKeyByPool.standard = standardKeys.value[0] ? String(standardKeys.value[0].id) : ''
+    if (!standardKeys.value.some((key) => String(key.api_key_id) === selectedKeyByPool.standard)) {
+      selectedKeyByPool.standard = standardKeys.value[0] ? String(standardKeys.value[0].api_key_id) : ''
     }
-    if (!hdKeys.value.some((key) => String(key.id) === selectedKeyByPool.hd)) {
-      selectedKeyByPool.hd = hdKeys.value[0] ? String(hdKeys.value[0].id) : ''
+    if (!hdKeys.value.some((key) => String(key.api_key_id) === selectedKeyByPool.hd)) {
+      selectedKeyByPool.hd = hdKeys.value[0] ? String(hdKeys.value[0].api_key_id) : ''
     }
   }
 
@@ -157,7 +145,7 @@ export function useImageGenerationWorkspace() {
   }
 
   function previewUrl(recordId: number, imageIndex: number, fallback?: string): string {
-    return imageDataUrls.value[imageKey(recordId, imageIndex)] || fallback || imageGenerationsAPI.getImageUrl(recordId, imageIndex, 'preview')
+    return imageDataUrls.value[imageKey(recordId, imageIndex)] || safeInlinePreview(fallback)
   }
 
   async function ensurePreview(recordId: number, imageIndex: number): Promise<string> {
@@ -169,9 +157,8 @@ export function useImageGenerationWorkspace() {
       imageDataUrls.value = { ...imageDataUrls.value, [key]: dataUrl }
       return dataUrl
     } catch {
-      const fallback = imageGenerationsAPI.getImageUrl(recordId, imageIndex, 'preview')
-      imageDataUrls.value = { ...imageDataUrls.value, [key]: fallback }
-      return fallback
+      imageDataUrls.value = { ...imageDataUrls.value, [key]: imagePreviewPlaceholder }
+      return imagePreviewPlaceholder
     }
   }
 
@@ -183,8 +170,8 @@ export function useImageGenerationWorkspace() {
   async function loadApiKeys() {
     loadingApiKeys.value = true
     try {
-      const keyResult = await keysAPI.list(1, 100, { status: 'active', sort_by: 'created_at', sort_order: 'desc' })
-      availableApiKeys.value = keyResult.items || []
+      const result = await imageGenerationsAPI.capabilities()
+      availableApiKeys.value = result.keys || []
       ensureKeySelections()
     } catch (error: unknown) {
       availableApiKeys.value = []
@@ -231,7 +218,7 @@ export function useImageGenerationWorkspace() {
 
   function currentSnapshot(): ImageGenerationQueueItem {
     const manualKey = manualApiKey.value.trim()
-    const key = manualKey ? manualSelectedApiKey.value : selectedApiKey.value
+    const key = manualKey ? undefined : selectedApiKey.value
     return {
       id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
       mode: activeMode.value,
@@ -245,8 +232,8 @@ export function useImageGenerationWorkspace() {
       n: Math.max(1, Number(form.n) || 1),
       source_image: activeMode.value === 'image' ? form.source_image : '',
       source_image_name: sourceImageName.value,
-      api_key_id: manualKey ? undefined : key?.id,
-      api_key_name: key?.name,
+      api_key_id: key?.api_key_id,
+      api_key_name: key?.key_name,
       manual_api_key: manualKey || undefined,
       status: 'waiting'
     }
@@ -266,6 +253,11 @@ export function useImageGenerationWorkspace() {
   }
 
   async function executeGeneration(item: ImageGenerationQueueItem) {
+    activeGeneration.value = {
+      model: item.model,
+      resolution_tier: item.resolution_tier,
+      size: item.size
+    }
     generating.value = true
     errorMessage.value = ''
     try {
@@ -303,6 +295,7 @@ export function useImageGenerationWorkspace() {
   }
 
   async function generate() {
+    if (generating.value || queueRunning.value) return
     const snapshot = currentSnapshot()
     if (!validateSnapshot(snapshot)) return
     await executeGeneration(snapshot)
@@ -379,6 +372,7 @@ export function useImageGenerationWorkspace() {
   }
 
   async function selectRecord(record: ImageGenerationRecord) {
+    errorMessage.value = ''
     currentRecord.value = record
     await ensureRecordPreviews(record)
   }
@@ -448,12 +442,6 @@ export function useImageGenerationWorkspace() {
     }
   }
 
-  onMounted(() => {
-    void loadApiKeys()
-    void loadPricing()
-    void loadHistory()
-  })
-
   return {
     form,
     activeMode,
@@ -464,6 +452,7 @@ export function useImageGenerationWorkspace() {
     manualApiKey,
     sourceImageName,
     currentRecord,
+    activeGeneration,
     history,
     standardKeys,
     hdKeys,
@@ -504,4 +493,36 @@ export function useImageGenerationWorkspace() {
     confirmDelete,
     deleteConfirmed
   }
+}
+
+export type ImageGenerationWorkspace = ReturnType<typeof createImageGenerationWorkspace>
+
+let persistentWorkspace: ImageGenerationWorkspace | null = null
+let persistentWorkspaceScope: EffectScope | null = null
+
+export function useImageGenerationWorkspace(): ImageGenerationWorkspace {
+  if (!persistentWorkspace) {
+    persistentWorkspaceScope = effectScope(true)
+    const workspace = persistentWorkspaceScope.run(createImageGenerationWorkspace)
+    if (!workspace) {
+      persistentWorkspaceScope.stop()
+      persistentWorkspaceScope = null
+      throw new Error('Failed to initialize image generation workspace')
+    }
+    persistentWorkspace = workspace
+  }
+
+  const workspace = persistentWorkspace
+  onMounted(() => {
+    void workspace.loadApiKeys()
+    void workspace.loadPricing()
+    void workspace.loadHistory()
+  })
+  return workspace
+}
+
+export function resetImageGenerationWorkspace(): void {
+  persistentWorkspaceScope?.stop()
+  persistentWorkspaceScope = null
+  persistentWorkspace = null
 }

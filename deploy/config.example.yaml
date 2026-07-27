@@ -105,6 +105,9 @@ security:
     # Allowed hosts for CRS sync (required when using CRS sync)
     # 允许 CRS 同步的主机列表（使用 CRS 同步功能时必须配置）
     crs_hosts: []
+    # Trusted upstream hostnames that may resolve to a proxy Fake-IP in 198.18.0.0/15.
+    # Keep this list narrow. Other private, loopback, and link-local IPs remain blocked.
+    fake_ip_hosts: []
     # Allow localhost/private IPs for upstream/pricing/CRS (use only in trusted networks)
     # 允许本地/私有 IP 地址用于上游/定价/CRS（仅在可信网络中使用）
     allow_private_hosts: false
@@ -815,6 +818,8 @@ database:
   # Connection max idle time (minutes)
   # 空闲连接最大存活时间（分钟）
   conn_max_idle_time_minutes: 5
+  # Maximum time to wait for PostgreSQL before running migrations (seconds).
+  startup_wait_seconds: 90
 
 # =============================================================================
 # Redis Configuration
@@ -835,13 +840,15 @@ redis:
   db: 0
   # Connection pool size (max concurrent connections)
   # 连接池大小（最大并发连接数）
-  pool_size: 1024
-  # Minimum number of idle connections (高并发场景建议 128+，保持足够热连接)
+  pool_size: 128
+  # Minimum number of idle connections (default 10; tune only after observing load)
   # 最小空闲连接数
-  min_idle_conns: 128
+  min_idle_conns: 10
   # Enable TLS/SSL connection
   # 是否启用 TLS/SSL 连接
   enable_tls: false
+  # Maximum time to wait for Redis during application startup (seconds).
+  startup_wait_seconds: 60
 
 # =============================================================================
 # Ops Monitoring (Optional)

@@ -27,6 +27,20 @@ func (h *ImageGenerationHandler) Pricing(c *gin.Context) {
 	})
 }
 
+func (h *ImageGenerationHandler) Capabilities(c *gin.Context) {
+	subject, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		response.Unauthorized(c, "User not authenticated")
+		return
+	}
+	capabilities, err := h.service.ListImageGenerationCapabilities(c.Request.Context(), subject.UserID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, capabilities)
+}
+
 type createImageGenerationRequest struct {
 	APIKeyID       *int64 `json:"api_key_id"`
 	APIKey         string `json:"api_key"`

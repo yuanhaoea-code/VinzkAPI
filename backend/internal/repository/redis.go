@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"crypto/tls"
 	"time"
 
@@ -20,8 +21,19 @@ import (
 // 1. PoolSize: 控制最大并发连接数（默认 128）
 // 2. MinIdleConns: 保持最小空闲连接，减少冷启动延迟（默认 10）
 // 3. DialTimeout/ReadTimeout/WriteTimeout: 精确控制各阶段超时
-func InitRedis(cfg *config.Config) *redis.Client {
-	return redis.NewClient(buildRedisOptions(cfg))
+func InitRedis(cfg *config.Config) (*redis.Client, error) {
+	client := redis.NewClient(buildRedisOptions(cfg))
+	err := waitForDependency(
+		context.Background(),
+		"redis",
+		time.Duration(cfg.Redis.StartupWaitSeconds)*time.Second,
+		func(ctx context.Context) error { return client.Ping(ctx).Err() },
+	)
+	if err != nil {
+		_ = client.Close()
+		return nil, err
+	}
+	return client, nil
 }
 
 // buildRedisOptions 构建 Redis 连接选项

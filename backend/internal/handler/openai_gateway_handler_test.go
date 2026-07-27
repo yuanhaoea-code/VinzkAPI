@@ -175,6 +175,21 @@ func TestOpenAIEnsureForwardErrorResponse_WritesFallbackWhenNotWritten(t *testin
 	assert.Equal(t, "Upstream request failed", errorObj["message"])
 }
 
+func TestOpenAIEnsureImagesForwardErrorResponse_ExplainsFakeIPBlock(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/images/generations", nil)
+
+	h := &OpenAIGatewayHandler{}
+	wrote := h.ensureImagesForwardErrorResponse(c, errors.New("upstream request failed: resolved ip 198.18.0.37 is not allowed"), false)
+
+	require.True(t, wrote)
+	require.Equal(t, http.StatusBadGateway, w.Code)
+	require.Equal(t, "upstream_dns_error", gjson.GetBytes(w.Body.Bytes(), "error.type").String())
+	require.Contains(t, gjson.GetBytes(w.Body.Bytes(), "error.message").String(), "fake_ip_hosts")
+}
+
 // Writer 已写后 ensureForwardErrorResponse 必须仍然把错误信息以 SSE
 // 形式追加给客户端（streamStarted 强制 true）。
 // 这是 case B 修复：旧实现遇到 Writer.Written 直接 return false，

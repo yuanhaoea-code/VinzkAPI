@@ -71,9 +71,29 @@ export interface ImageGenerationPricing {
   tiers: Record<'1K' | '2K' | '4K', number>
 }
 
+export interface ImageGenerationKeyCapability {
+  api_key_id: number
+  key_name: string
+  group_id?: number
+  group_name?: string
+  status: string
+  available: boolean
+  allowed_tiers: Array<'1K' | '2K' | '4K'>
+  unavailable_reason?: string
+}
+
+export interface ImageGenerationCapabilities {
+  keys: ImageGenerationKeyCapability[]
+  tiers: Record<'1K' | '2K' | '4K', number[]>
+}
+
 export const imageGenerationsAPI = {
   pricing(): Promise<ImageGenerationPricing> {
     return apiClient.get('/image-generations/pricing').then((res) => res.data)
+  },
+
+  capabilities(): Promise<ImageGenerationCapabilities> {
+    return apiClient.get('/image-generations/capabilities').then((res) => res.data)
   },
 
   create(data: CreateImageGenerationRequest): Promise<ImageGenerationRecord> {

@@ -34,6 +34,10 @@ var nonPublicIPPrefixes = []netip.Prefix{
 	netip.MustParsePrefix("fec0::/10"),
 }
 
+var proxyFakeIPPrefixes = []netip.Prefix{
+	netip.MustParsePrefix("198.18.0.0/15"),
+}
+
 type lookupIPFunc func(context.Context, string, string) ([]net.IP, error)
 type dialContextFunc func(context.Context, string, string) (net.Conn, error)
 
@@ -41,6 +45,14 @@ type ValidationOptions struct {
 	AllowedHosts     []string
 	RequireAllowlist bool
 	AllowPrivate     bool
+}
+
+// ResolvedIPOptions controls the socket-level DNS validation policy. Fake-IP
+// exceptions are host-scoped and only apply to the benchmarking range commonly
+// used by transparent proxies. Private, loopback, and link-local answers remain
+// blocked even for an allowed Fake-IP host.
+type ResolvedIPOptions struct {
+	AllowedFakeIPHosts []string
 }
 
 // ValidateHTTPURL validates an outbound HTTP/HTTPS URL.
@@ -140,10 +152,14 @@ func ValidateHTTPSURL(raw string, opts ValidationOptions) (string, error) {
 // ValidateResolvedIP 验证 DNS 解析后的 IP 地址是否安全
 // 用于防止 DNS Rebinding 攻击：在实际 HTTP 请求时调用此函数验证解析后的 IP
 func ValidateResolvedIP(host string) error {
+	return ValidateResolvedIPWithOptions(host, ResolvedIPOptions{})
+}
+
+func ValidateResolvedIPWithOptions(host string, opts ResolvedIPOptions) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := resolvePublicIPs(ctx, host, net.DefaultResolver.LookupIP)
+	_, err := resolvePublicIPsWithOptions(ctx, host, net.DefaultResolver.LookupIP, opts)
 	return err
 }
 
@@ -152,11 +168,15 @@ func ValidateResolvedIP(host string) error {
 // hostname remains on the HTTP request, so TLS certificate and SNI checks still
 // use the supplier hostname.
 func NewPublicDialContext(dialer *net.Dialer) func(context.Context, string, string) (net.Conn, error) {
+	return NewPublicDialContextWithOptions(dialer, ResolvedIPOptions{})
+}
+
+func NewPublicDialContextWithOptions(dialer *net.Dialer, opts ResolvedIPOptions) func(context.Context, string, string) (net.Conn, error) {
 	if dialer == nil {
 		dialer = &net.Dialer{Timeout: 30 * time.Second, KeepAlive: 30 * time.Second}
 	}
 	return func(ctx context.Context, network, address string) (net.Conn, error) {
-		return dialPublicContext(ctx, network, address, net.DefaultResolver.LookupIP, dialer.DialContext)
+		return dialPublicContextWithOptions(ctx, network, address, net.DefaultResolver.LookupIP, dialer.DialContext, opts)
 	}
 }
 
@@ -167,11 +187,22 @@ func dialPublicContext(
 	lookup lookupIPFunc,
 	dial dialContextFunc,
 ) (net.Conn, error) {
+	return dialPublicContextWithOptions(ctx, network, address, lookup, dial, ResolvedIPOptions{})
+}
+
+func dialPublicContextWithOptions(
+	ctx context.Context,
+	network string,
+	address string,
+	lookup lookupIPFunc,
+	dial dialContextFunc,
+	opts ResolvedIPOptions,
+) (net.Conn, error) {
 	host, port, err := net.SplitHostPort(address)
 	if err != nil {
 		return nil, err
 	}
-	ips, err := resolvePublicIPs(ctx, host, lookup)
+	ips, err := resolvePublicIPsWithOptions(ctx, host, lookup, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -191,6 +222,10 @@ func dialPublicContext(
 }
 
 func resolvePublicIPs(ctx context.Context, host string, lookup lookupIPFunc) ([]net.IP, error) {
+	return resolvePublicIPsWithOptions(ctx, host, lookup, ResolvedIPOptions{})
+}
+
+func resolvePublicIPsWithOptions(ctx context.Context, host string, lookup lookupIPFunc, opts ResolvedIPOptions) ([]net.IP, error) {
 	host = strings.TrimSpace(host)
 	if host == "" {
 		return nil, errors.New("host is required")
@@ -210,12 +245,35 @@ func resolvePublicIPs(ctx context.Context, host string, lookup lookupIPFunc) ([]
 		return nil, fmt.Errorf("dns resolution returned no addresses for host %s", host)
 	}
 
+	allowProxyFakeIP := isAllowedProxyFakeIPHost(host, opts.AllowedFakeIPHosts)
 	for _, ip := range ips {
-		if !isPublicIP(ip) {
+		if !isPublicIP(ip) && !(allowProxyFakeIP && isProxyFakeIP(ip)) {
 			return nil, fmt.Errorf("resolved ip %s is not allowed", ip.String())
 		}
 	}
 	return ips, nil
+}
+
+func isAllowedProxyFakeIPHost(host string, allowedHosts []string) bool {
+	host = strings.ToLower(strings.TrimSpace(host))
+	if host == "" || net.ParseIP(host) != nil {
+		return false
+	}
+	return isAllowedHost(host, normalizeAllowlist(allowedHosts))
+}
+
+func isProxyFakeIP(ip net.IP) bool {
+	addr, ok := netip.AddrFromSlice(ip)
+	if !ok {
+		return false
+	}
+	addr = addr.Unmap()
+	for _, prefix := range proxyFakeIPPrefixes {
+		if prefix.Contains(addr) {
+			return true
+		}
+	}
+	return false
 }
 
 func isPublicIP(ip net.IP) bool {

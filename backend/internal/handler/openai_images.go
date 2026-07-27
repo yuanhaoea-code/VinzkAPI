@@ -312,7 +312,7 @@ func (h *OpenAIGatewayHandler) Images(c *gin.Context) {
 				upstreamErrorAlreadyCommunicated := openAIForwardErrorAlreadyCommunicated(c, writerSizeBeforeForward, err)
 				wroteFallback := false
 				if !upstreamErrorAlreadyCommunicated {
-					wroteFallback = h.ensureForwardErrorResponse(c, streamStarted)
+					wroteFallback = h.ensureImagesForwardErrorResponse(c, err, streamStarted)
 				}
 				fields := []zap.Field{
 					zap.Int64("account_id", account.ID),
@@ -389,4 +389,21 @@ func (h *OpenAIGatewayHandler) Images(c *gin.Context) {
 
 func isMultipartImagesContentType(contentType string) bool {
 	return strings.HasPrefix(strings.ToLower(strings.TrimSpace(contentType)), "multipart/form-data")
+}
+
+func (h *OpenAIGatewayHandler) ensureImagesForwardErrorResponse(c *gin.Context, err error, streamStarted bool) bool {
+	if err != nil {
+		message := strings.ToLower(strings.TrimSpace(err.Error()))
+		if strings.Contains(message, "resolved ip") && strings.Contains(message, "not allowed") {
+			h.handleStreamingAwareError(
+				c,
+				http.StatusBadGateway,
+				"upstream_dns_error",
+				"Upstream request failed: resolved IP is not allowed because the hostname returned a proxy Fake-IP; configure security.url_allowlist.fake_ip_hosts for trusted upstreams",
+				streamStarted,
+			)
+			return true
+		}
+	}
+	return h.ensureForwardErrorResponse(c, streamStarted)
 }

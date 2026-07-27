@@ -180,6 +180,18 @@ func TestMigration158BackfillsGrokMediaGenerationGroups(t *testing.T) {
 	require.Contains(t, sql, "AND allow_image_generation = false")
 }
 
+func TestMigration166AllowsAllImageSizeSourcesProducedByBillingResolver(t *testing.T) {
+	content, err := FS.ReadFile("166_expand_usage_log_image_size_source.sql")
+	require.NoError(t, err)
+
+	sql := string(content)
+	require.Contains(t, sql, "DROP CONSTRAINT IF EXISTS usage_logs_image_size_source_check")
+	require.Contains(t, sql, "ADD CONSTRAINT usage_logs_image_size_source_check")
+	for _, source := range []string{"output", "input", "default", "legacy", "requested", "output_downgrade"} {
+		require.Contains(t, sql, "'"+source+"'")
+	}
+}
+
 func TestMigration154AddsSparkShadowColumnsAndConstraintsWithoutHotIndexes(t *testing.T) {
 	content, err := FS.ReadFile("154_account_spark_shadow.sql")
 	require.NoError(t, err)

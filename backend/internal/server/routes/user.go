@@ -74,6 +74,21 @@ func RegisterUserRoutes(
 
 		authenticated.GET("/model-market/catalog", h.ModelMarket.Catalog)
 
+		workbench := authenticated.Group("/workbench")
+		{
+			workbench.GET("/models", h.Workbench.Models)
+			workbench.POST("/models", h.Workbench.AddModel)
+			workbench.DELETE("/models/:id", h.Workbench.HideModel)
+			workbench.POST("/conversations", h.Workbench.CreateConversation)
+			workbench.GET("/conversations", h.Workbench.ListConversations)
+			workbench.GET("/conversations/:id", h.Workbench.GetConversation)
+			workbench.PATCH("/conversations/:id", h.Workbench.UpdateConversation)
+			workbench.DELETE("/conversations/:id", h.Workbench.DeleteConversation)
+			workbench.POST("/conversations/:id/messages", h.Workbench.CreateMessage)
+			workbench.POST("/generations/:id/stream", h.Workbench.StreamGeneration)
+			workbench.POST("/generations/:id/cancel", h.Workbench.CancelGeneration)
+		}
+
 		// 用户可用渠道（非管理员接口）
 		channels := authenticated.Group("/channels")
 		{
@@ -113,6 +128,7 @@ func RegisterUserRoutes(
 		imageGenerations := authenticated.Group("/image-generations")
 		{
 			imageGenerations.GET("/pricing", h.ImageGeneration.Pricing)
+			imageGenerations.GET("/capabilities", h.ImageGeneration.Capabilities)
 			imageGenerations.POST("", h.ImageGeneration.Create)
 			imageGenerations.POST("/queued", h.ImageGeneration.CreateQueued)
 			imageGenerations.GET("", h.ImageGeneration.List)

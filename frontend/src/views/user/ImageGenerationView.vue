@@ -74,6 +74,7 @@ function formatDate(value: string): string {
 
         <ImageGenerationResult
           :record="workspace.currentRecord.value"
+          :active-generation="workspace.activeGeneration.value"
           :generating="workspace.generating.value"
           :error-message="workspace.errorMessage.value"
           :preview-url="workspace.previewUrl"
@@ -249,8 +250,8 @@ function formatDate(value: string): string {
 }
 
 .studio-workspace {
-  min-height: 680px;
-  max-height: 820px;
+  height: clamp(560px, calc(100dvh - 178px), 820px);
+  min-height: 0;
   overflow: hidden;
   border: 1px solid var(--ig-line-strong);
   border-radius: 8px;
@@ -332,8 +333,9 @@ function formatDate(value: string): string {
 
 @media (max-width: 1439px) and (min-width: 821px) {
   .studio-workspace {
-    max-height: none;
+    height: clamp(620px, calc(100dvh - 178px), 820px);
     grid-template-columns: minmax(320px, 0.88fr) minmax(430px, 1.3fr);
+    grid-template-rows: minmax(0, 1fr) minmax(180px, 240px);
   }
 }
 
@@ -354,8 +356,9 @@ function formatDate(value: string): string {
 
   .studio-workspace {
     min-height: 0;
-    max-height: none;
+    height: auto;
     grid-template-columns: 1fr;
+    overflow: visible;
   }
 }
 

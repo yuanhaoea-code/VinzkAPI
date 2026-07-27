@@ -59,6 +59,8 @@ func TestMigrationsRunner_IsIdempotent_AndSchemaIsUpToDate(t *testing.T) {
 		"'input'",
 		"'default'",
 		"'legacy'",
+		"'requested'",
+		"'output_downgrade'",
 	)
 	requireConstraintDefinitionContains(
 		t,

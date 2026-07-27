@@ -60,6 +60,7 @@ type Handlers struct {
 	AvailableChannel *AvailableChannelHandler
 	ImageGeneration  *ImageGenerationHandler
 	ModelMarket      *ModelMarketHandler
+	Workbench        *WorkbenchHandler
 }
 
 // BuildInfo contains build-time information
