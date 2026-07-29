@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"mime"
 	"net/http"
 	"strings"
 	"sync"
@@ -195,6 +196,93 @@ func (h *WorkbenchHandler) CreateMessage(c *gin.Context) {
 		return
 	}
 	response.Created(c, turn)
+}
+
+type createWorkbenchAttachmentRequest struct {
+	Name      string `json:"name" binding:"required"`
+	MIMEType  string `json:"mime_type" binding:"required"`
+	SizeBytes int64  `json:"size_bytes" binding:"required"`
+}
+
+func (h *WorkbenchHandler) CreateAttachmentUpload(c *gin.Context) {
+	userID, ok := workbenchUserID(c)
+	if !ok {
+		return
+	}
+	var req createWorkbenchAttachmentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "附件信息不完整")
+		return
+	}
+	ticket, err := h.service.CreateAttachmentUpload(c.Request.Context(), userID, req.Name, req.MIMEType, req.SizeBytes)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Created(c, ticket)
+}
+
+func (h *WorkbenchHandler) UploadAttachmentContent(c *gin.Context) {
+	userID, ok := workbenchUserID(c)
+	if !ok {
+		return
+	}
+	attachment, err := h.service.UploadAttachmentContent(
+		c.Request.Context(), userID, strings.TrimSpace(c.Param("id")), c.Request.ContentLength, c.Request.Body,
+	)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, attachment)
+}
+
+func (h *WorkbenchHandler) CompleteAttachmentUpload(c *gin.Context) {
+	userID, ok := workbenchUserID(c)
+	if !ok {
+		return
+	}
+	attachment, err := h.service.CompleteAttachmentUpload(c.Request.Context(), userID, strings.TrimSpace(c.Param("id")))
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, attachment)
+}
+
+func (h *WorkbenchHandler) AttachmentContent(c *gin.Context) {
+	userID, ok := workbenchUserID(c)
+	if !ok {
+		return
+	}
+	attachment, body, err := h.service.OpenAttachmentContent(c.Request.Context(), userID, strings.TrimSpace(c.Param("id")))
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	defer body.Close()
+	disposition := "inline"
+	if !strings.HasPrefix(attachment.MIMEType, "image/") || c.Query("download") == "1" {
+		disposition = "attachment"
+	}
+	headers := map[string]string{
+		"Content-Disposition":    mime.FormatMediaType(disposition, map[string]string{"filename": attachment.Name}),
+		"Cache-Control":          "private, no-store",
+		"X-Content-Type-Options": "nosniff",
+	}
+	c.DataFromReader(http.StatusOK, attachment.SizeBytes, attachment.MIMEType, body, headers)
+}
+
+func (h *WorkbenchHandler) DeleteAttachment(c *gin.Context) {
+	userID, ok := workbenchUserID(c)
+	if !ok {
+		return
+	}
+	if err := h.service.DeleteAttachment(c.Request.Context(), userID, strings.TrimSpace(c.Param("id"))); err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, gin.H{"deleted": true})
 }
 
 func (h *WorkbenchHandler) StreamGeneration(c *gin.Context) {

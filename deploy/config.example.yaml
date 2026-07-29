@@ -67,6 +67,33 @@ server:
 run_mode: "standard"
 
 # =============================================================================
+# AI Workbench Attachment Storage
+# AI 工作台附件存储
+# =============================================================================
+workbench:
+  attachments:
+    # local for development; s3 for Alibaba Cloud OSS or other S3-compatible storage.
+    # 开发环境使用 local；生产环境使用 s3，并保持 Bucket 私有。
+    provider: "local"
+    local_dir: "./data/workbench-attachments"
+    endpoint: ""
+    region: ""
+    bucket: ""
+    access_key_id: ""
+    secret_access_key: ""
+    prefix: "workbench-attachments"
+    force_path_style: false
+    presign_ttl_seconds: 300
+    pending_ttl_seconds: 900
+    ready_ttl_seconds: 86400
+    cleanup_interval_seconds: 300
+    cleanup_batch_size: 200
+    daily_upload_limit_bytes: 268435456
+    daily_upload_limit_count: 200
+    max_stored_bytes: 2147483648
+    max_stored_count: 1000
+
+# =============================================================================
 # CORS Configuration
 # 跨域资源共享 (CORS) 配置
 # =============================================================================

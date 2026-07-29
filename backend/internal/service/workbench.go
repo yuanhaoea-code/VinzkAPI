@@ -4,11 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"sort"
 	"strings"
@@ -40,9 +40,9 @@ const (
 	workbenchMaxMessageRunes          = 100000
 	workbenchMaxHistoryRunes          = 60000
 	workbenchMaxHistoryItems          = 32
-	workbenchMaxAttachmentsPerMessage = 8
-	workbenchMaxAttachmentBytes       = 10 << 20
-	workbenchMaxAttachmentTotalBytes  = 24 << 20
+	workbenchMaxAttachmentsPerMessage = WorkbenchMaxAttachmentsPerMessage
+	workbenchMaxAttachmentBytes       = WorkbenchMaxAttachmentBytes
+	workbenchMaxAttachmentTotalBytes  = WorkbenchMaxAttachmentTotalBytes
 )
 
 var (
@@ -146,10 +146,23 @@ type WorkbenchMessage struct {
 
 type WorkbenchAttachment struct {
 	ID        string `json:"id"`
-	Name      string `json:"name"`
-	MIMEType  string `json:"mime_type"`
-	SizeBytes int64  `json:"size_bytes"`
-	DataURL   string `json:"data_url"`
+	Name      string `json:"name,omitempty"`
+	MIMEType  string `json:"mime_type,omitempty"`
+	SizeBytes int64  `json:"size_bytes,omitempty"`
+	DataURL   string `json:"data_url,omitempty"`
+
+	Provider  string     `json:"-"`
+	ObjectKey string     `json:"-"`
+	Status    string     `json:"-"`
+	ETag      string     `json:"-"`
+	ExpiresAt *time.Time `json:"-"`
+}
+
+type WorkbenchAttachmentLimits struct {
+	DailyUploadBytes int64
+	DailyUploadCount int64
+	MaxStoredBytes   int64
+	MaxStoredCount   int64
 }
 
 type WorkbenchTurn struct {
@@ -182,6 +195,12 @@ type WorkbenchRepository interface {
 	ClaimAssistantMessage(ctx context.Context, userID int64, messageID, requestID string) error
 	FinishAssistantMessage(ctx context.Context, userID int64, messageID, status, content, reasoningSummary, errorMessage string) error
 	CancelAssistantMessage(ctx context.Context, userID int64, messageID string) error
+
+	ReserveAttachment(ctx context.Context, userID int64, attachment WorkbenchAttachment, limits WorkbenchAttachmentLimits) (*WorkbenchAttachment, error)
+	GetAttachment(ctx context.Context, userID int64, attachmentID string) (*WorkbenchAttachment, error)
+	MarkAttachmentReady(ctx context.Context, userID int64, attachmentID, etag string, expiresAt time.Time) (*WorkbenchAttachment, error)
+	DeleteAttachment(ctx context.Context, userID int64, attachmentID string) (*WorkbenchAttachment, error)
+	ListConversationAttachments(ctx context.Context, userID int64, conversationID string) ([]WorkbenchAttachment, error)
 }
 
 type workbenchDefaultModel struct {
@@ -231,20 +250,22 @@ var workbenchPickerModelsByProvider = map[string][]string{
 }
 
 type WorkbenchService struct {
-	repo           WorkbenchRepository
-	apiKeyService  *APIKeyService
-	gatewayService *GatewayService
-	cfg            *config.Config
-	httpClient     *http.Client
+	repo            WorkbenchRepository
+	apiKeyService   *APIKeyService
+	gatewayService  *GatewayService
+	cfg             *config.Config
+	httpClient      *http.Client
+	attachmentStore WorkbenchAttachmentObjectStore
 }
 
-func NewWorkbenchService(repo WorkbenchRepository, apiKeyService *APIKeyService, gatewayService *GatewayService, cfg *config.Config) *WorkbenchService {
+func NewWorkbenchService(repo WorkbenchRepository, apiKeyService *APIKeyService, gatewayService *GatewayService, cfg *config.Config, attachmentStore WorkbenchAttachmentObjectStore) *WorkbenchService {
 	return &WorkbenchService{
-		repo:           repo,
-		apiKeyService:  apiKeyService,
-		gatewayService: gatewayService,
-		cfg:            cfg,
-		httpClient:     &http.Client{Timeout: 30 * time.Minute},
+		repo:            repo,
+		apiKeyService:   apiKeyService,
+		gatewayService:  gatewayService,
+		cfg:             cfg,
+		httpClient:      &http.Client{Timeout: 30 * time.Minute},
+		attachmentStore: attachmentStore,
 	}
 }
 
@@ -608,7 +629,19 @@ func (s *WorkbenchService) UpdateConversation(ctx context.Context, userID int64,
 }
 
 func (s *WorkbenchService) DeleteConversation(ctx context.Context, userID int64, conversationID string) error {
-	return s.repo.DeleteConversation(ctx, userID, conversationID)
+	attachments, err := s.repo.ListConversationAttachments(ctx, userID, conversationID)
+	if err != nil {
+		return err
+	}
+	if err := s.repo.DeleteConversation(ctx, userID, conversationID); err != nil {
+		return err
+	}
+	for _, attachment := range attachments {
+		if deleteErr := s.attachmentStore.Delete(context.WithoutCancel(ctx), attachment.ObjectKey); deleteErr != nil {
+			slog.Warn("failed to delete workbench attachment object", "attachment_id", attachment.ID, "error", deleteErr)
+		}
+	}
+	return nil
 }
 
 func (s *WorkbenchService) CreateTurn(ctx context.Context, userID int64, conversationID, content, bindingID, preset string, attachments []WorkbenchAttachment) (*WorkbenchTurn, error) {
@@ -644,7 +677,7 @@ func (s *WorkbenchService) CreateTurn(ctx context.Context, userID int64, convers
 		if content != "" {
 			title = truncateRunes(strings.Join(strings.Fields(content), " "), 28)
 		} else {
-			title = "图片对话"
+			title = "附件对话"
 		}
 	}
 	return s.repo.CreateTurn(ctx, userID, conversationID, content, title, validatedAttachments, &selectedBindingID, selectedPreset)
@@ -654,62 +687,20 @@ func validateWorkbenchAttachments(attachments []WorkbenchAttachment) ([]Workbenc
 	if len(attachments) > workbenchMaxAttachmentsPerMessage {
 		return nil, ErrWorkbenchInvalidInput
 	}
-	allowed := map[string]struct{}{
-		"image/png": {}, "image/jpeg": {}, "image/webp": {}, "image/gif": {},
-		"application/pdf":    {},
-		"application/msword": {},
-		"application/vnd.openxmlformats-officedocument.wordprocessingml.document": {},
-		"application/vnd.ms-excel": {},
-		"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":         {},
-		"application/vnd.ms-powerpoint":                                             {},
-		"application/vnd.openxmlformats-officedocument.presentationml.presentation": {},
-		"application/json": {}, "application/xml": {}, "application/rtf": {},
-		"text/plain": {}, "text/markdown": {}, "text/csv": {}, "text/html": {},
-		"text/xml": {}, "text/yaml": {}, "application/x-yaml": {},
-	}
 	result := make([]WorkbenchAttachment, 0, len(attachments))
-	var total int64
+	seen := make(map[string]struct{}, len(attachments))
 	for _, attachment := range attachments {
-		mimeType := strings.ToLower(strings.TrimSpace(attachment.MIMEType))
-		if _, ok := allowed[mimeType]; !ok {
-			return nil, ErrWorkbenchInvalidInput
-		}
-		prefix := "data:" + mimeType + ";base64,"
-		if !strings.HasPrefix(attachment.DataURL, prefix) {
-			return nil, ErrWorkbenchInvalidInput
-		}
-		decodedSize, err := workbenchBase64DecodedSize(strings.TrimPrefix(attachment.DataURL, prefix))
-		if err != nil || decodedSize <= 0 || decodedSize > workbenchMaxAttachmentBytes {
-			return nil, ErrWorkbenchInvalidInput
-		}
-		total += decodedSize
-		if total > workbenchMaxAttachmentTotalBytes {
-			return nil, ErrWorkbenchInvalidInput
-		}
 		id := strings.TrimSpace(attachment.ID)
-		if _, err := uuid.Parse(id); err != nil {
-			id = uuid.NewString()
+		if _, err := uuid.Parse(id); err != nil || attachment.DataURL != "" {
+			return nil, ErrWorkbenchInvalidInput
 		}
-		name := truncateRunes(strings.TrimSpace(attachment.Name), 160)
-		if name == "" {
-			name = "attachment"
+		if _, exists := seen[id]; exists {
+			return nil, ErrWorkbenchInvalidInput
 		}
-		result = append(result, WorkbenchAttachment{
-			ID: id, Name: name, MIMEType: mimeType, SizeBytes: decodedSize, DataURL: attachment.DataURL,
-		})
+		seen[id] = struct{}{}
+		result = append(result, WorkbenchAttachment{ID: id})
 	}
 	return result, nil
-}
-
-func workbenchBase64DecodedSize(value string) (int64, error) {
-	if len(value) > base64.StdEncoding.EncodedLen(workbenchMaxAttachmentBytes) {
-		return 0, ErrWorkbenchInvalidInput
-	}
-	decoded, err := base64.StdEncoding.DecodeString(value)
-	if err != nil {
-		return 0, err
-	}
-	return int64(len(decoded)), nil
 }
 
 func (s *WorkbenchService) CancelGeneration(ctx context.Context, userID int64, messageID string) error {
@@ -755,6 +746,10 @@ func (s *WorkbenchService) StreamGeneration(ctx context.Context, userID int64, m
 	}
 
 	message, conversation, binding, apiKey, history, err := s.generationContext(ctx, userID, messageID)
+	if err != nil {
+		return fail(WorkbenchMessageFailed, err.Error(), "", "")
+	}
+	history, err = s.materializeCurrentWorkbenchAttachments(ctx, userID, message.Sequence-1, history)
 	if err != nil {
 		return fail(WorkbenchMessageFailed, err.Error(), "", "")
 	}
@@ -842,6 +837,38 @@ func (s *WorkbenchService) StreamGeneration(ctx context.Context, userID int64, m
 		return err
 	}
 	return nil
+}
+
+func (s *WorkbenchService) materializeCurrentWorkbenchAttachments(ctx context.Context, userID, userMessageSequence int64, history []WorkbenchMessage) ([]WorkbenchMessage, error) {
+	for messageIndex := range history {
+		message := &history[messageIndex]
+		if message.Role != "user" || message.Sequence != userMessageSequence || len(message.Attachments) == 0 {
+			continue
+		}
+		for attachmentIndex := range message.Attachments {
+			attachment := &message.Attachments[attachmentIndex]
+			if attachment.DataURL != "" {
+				continue
+			}
+			stored, err := s.repo.GetAttachment(ctx, userID, attachment.ID)
+			if err != nil || stored.Status != "attached" {
+				return nil, ErrWorkbenchAttachmentNotFound
+			}
+			object, err := s.attachmentStore.Open(ctx, stored.ObjectKey)
+			if err != nil {
+				return nil, ErrWorkbenchAttachmentNotFound
+			}
+			data, readErr := io.ReadAll(io.LimitReader(object, WorkbenchMaxAttachmentBytes+1))
+			_ = object.Close()
+			if readErr != nil || int64(len(data)) != stored.SizeBytes || int64(len(data)) > WorkbenchMaxAttachmentBytes {
+				return nil, ErrWorkbenchAttachmentInvalid
+			}
+			stored.DataURL = encodeWorkbenchAttachmentDataURL(stored.MIMEType, data)
+			message.Attachments[attachmentIndex] = *stored
+		}
+		break
+	}
+	return history, nil
 }
 
 func (s *WorkbenchService) generationContext(ctx context.Context, userID int64, messageID string) (*WorkbenchMessage, *WorkbenchConversation, *WorkbenchModelBinding, *APIKey, []WorkbenchMessage, error) {
@@ -1297,7 +1324,13 @@ func buildWorkbenchResponsesBody(conversation *WorkbenchConversation, binding *W
 		selected[left], selected[right] = selected[right], selected[left]
 	}
 	input := make([]map[string]any, 0, len(selected))
-	for _, message := range selected {
+	latestUserIndex := -1
+	for index := range selected {
+		if selected[index].Role == "user" {
+			latestUserIndex = index
+		}
+	}
+	for messageIndex, message := range selected {
 		contentType := "input_text"
 		if message.Role == "assistant" {
 			contentType = "output_text"
@@ -1306,7 +1339,7 @@ func buildWorkbenchResponsesBody(conversation *WorkbenchConversation, binding *W
 		if message.Content != "" {
 			content = append(content, map[string]any{"type": contentType, "text": message.Content})
 		}
-		if message.Role == "user" {
+		if message.Role == "user" && messageIndex == latestUserIndex {
 			for _, attachment := range message.Attachments {
 				if strings.HasPrefix(attachment.MIMEType, "image/") {
 					content = append(content, map[string]any{"type": "input_image", "image_url": attachment.DataURL})

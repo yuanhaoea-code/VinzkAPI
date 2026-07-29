@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { toRef } from 'vue'
 import type { WorkbenchAttachment } from '@/api/workbench'
 import Icon from '@/components/icons/Icon.vue'
+import { useWorkbenchAttachmentContent } from '@/composables/useWorkbenchAttachmentContent'
 
-defineProps<{ attachments: WorkbenchAttachment[] }>()
+const props = defineProps<{ attachments: WorkbenchAttachment[] }>()
+const { contentURL, download } = useWorkbenchAttachmentContent(toRef(props, 'attachments'))
 
 function isImage(attachment: WorkbenchAttachment): boolean {
   return attachment.mime_type.startsWith('image/')
@@ -18,6 +21,12 @@ function formatSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${Math.ceil(bytes / 1024)} KB`
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
+
+function onAttachmentClick(event: MouseEvent, attachment: WorkbenchAttachment): void {
+  if (isImage(attachment)) return
+  event.preventDefault()
+  void download(attachment)
+}
 </script>
 
 <template>
@@ -27,13 +36,16 @@ function formatSize(bytes: number): string {
       :key="attachment.id"
       class="message-attachment"
       :class="isImage(attachment) ? 'message-attachment--image' : 'message-attachment--file'"
-      :href="attachment.data_url"
+      :href="isImage(attachment) ? contentURL(attachment) || undefined : undefined"
       :target="isImage(attachment) ? '_blank' : undefined"
-      :download="isImage(attachment) ? undefined : attachment.name"
       rel="noopener noreferrer"
       :title="attachment.name"
+      @click="onAttachmentClick($event, attachment)"
     >
-      <img v-if="isImage(attachment)" :src="attachment.data_url" :alt="attachment.name" />
+      <img v-if="isImage(attachment) && contentURL(attachment)" :src="contentURL(attachment)" :alt="attachment.name" />
+      <span v-else-if="isImage(attachment)" class="image-loading" aria-label="正在加载附件">
+        <Icon name="document" size="md" />
+      </span>
       <template v-else>
         <span class="file-mark">
           <Icon name="document" size="md" />
@@ -75,6 +87,14 @@ function formatSize(bytes: number): string {
   height: 100%;
   object-fit: cover;
   transition: transform 180ms ease, filter 180ms ease;
+}
+
+.image-loading {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: #789087;
 }
 
 .message-attachment--image:hover img {

@@ -85,6 +85,7 @@ func provideCleanup(
 	subscriptionExpiry *service.SubscriptionExpiryService,
 	usageCleanup *service.UsageCleanupService,
 	idempotencyCleanup *service.IdempotencyCleanupService,
+	workbenchAttachmentCleanup *service.WorkbenchAttachmentCleanupService,
 	pricing *service.PricingService,
 	emailQueue *service.EmailQueueService,
 	billingCache *service.BillingCacheService,
@@ -164,6 +165,12 @@ func provideCleanup(
 			{"IdempotencyCleanupService", func() error {
 				if idempotencyCleanup != nil {
 					idempotencyCleanup.Stop()
+				}
+				return nil
+			}},
+			{"WorkbenchAttachmentCleanupService", func() error {
+				if workbenchAttachmentCleanup != nil {
+					workbenchAttachmentCleanup.Stop()
 				}
 				return nil
 			}},

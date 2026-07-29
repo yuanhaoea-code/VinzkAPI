@@ -93,6 +93,32 @@ type Config struct {
 	Gemini                  GeminiConfig                  `mapstructure:"gemini"`
 	Update                  UpdateConfig                  `mapstructure:"update"`
 	Idempotency             IdempotencyConfig             `mapstructure:"idempotency"`
+	Workbench               WorkbenchConfig               `mapstructure:"workbench"`
+}
+
+type WorkbenchConfig struct {
+	Attachments WorkbenchAttachmentConfig `mapstructure:"attachments"`
+}
+
+type WorkbenchAttachmentConfig struct {
+	Provider               string `mapstructure:"provider"`
+	LocalDir               string `mapstructure:"local_dir"`
+	Endpoint               string `mapstructure:"endpoint"`
+	Region                 string `mapstructure:"region"`
+	Bucket                 string `mapstructure:"bucket"`
+	AccessKeyID            string `mapstructure:"access_key_id"`
+	SecretAccessKey        string `mapstructure:"secret_access_key"`
+	Prefix                 string `mapstructure:"prefix"`
+	ForcePathStyle         bool   `mapstructure:"force_path_style"`
+	PresignTTLSeconds      int    `mapstructure:"presign_ttl_seconds"`
+	PendingTTLSeconds      int    `mapstructure:"pending_ttl_seconds"`
+	ReadyTTLSeconds        int    `mapstructure:"ready_ttl_seconds"`
+	CleanupIntervalSeconds int    `mapstructure:"cleanup_interval_seconds"`
+	CleanupBatchSize       int    `mapstructure:"cleanup_batch_size"`
+	DailyUploadLimitBytes  int64  `mapstructure:"daily_upload_limit_bytes"`
+	DailyUploadLimitCount  int64  `mapstructure:"daily_upload_limit_count"`
+	MaxStoredBytes         int64  `mapstructure:"max_stored_bytes"`
+	MaxStoredCount         int64  `mapstructure:"max_stored_count"`
 }
 
 type LogConfig struct {
@@ -1564,6 +1590,27 @@ func setDefaults() {
 	viper.SetDefault("server.idle_timeout", 120)       // 120秒空闲超时
 	viper.SetDefault("server.trusted_proxies", []string{})
 	viper.SetDefault("server.max_request_body_size", int64(256*1024*1024))
+
+	// Workbench attachments. Local storage keeps development self-contained;
+	// production deployments should use an S3-compatible private bucket.
+	viper.SetDefault("workbench.attachments.provider", "local")
+	viper.SetDefault("workbench.attachments.local_dir", "./data/workbench-attachments")
+	viper.SetDefault("workbench.attachments.endpoint", "")
+	viper.SetDefault("workbench.attachments.region", "")
+	viper.SetDefault("workbench.attachments.bucket", "")
+	viper.SetDefault("workbench.attachments.access_key_id", "")
+	viper.SetDefault("workbench.attachments.secret_access_key", "")
+	viper.SetDefault("workbench.attachments.prefix", "workbench-attachments")
+	viper.SetDefault("workbench.attachments.force_path_style", false)
+	viper.SetDefault("workbench.attachments.presign_ttl_seconds", 300)
+	viper.SetDefault("workbench.attachments.pending_ttl_seconds", 900)
+	viper.SetDefault("workbench.attachments.ready_ttl_seconds", 86400)
+	viper.SetDefault("workbench.attachments.cleanup_interval_seconds", 300)
+	viper.SetDefault("workbench.attachments.cleanup_batch_size", 200)
+	viper.SetDefault("workbench.attachments.daily_upload_limit_bytes", int64(256*1024*1024))
+	viper.SetDefault("workbench.attachments.daily_upload_limit_count", int64(200))
+	viper.SetDefault("workbench.attachments.max_stored_bytes", int64(2*1024*1024*1024))
+	viper.SetDefault("workbench.attachments.max_stored_count", int64(1000))
 	// H2C 默认配置
 	viper.SetDefault("server.h2c.enabled", false)
 	viper.SetDefault("server.h2c.max_concurrent_streams", uint32(50))      // 50 个并发流
@@ -2000,6 +2047,33 @@ func setDefaults() {
 }
 
 func (c *Config) Validate() error {
+	attachmentProvider := strings.ToLower(strings.TrimSpace(c.Workbench.Attachments.Provider))
+	switch attachmentProvider {
+	case "local":
+		if strings.TrimSpace(c.Workbench.Attachments.LocalDir) == "" {
+			return fmt.Errorf("workbench.attachments.local_dir is required for local storage")
+		}
+	case "s3":
+		if strings.TrimSpace(c.Workbench.Attachments.Endpoint) == "" ||
+			strings.TrimSpace(c.Workbench.Attachments.Region) == "" ||
+			strings.TrimSpace(c.Workbench.Attachments.Bucket) == "" ||
+			strings.TrimSpace(c.Workbench.Attachments.AccessKeyID) == "" ||
+			strings.TrimSpace(c.Workbench.Attachments.SecretAccessKey) == "" {
+			return fmt.Errorf("workbench.attachments s3 endpoint, region, bucket, access_key_id and secret_access_key are required")
+		}
+	default:
+		return fmt.Errorf("workbench.attachments.provider must be local or s3")
+	}
+	if c.Workbench.Attachments.PresignTTLSeconds <= 0 || c.Workbench.Attachments.PendingTTLSeconds <= 0 || c.Workbench.Attachments.ReadyTTLSeconds <= 0 {
+		return fmt.Errorf("workbench attachment TTL values must be positive")
+	}
+	if c.Workbench.Attachments.CleanupIntervalSeconds <= 0 || c.Workbench.Attachments.CleanupBatchSize <= 0 {
+		return fmt.Errorf("workbench attachment cleanup settings must be positive")
+	}
+	if c.Workbench.Attachments.DailyUploadLimitBytes <= 0 || c.Workbench.Attachments.MaxStoredBytes <= 0 ||
+		c.Workbench.Attachments.DailyUploadLimitCount <= 0 || c.Workbench.Attachments.MaxStoredCount <= 0 {
+		return fmt.Errorf("workbench attachment upload and storage limits must be positive")
+	}
 	jwtSecret := strings.TrimSpace(c.JWT.Secret)
 	if jwtSecret == "" {
 		return fmt.Errorf("jwt.secret is required")

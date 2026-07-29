@@ -1103,6 +1103,21 @@ func TestValidateConfigErrors(t *testing.T) {
 			wantErr: "jwt.secret is required",
 		},
 		{
+			name:    "workbench s3 fields required",
+			mutate:  func(c *Config) { c.Workbench.Attachments.Provider = "s3" },
+			wantErr: "workbench.attachments s3",
+		},
+		{
+			name:    "workbench daily upload count positive",
+			mutate:  func(c *Config) { c.Workbench.Attachments.DailyUploadLimitCount = 0 },
+			wantErr: "workbench attachment upload and storage limits",
+		},
+		{
+			name:    "workbench cleanup batch positive",
+			mutate:  func(c *Config) { c.Workbench.Attachments.CleanupBatchSize = 0 },
+			wantErr: "workbench attachment cleanup settings",
+		},
+		{
 			name:    "jwt secret min bytes",
 			mutate:  func(c *Config) { c.JWT.Secret = strings.Repeat("a", 31) },
 			wantErr: "jwt.secret must be at least 32 bytes",

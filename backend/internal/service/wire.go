@@ -645,6 +645,7 @@ var ProviderSet = wire.NewSet(
 	ProvideUserPlatformQuotaUsageFlusher,
 	NewImageGenerationService,
 	NewWorkbenchService,
+	ProvideWorkbenchAttachmentCleanupService,
 )
 
 // ProvideUserPlatformQuotaUsageFlusher 创建并启动 UserPlatformQuotaUsageFlusher。

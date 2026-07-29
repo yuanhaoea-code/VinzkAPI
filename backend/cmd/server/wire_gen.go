@@ -267,7 +267,13 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 	imageGenerationHandler := handler.NewImageGenerationHandler(imageGenerationService)
 	modelMarketHandler := handler.NewModelMarketHandler(apiKeyService, gatewayService, billingService)
 	workbenchRepository := repository.NewWorkbenchRepository(db)
-	workbenchService := service.NewWorkbenchService(workbenchRepository, apiKeyService, gatewayService, configConfig)
+	workbenchAttachmentObjectStore, err := repository.NewWorkbenchAttachmentObjectStore(configConfig)
+	if err != nil {
+		return nil, err
+	}
+	workbenchAttachmentCleanupRepository := repository.NewWorkbenchAttachmentCleanupRepository(db)
+	workbenchAttachmentCleanupService := service.ProvideWorkbenchAttachmentCleanupService(workbenchAttachmentCleanupRepository, workbenchAttachmentObjectStore, configConfig)
+	workbenchService := service.NewWorkbenchService(workbenchRepository, apiKeyService, gatewayService, configConfig, workbenchAttachmentObjectStore)
 	workbenchHandler := handler.NewWorkbenchHandler(workbenchService)
 	idempotencyCoordinator := service.ProvideIdempotencyCoordinator(idempotencyRepository, configConfig)
 	idempotencyCleanupService := service.ProvideIdempotencyCleanupService(idempotencyRepository, configConfig)
@@ -290,7 +296,7 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 	paymentOrderExpiryService := service.ProvidePaymentOrderExpiryService(paymentService, leaderLockCache, db)
 	channelMonitorRunner := service.ProvideChannelMonitorRunner(channelMonitorService, settingService)
 	userPlatformQuotaUsageFlusher := service.ProvideUserPlatformQuotaUsageFlusher(configConfig, billingCache, serviceUserPlatformQuotaRepository, timingWheelService)
-	v := provideCleanup(client, redisClient, opsMetricsCollector, opsAggregationService, opsAlertEvaluatorService, opsCleanupService, opsScheduledReportService, opsSystemLogSink, schedulerSnapshotService, tokenRefreshService, accountExpiryService, proxyExpiryService, subscriptionExpiryService, usageCleanupService, idempotencyCleanupService, pricingService, emailQueueService, billingCacheService, usageRecordWorkerPool, subscriptionService, oAuthService, openAIOAuthService, geminiOAuthService, antigravityOAuthService, grokOAuthService, openAIGatewayService, scheduledTestRunnerService, backupService, paymentOrderExpiryService, channelMonitorRunner, userPlatformQuotaUsageFlusher)
+	v := provideCleanup(client, redisClient, opsMetricsCollector, opsAggregationService, opsAlertEvaluatorService, opsCleanupService, opsScheduledReportService, opsSystemLogSink, schedulerSnapshotService, tokenRefreshService, accountExpiryService, proxyExpiryService, subscriptionExpiryService, usageCleanupService, idempotencyCleanupService, workbenchAttachmentCleanupService, pricingService, emailQueueService, billingCacheService, usageRecordWorkerPool, subscriptionService, oAuthService, openAIOAuthService, geminiOAuthService, antigravityOAuthService, grokOAuthService, openAIGatewayService, scheduledTestRunnerService, backupService, paymentOrderExpiryService, channelMonitorRunner, userPlatformQuotaUsageFlusher)
 	application := &Application{
 		Server:  httpServer,
 		Cleanup: v,
@@ -332,6 +338,7 @@ func provideCleanup(
 	subscriptionExpiry *service.SubscriptionExpiryService,
 	usageCleanup *service.UsageCleanupService,
 	idempotencyCleanup *service.IdempotencyCleanupService,
+	workbenchAttachmentCleanup *service.WorkbenchAttachmentCleanupService,
 	pricing *service.PricingService,
 	emailQueue *service.EmailQueueService,
 	billingCache *service.BillingCacheService,
@@ -410,6 +417,12 @@ func provideCleanup(
 			{"IdempotencyCleanupService", func() error {
 				if idempotencyCleanup != nil {
 					idempotencyCleanup.Stop()
+				}
+				return nil
+			}},
+			{"WorkbenchAttachmentCleanupService", func() error {
+				if workbenchAttachmentCleanup != nil {
+					workbenchAttachmentCleanup.Stop()
 				}
 				return nil
 			}},

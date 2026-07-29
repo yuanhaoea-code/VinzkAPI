@@ -95,6 +95,8 @@ var ProviderSet = wire.NewSet(
 	NewAffiliateRepository,
 	NewImageGenerationRepository,
 	NewWorkbenchRepository,
+	NewWorkbenchAttachmentCleanupRepository,
+	NewWorkbenchAttachmentObjectStore,
 	NewUserPlatformQuotaRepository,     // T14: user × platform quota
 	NewUserPlatformQuotaServiceAdapter, // T14: adapter → service.UserPlatformQuotaRepository
 

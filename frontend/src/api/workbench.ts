@@ -73,7 +73,18 @@ export interface WorkbenchAttachment {
   name: string
   mime_type: string
   size_bytes: number
-  data_url: string
+  data_url?: string
+}
+
+export interface WorkbenchAttachmentUploadTicket {
+  attachment: WorkbenchAttachment
+  upload: {
+    url: string
+    method: 'PUT'
+    headers?: Record<string, string>
+    requires_auth: boolean
+  }
+  expires_at: string
 }
 
 export interface WorkbenchConversation {
@@ -144,6 +155,56 @@ export async function updateWorkbenchConversation(
 
 export async function deleteWorkbenchConversation(id: string): Promise<void> {
   await apiClient.delete(`/workbench/conversations/${encodeURIComponent(id)}`)
+}
+
+export async function createWorkbenchAttachmentUpload(input: {
+  name: string
+  mime_type: string
+  size_bytes: number
+}): Promise<WorkbenchAttachmentUploadTicket> {
+  const { data } = await apiClient.post<WorkbenchAttachmentUploadTicket>('/workbench/attachments', input)
+  return data
+}
+
+export async function uploadWorkbenchAttachment(ticket: WorkbenchAttachmentUploadTicket, file: File): Promise<void> {
+  const headers = { ...(ticket.upload.headers ?? {}) }
+  if (!Object.keys(headers).some(name => name.toLowerCase() === 'content-type')) {
+    headers['Content-Type'] = ticket.attachment.mime_type
+  }
+  if (ticket.upload.requires_auth) {
+    await apiClient.request({
+      url: ticket.upload.url,
+      method: ticket.upload.method,
+      headers,
+      data: file
+    })
+    return
+  }
+  const response = await fetch(ticket.upload.url, {
+    method: ticket.upload.method,
+    headers,
+    body: file
+  })
+  if (!response.ok) {
+    throw new Error(`附件上传失败 (${response.status})`)
+  }
+}
+
+export async function completeWorkbenchAttachmentUpload(id: string): Promise<WorkbenchAttachment> {
+  const { data } = await apiClient.post<WorkbenchAttachment>(`/workbench/attachments/${encodeURIComponent(id)}/complete`)
+  return data
+}
+
+export async function deleteWorkbenchAttachment(id: string): Promise<void> {
+  await apiClient.delete(`/workbench/attachments/${encodeURIComponent(id)}`)
+}
+
+export async function getWorkbenchAttachmentContent(id: string, download = false): Promise<Blob> {
+  const { data } = await apiClient.get<Blob>(
+    `/workbench/attachments/${encodeURIComponent(id)}/content${download ? '?download=1' : ''}`,
+    { responseType: 'blob' }
+  )
+  return data
 }
 
 export async function createWorkbenchMessage(
@@ -259,6 +320,11 @@ export const workbenchAPI = {
   getConversation: getWorkbenchConversation,
   updateConversation: updateWorkbenchConversation,
   deleteConversation: deleteWorkbenchConversation,
+  createAttachmentUpload: createWorkbenchAttachmentUpload,
+  uploadAttachment: uploadWorkbenchAttachment,
+  completeAttachmentUpload: completeWorkbenchAttachmentUpload,
+  deleteAttachment: deleteWorkbenchAttachment,
+  getAttachmentContent: getWorkbenchAttachmentContent,
   createMessage: createWorkbenchMessage,
   cancelGeneration: cancelWorkbenchGeneration,
   streamGeneration: streamWorkbenchGeneration

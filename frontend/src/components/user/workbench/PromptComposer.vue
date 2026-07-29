@@ -2,26 +2,11 @@
 import { computed, nextTick, ref, shallowRef, watch } from 'vue'
 import type { WorkbenchAttachment } from '@/api/workbench'
 import Icon from '@/components/icons/Icon.vue'
-
-const MAX_ATTACHMENTS = 8
-const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
-const MAX_TOTAL_BYTES = 24 * 1024 * 1024
-const MIME_BY_EXTENSION: Record<string, string> = {
-  png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif',
-  pdf: 'application/pdf', doc: 'application/msword',
-  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  xls: 'application/vnd.ms-excel',
-  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  ppt: 'application/vnd.ms-powerpoint',
-  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  json: 'application/json', xml: 'application/xml', rtf: 'application/rtf',
-  txt: 'text/plain', log: 'text/plain', md: 'text/markdown', csv: 'text/csv', html: 'text/html',
-  yaml: 'text/yaml', yml: 'text/yaml', js: 'text/plain', ts: 'text/plain', jsx: 'text/plain',
-  tsx: 'text/plain', py: 'text/plain', go: 'text/plain', java: 'text/plain', sql: 'text/plain',
-  c: 'text/plain', cpp: 'text/plain', h: 'text/plain', css: 'text/plain', sh: 'text/plain'
-}
-const ACCEPTED_MIME_TYPES = new Set(Object.values(MIME_BY_EXTENSION))
-const ACCEPT_ATTRIBUTE = Object.keys(MIME_BY_EXTENSION).map(extension => `.${extension}`).join(',')
+import {
+  useWorkbenchAttachments,
+  WORKBENCH_ATTACHMENT_ACCEPT,
+  type ComposerAttachment
+} from '@/composables/useWorkbenchAttachments'
 
 const props = defineProps<{
   canSend: boolean
@@ -38,13 +23,20 @@ const value = defineModel<string>({ default: '' })
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const folderInputRef = ref<HTMLInputElement | null>(null)
-const attachments = shallowRef<WorkbenchAttachment[]>([])
-const attachmentError = shallowRef('')
 const attachmentMenuOpen = shallowRef(false)
 const dragging = shallowRef(false)
+const {
+  items: attachments,
+  errorMessage: attachmentError,
+  uploading: attachmentsUploading,
+  addFiles,
+  removeAttachment,
+  attachmentsForSend,
+  clearAfterSend
+} = useWorkbenchAttachments()
 
 const canSubmit = computed(() => (
-  props.canSend && !props.streaming && Boolean(value.value.trim() || attachments.value.length)
+  props.canSend && !props.streaming && !attachmentsUploading.value && Boolean(value.value.trim() || attachments.value.length)
 ))
 
 function resize(): void {
@@ -56,10 +48,9 @@ function resize(): void {
 
 function submit(): void {
   if (!canSubmit.value) return
-  emit('send', value.value.trim(), [...attachments.value])
+  emit('send', value.value.trim(), attachmentsForSend())
   value.value = ''
-  attachments.value = []
-  attachmentError.value = ''
+  clearAfterSend()
   attachmentMenuOpen.value = false
   void nextTick(resize)
 }
@@ -71,7 +62,7 @@ function onKeydown(event: KeyboardEvent): void {
 }
 
 function toggleAttachmentMenu(): void {
-  if (!props.modelName || props.streaming) return
+  if (!props.modelName || props.streaming || attachmentsUploading.value) return
   attachmentMenuOpen.value = !attachmentMenuOpen.value
 }
 
@@ -102,76 +93,8 @@ function onDrop(event: DragEvent): void {
   void addFiles(Array.from(event.dataTransfer?.files ?? []))
 }
 
-async function addFiles(files: File[]): Promise<void> {
-  attachmentError.value = ''
-  const next = [...attachments.value]
-  let skipped = 0
-  for (const file of files) {
-    if (next.length >= MAX_ATTACHMENTS) {
-      attachmentError.value = `每条消息最多添加 ${MAX_ATTACHMENTS} 个附件`
-      break
-    }
-    const mimeType = normalizedMimeType(file)
-    if (!mimeType) {
-      skipped += 1
-      continue
-    }
-    if (file.size > MAX_ATTACHMENT_BYTES) {
-      attachmentError.value = `${file.name} 超过 10 MB`
-      continue
-    }
-    const totalBytes = next.reduce((sum, item) => sum + item.size_bytes, 0) + file.size
-    if (totalBytes > MAX_TOTAL_BYTES) {
-      attachmentError.value = '本条消息的附件总大小不能超过 24 MB'
-      break
-    }
-    const name = file.webkitRelativePath || file.name || 'attachment'
-    next.push({
-      id: createAttachmentId(),
-      name,
-      mime_type: mimeType,
-      size_bytes: file.size,
-      data_url: await readFileAsDataURL(file, mimeType)
-    })
-  }
-  attachments.value = next
-  if (!attachmentError.value && skipped > 0) {
-    attachmentError.value = `已跳过 ${skipped} 个不支持的文件`
-  }
-}
-
-function normalizedMimeType(file: File): string {
-  const declared = file.type.toLowerCase().trim()
-  if (ACCEPTED_MIME_TYPES.has(declared)) return declared
-  const extension = file.name.split('.').pop()?.toLowerCase() ?? ''
-  return MIME_BY_EXTENSION[extension] ?? ''
-}
-
-function removeAttachment(id: string): void {
-  attachments.value = attachments.value.filter(item => item.id !== id)
-  attachmentError.value = ''
-}
-
-function readFileAsDataURL(file: File, mimeType: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = String(reader.result ?? '')
-      resolve(result.replace(/^data:[^;]*;base64,/, `data:${mimeType};base64,`))
-    }
-    reader.onerror = () => reject(reader.error ?? new Error('读取附件失败'))
-    reader.readAsDataURL(file)
-  })
-}
-
-function createAttachmentId(): string {
-  return typeof crypto.randomUUID === 'function'
-    ? crypto.randomUUID()
-    : `attachment-${Date.now()}-${Math.random().toString(16).slice(2)}`
-}
-
-function isImage(attachment: WorkbenchAttachment): boolean {
-  return attachment.mime_type.startsWith('image/')
+function isImage(attachment: ComposerAttachment): boolean {
+  return attachment.mimeType.startsWith('image/')
 }
 
 function extension(name: string): string {
@@ -195,17 +118,21 @@ watch(value, () => void nextTick(resize))
       <div v-if="attachments.length" class="attachment-strip" aria-label="待发送附件">
         <figure
           v-for="attachment in attachments"
-          :key="attachment.id"
+          :key="attachment.localId"
           class="attachment-preview"
-          :class="{ 'attachment-preview--file': !isImage(attachment) }"
+          :class="{
+            'attachment-preview--file': !isImage(attachment),
+            'attachment-preview--uploading': attachment.status === 'uploading'
+          }"
         >
-          <img v-if="isImage(attachment)" :src="attachment.data_url" :alt="attachment.name" />
+          <img v-if="isImage(attachment)" :src="attachment.previewURL" :alt="attachment.name" />
           <template v-else>
             <Icon name="document" size="md" />
             <strong>{{ extension(attachment.name) }}</strong>
             <span>{{ attachment.name.split('/').pop() }}</span>
           </template>
-          <button type="button" :title="`移除 ${attachment.name}`" @click="removeAttachment(attachment.id)">
+          <span v-if="attachment.status === 'uploading'" class="attachment-spinner" aria-label="正在上传" />
+          <button type="button" :title="`移除 ${attachment.name}`" @click="removeAttachment(attachment.localId)">
             <Icon name="x" size="xs" />
           </button>
         </figure>
@@ -217,7 +144,7 @@ watch(value, () => void nextTick(resize))
             type="button"
             class="attachment-button"
             title="添加附件"
-            :disabled="!modelName || streaming"
+            :disabled="!modelName || streaming || attachmentsUploading"
             :aria-expanded="attachmentMenuOpen"
             @click="toggleAttachmentMenu"
           >
@@ -272,7 +199,7 @@ watch(value, () => void nextTick(resize))
         ref="fileInputRef"
         class="file-input"
         type="file"
-        :accept="ACCEPT_ATTRIBUTE"
+        :accept="WORKBENCH_ATTACHMENT_ACCEPT"
         multiple
         @change="onFileChange"
       />
@@ -345,6 +272,32 @@ watch(value, () => void nextTick(resize))
 }
 
 .attachment-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+.attachment-preview--uploading::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.32);
+  content: '';
+}
+
+.attachment-spinner {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: attachment-spin 700ms linear infinite;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes attachment-spin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
 
 .attachment-preview--file {
   grid-template-rows: 27px 11px 13px;
@@ -501,6 +454,7 @@ watch(value, () => void nextTick(resize))
   .composer,
   .attachment-menu-enter-active,
   .attachment-menu-leave-active { transition: none; }
+  .attachment-spinner { animation: none; }
 }
 
 @media (max-width: 640px) {

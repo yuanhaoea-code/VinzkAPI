@@ -1,11 +1,16 @@
 package routes
 
 import (
+	"strconv"
+	"time"
+
 	"github.com/Wei-Shaw/sub2api/internal/handler"
+	ratelimitmiddleware "github.com/Wei-Shaw/sub2api/internal/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 // RegisterUserRoutes 注册用户相关路由（需要认证）
@@ -14,6 +19,7 @@ func RegisterUserRoutes(
 	h *handler.Handlers,
 	jwtAuth middleware.JWTAuthMiddleware,
 	settingService *service.SettingService,
+	redisClient *redis.Client,
 ) {
 	authenticated := v1.Group("")
 	authenticated.Use(gin.HandlerFunc(jwtAuth))
@@ -76,6 +82,29 @@ func RegisterUserRoutes(
 
 		workbench := authenticated.Group("/workbench")
 		{
+			rateLimiter := ratelimitmiddleware.NewRateLimiter(redisClient)
+			failClose := ratelimitmiddleware.RateLimitOptions{FailureMode: ratelimitmiddleware.RateLimitFailClose}
+			userFailClose := ratelimitmiddleware.RateLimitOptions{
+				FailureMode: ratelimitmiddleware.RateLimitFailClose,
+				KeyFunc: func(c *gin.Context) string {
+					subject, ok := middleware.GetAuthSubjectFromContext(c)
+					if !ok {
+						return ""
+					}
+					return strconv.FormatInt(subject.UserID, 10)
+				},
+			}
+			attachmentCreateIPLimit := rateLimiter.LimitWithOptions("workbench-attachment-create-ip", 30, time.Minute, failClose)
+			attachmentCreateUserLimit := rateLimiter.LimitWithOptions("workbench-attachment-create-user", 12, time.Minute, userFailClose)
+			attachmentUploadIPLimit := rateLimiter.LimitWithOptions("workbench-attachment-upload-ip", 30, time.Minute, failClose)
+			attachmentUploadUserLimit := rateLimiter.LimitWithOptions("workbench-attachment-upload-user", 12, time.Minute, userFailClose)
+			attachmentCompleteIPLimit := rateLimiter.LimitWithOptions("workbench-attachment-complete-ip", 30, time.Minute, failClose)
+			attachmentCompleteUserLimit := rateLimiter.LimitWithOptions("workbench-attachment-complete-user", 12, time.Minute, userFailClose)
+			attachmentDeleteIPLimit := rateLimiter.LimitWithOptions("workbench-attachment-delete-ip", 60, time.Minute, failClose)
+			attachmentDeleteUserLimit := rateLimiter.LimitWithOptions("workbench-attachment-delete-user", 30, time.Minute, userFailClose)
+			attachmentReadIPLimit := rateLimiter.LimitWithOptions("workbench-attachment-read-ip", 180, time.Minute, failClose)
+			attachmentReadUserLimit := rateLimiter.LimitWithOptions("workbench-attachment-read-user", 120, time.Minute, userFailClose)
+
 			workbench.GET("/models", h.Workbench.Models)
 			workbench.POST("/models", h.Workbench.AddModel)
 			workbench.DELETE("/models/:id", h.Workbench.HideModel)
@@ -84,9 +113,14 @@ func RegisterUserRoutes(
 			workbench.GET("/conversations/:id", h.Workbench.GetConversation)
 			workbench.PATCH("/conversations/:id", h.Workbench.UpdateConversation)
 			workbench.DELETE("/conversations/:id", h.Workbench.DeleteConversation)
-			workbench.POST("/conversations/:id/messages", h.Workbench.CreateMessage)
+			workbench.POST("/conversations/:id/messages", middleware.RequestBodyLimit(512<<10), h.Workbench.CreateMessage)
 			workbench.POST("/generations/:id/stream", h.Workbench.StreamGeneration)
 			workbench.POST("/generations/:id/cancel", h.Workbench.CancelGeneration)
+			workbench.POST("/attachments", attachmentCreateIPLimit, attachmentCreateUserLimit, middleware.RequestBodyLimit(32<<10), h.Workbench.CreateAttachmentUpload)
+			workbench.PUT("/attachments/:id/content", attachmentUploadIPLimit, attachmentUploadUserLimit, middleware.RequestBodyLimit(service.WorkbenchMaxAttachmentBytes+1), h.Workbench.UploadAttachmentContent)
+			workbench.POST("/attachments/:id/complete", attachmentCompleteIPLimit, attachmentCompleteUserLimit, h.Workbench.CompleteAttachmentUpload)
+			workbench.GET("/attachments/:id/content", attachmentReadIPLimit, attachmentReadUserLimit, h.Workbench.AttachmentContent)
+			workbench.DELETE("/attachments/:id", attachmentDeleteIPLimit, attachmentDeleteUserLimit, h.Workbench.DeleteAttachment)
 		}
 
 		// 用户可用渠道（非管理员接口）

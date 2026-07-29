@@ -9,6 +9,7 @@ vi.mock('@/api/client', () => ({
     post: vi.fn(),
     patch: vi.fn(),
     delete: vi.fn(),
+    request: vi.fn(),
   },
   buildApiUrl: (path: string) => `/api/v1${path}`,
 }))
@@ -17,7 +18,13 @@ vi.mock('@/api/auth', () => ({
   refreshToken: refreshTokenMock,
 }))
 
-import { addWorkbenchModels, streamWorkbenchGeneration } from '@/api/workbench'
+import {
+  addWorkbenchModels,
+  createWorkbenchAttachmentUpload,
+  streamWorkbenchGeneration,
+  uploadWorkbenchAttachment,
+  type WorkbenchAttachmentUploadTicket
+} from '@/api/workbench'
 
 function streamResponse(chunks: string[]): Response {
   const encoder = new TextEncoder()
@@ -95,6 +102,40 @@ describe('workbench model API', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/workbench/models', {
       model_ids: ['gpt-5.3-codex-spark', 'gpt-5.2'],
       api_key_id: 42
+    })
+  })
+})
+
+describe('workbench attachment API', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('uploads local-development attachments through the authenticated client', async () => {
+    const ticket: WorkbenchAttachmentUploadTicket = {
+      attachment: { id: 'attachment-1', name: 'notes.txt', mime_type: 'text/plain', size_bytes: 5 },
+      upload: { url: '/workbench/attachments/attachment-1/content', method: 'PUT', requires_auth: true },
+      expires_at: '2026-07-28T12:00:00Z'
+    }
+    const file = new File(['hello'], 'notes.txt', { type: 'text/plain' })
+
+    await uploadWorkbenchAttachment(ticket, file)
+
+    expect(apiClient.request).toHaveBeenCalledWith(expect.objectContaining({
+      url: ticket.upload.url,
+      method: 'PUT',
+      data: file,
+      headers: { 'Content-Type': 'text/plain' }
+    }))
+  })
+
+  it('requests an upload ticket without sending file content to the API', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ data: { attachment: { id: 'attachment-1' } } })
+
+    await createWorkbenchAttachmentUpload({ name: 'brief.pdf', mime_type: 'application/pdf', size_bytes: 1024 })
+
+    expect(apiClient.post).toHaveBeenCalledWith('/workbench/attachments', {
+      name: 'brief.pdf',
+      mime_type: 'application/pdf',
+      size_bytes: 1024
     })
   })
 })

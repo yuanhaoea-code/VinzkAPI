@@ -141,3 +141,27 @@ func TestRateLimiterSuccessAndLimit(t *testing.T) {
 	router.ServeHTTP(recorder, req)
 	require.Equal(t, http.StatusTooManyRequests, recorder.Code)
 }
+
+func TestRateLimiterUsesConfiguredIdentityKey(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	originalRun := rateLimitRun
+	var capturedKey string
+	rateLimitRun = func(_ context.Context, _ *redis.Client, key string, _ int64) (int64, bool, error) {
+		capturedKey = key
+		return 1, false, nil
+	}
+	t.Cleanup(func() { rateLimitRun = originalRun })
+
+	limiter := NewRateLimiter(redis.NewClient(&redis.Options{Addr: "127.0.0.1:1"}))
+	router := gin.New()
+	router.Use(limiter.LimitWithOptions("upload", 1, time.Minute, RateLimitOptions{
+		KeyFunc: func(*gin.Context) string { return "user-42" },
+	}))
+	router.GET("/test", func(c *gin.Context) { c.Status(http.StatusNoContent) })
+
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/test", nil))
+
+	require.Equal(t, http.StatusNoContent, recorder.Code)
+	require.Equal(t, "rate_limit:upload:user-42", capturedKey)
+}

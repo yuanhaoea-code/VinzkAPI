@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -234,26 +233,54 @@ func TestBuildWorkbenchResponsesBodyIncludesDocumentAttachments(t *testing.T) {
 	require.Equal(t, "data:application/pdf;base64,aGVsbG8=", payload.Input[0].Content[1].FileData)
 }
 
-func TestValidateWorkbenchAttachmentsRejectsUnsupportedContent(t *testing.T) {
+func TestBuildWorkbenchResponsesBodyOnlySendsLatestUserAttachments(t *testing.T) {
+	conversation := &WorkbenchConversation{ID: "conversation", ReasoningPreset: WorkbenchReasoningStandard}
+	binding := &WorkbenchModelBinding{ModelID: "gpt-5.5", Provider: PlatformOpenAI}
+	messages := []WorkbenchMessage{
+		{Role: "user", Content: "older", Status: WorkbenchMessageCompleted, Attachments: []WorkbenchAttachment{{
+			ID: "f595fc23-4147-45cf-b1d9-f6d6325cc1f2", Name: "old.png", MIMEType: "image/png", DataURL: "data:image/png;base64,b2xk",
+		}}},
+		{Role: "assistant", Content: "older answer", Status: WorkbenchMessageCompleted},
+		{Role: "user", Content: "latest", Status: WorkbenchMessageCompleted, Attachments: []WorkbenchAttachment{{
+			ID: "92678077-07de-4e14-89df-949a0d105580", Name: "new.png", MIMEType: "image/png", DataURL: "data:image/png;base64,bmV3",
+		}}},
+		{Role: "assistant", Status: WorkbenchMessagePending},
+	}
+
+	body, err := buildWorkbenchResponsesBody(conversation, binding, messages)
+	require.NoError(t, err)
+	require.NotContains(t, string(body), "data:image/png;base64,b2xk")
+	require.Contains(t, string(body), "data:image/png;base64,bmV3")
+}
+
+func TestWorkbenchAttachmentContentMatchesRejectsDisguisedBinary(t *testing.T) {
+	require.True(t, workbenchAttachmentContentMatches([]byte("plain text"), "text/plain"))
+	require.False(t, workbenchAttachmentContentMatches([]byte("PK\x03\x04binary zip"), "text/plain"))
+	require.True(t, workbenchAttachmentContentMatches([]byte("%PDF-1.7"), "application/pdf"))
+	require.False(t, workbenchAttachmentContentMatches([]byte("not a pdf"), "application/pdf"))
+}
+
+func TestValidateWorkbenchAttachmentsRejectsInlineContent(t *testing.T) {
 	_, err := validateWorkbenchAttachments([]WorkbenchAttachment{{
-		Name: "archive.exe", MIMEType: "application/octet-stream", DataURL: "data:application/octet-stream;base64,aGVsbG8=",
+		ID: "f595fc23-4147-45cf-b1d9-f6d6325cc1f2", DataURL: "data:text/plain;base64,aGVsbG8=",
 	}})
 	require.ErrorIs(t, err, ErrWorkbenchInvalidInput)
 }
 
-func TestValidateWorkbenchAttachmentsAcceptsOfficeAndTextFiles(t *testing.T) {
+func TestValidateWorkbenchAttachmentsAcceptsUploadedReferences(t *testing.T) {
 	attachments, err := validateWorkbenchAttachments([]WorkbenchAttachment{
-		{Name: "notes.txt", MIMEType: "text/plain", DataURL: "data:text/plain;base64,aGVsbG8="},
-		{Name: "report.xlsx", MIMEType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", DataURL: "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,aGVsbG8="},
+		{ID: "f595fc23-4147-45cf-b1d9-f6d6325cc1f2"},
+		{ID: "92678077-07de-4e14-89df-949a0d105580"},
 	})
 	require.NoError(t, err)
 	require.Len(t, attachments, 2)
 }
 
-func TestValidateWorkbenchAttachmentsRejectsOversizedBase64BeforeDecode(t *testing.T) {
-	oversized := strings.Repeat("A", base64.StdEncoding.EncodedLen(workbenchMaxAttachmentBytes)+4)
+func TestValidateWorkbenchAttachmentsRejectsDuplicateReferences(t *testing.T) {
 	_, err := validateWorkbenchAttachments([]WorkbenchAttachment{{
-		Name: "oversized.png", MIMEType: "image/png", DataURL: "data:image/png;base64," + oversized,
+		ID: "f595fc23-4147-45cf-b1d9-f6d6325cc1f2",
+	}, {
+		ID: "f595fc23-4147-45cf-b1d9-f6d6325cc1f2",
 	}})
 	require.ErrorIs(t, err, ErrWorkbenchInvalidInput)
 }

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -23,6 +24,7 @@ const (
 // RateLimitOptions 限流可选配置
 type RateLimitOptions struct {
 	FailureMode RateLimitFailureMode
+	KeyFunc     func(*gin.Context) string
 }
 
 var rateLimitScript = redis.NewScript(`
@@ -88,8 +90,13 @@ func (r *RateLimiter) LimitWithOptions(key string, limit int, window time.Durati
 	}
 
 	return func(c *gin.Context) {
-		ip := c.ClientIP()
-		redisKey := r.prefix + key + ":" + ip
+		identity := c.ClientIP()
+		if opts.KeyFunc != nil {
+			if value := strings.TrimSpace(opts.KeyFunc(c)); value != "" {
+				identity = value
+			}
+		}
+		redisKey := r.prefix + key + ":" + identity
 
 		ctx := c.Request.Context()
 
